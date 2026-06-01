@@ -199,9 +199,14 @@
             <!-- Mode 3: CLNR Verifier -->
             <div class="mode-container" id="container-verify">
               <div class="verify-layout">
-                <div class="verify-instructions">
-                  <h4>Decompression Feedback Loop</h4>
-                  <p>Paste the LLM's reconstructed code below. The Diff Engine will extract structural identifiers and verify against the source AST.</p>
+                <div class="verify-instructions" style="display: flex; justify-content: space-between; align-items: center; gap: 20px; width: 100%;">
+                  <div style="flex-grow: 1;">
+                    <h4>Decompression Feedback Loop</h4>
+                    <p>Paste the LLM's reconstructed code below. The Diff Engine will extract structural identifiers and verify against the source AST.</p>
+                  </div>
+                  <button class="utility-btn accent" id="simulate-clnr-btn" style="flex-shrink: 0; background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: #fff; font-weight: 600; padding: 10px 16px; border: none; border-radius: 6px; cursor: pointer; display: flex; align-items: center; gap: 8px; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2); transition: all 0.2s ease; outline: none;">
+                    🔬 Simulate Auto-CLNR
+                  </button>
                 </div>
                 
                 <div class="verify-editor-container">

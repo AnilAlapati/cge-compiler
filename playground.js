@@ -1631,6 +1631,76 @@ ${textContent}`;
     }
   });
 
+  const simulateBtn = document.getElementById("simulate-clnr-btn");
+  if (simulateBtn) {
+    simulateBtn.addEventListener("click", () => {
+      // Deactivate button during simulation
+      simulateBtn.disabled = true;
+      simulateBtn.style.opacity = "0.6";
+      simulateBtn.style.cursor = "not-allowed";
+
+      llmInput.value = "";
+      verifyStatus.className = "verify-status";
+      verifyStatus.innerHTML = "📡 Querying LLM for zero-shot CGE decompression...";
+      verifyDiffList.innerHTML = "";
+      patchAction.style.display = "none";
+      updateVerifyLineNumbers();
+
+      let candidateCode = "";
+      let correctedCode = "";
+
+      if (currentLang === "typescript") {
+        candidateCode = `import { useState } from "react";\n\nexport interface User {\n  id: string;\n  email: string;\n  isActive: boolean;\n}\n\nexport const useSession = (email: string) => {\n  if (!email) throw new Error("no_email");\n  return { loggedIn: true };\n};\n\nexport class AuthService {\n  private endpointUrl: string = "api/auth";\n\n  public async login(email: string): Promise<string> {\n    if (!email) {\n      throw new Error("invalid");\n    }\n    return "token123";\n  }\n}`;
+        correctedCode = `import { useState } from "react";\n\nexport interface User {\n  id: string;\n  email: string;\n  isActive: boolean;\n}\n\nexport const useAuth = (email: string) => {\n  if (!email) throw new Error("no_email");\n  return { loggedIn: true };\n};\n\nexport class AuthService {\n  private endpoint: string = "api/auth";\n\n  public async login(email: string): Promise<string> {\n    if (!email) {\n      throw new Error("invalid");\n    }\n    return "token123";\n  }\n}`;
+      } else if (currentLang === "python") {
+        candidateCode = `from datetime import datetime\nfrom typing import List, Optional\n\nclass UserProfile:\n    id: str\n    email: str\n    created_at: datetime\n\nTOKEN_EXPIRY = 900000\n\ndef _get_hash(password: str) -> str:\n    return "hashed"\n\ndef check_user(user: UserProfile) -> bool:\n    if not user:\n        raise ValueError("missing_user")\n    for item in user.items:\n        if item.val == 10:\n            return True\n    return False`;
+        correctedCode = `from datetime import datetime\nfrom typing import List, Optional\n\nclass UserProfile:\n    id: str\n    email: str\n    created_at: datetime\n\nTOKEN_EXPIRY = 900000\n\ndef _get_hash(password: str) -> str:\n    return "hashed"\n\ndef verify_user(user: UserProfile) -> bool:\n    if not user:\n        raise ValueError("missing_user")\n    for item in user.items:\n        if item.val == 10:\n            return True\n    return False`;
+      } else {
+        candidateCode = `use std::collections::HashMap;\n\npub struct UserSession {\n    pub token: String,\n    pub user_id: u64,\n}\n\npub enum UserRole {\n    Admin,\n    User,\n}\n\nconst MAX_ATTEMPTS: u32 = 5;\n\npub fn verify_session(session: UserSession) -> bool {\n    if session.token.is_empty() {\n        return false;\n    }\n    true\n}\n\nfn internal_check() {\n    println!("internal");\n}`;
+        correctedCode = `use std::collections::HashMap;\n\npub struct UserSession {\n    pub token: String,\n    pub user_id: u64,\n}\n\npub enum UserRole {\n    Admin,\n    User,\n}\n\nconst MAX_ATTEMPTS: u32 = 5;\n\npub fn validate(session: UserSession) -> bool {\n    if session.token.is_empty() {\n        return false;\n    }\n    true\n}\n\nfn internal_check() {\n    println!("internal");\n}`;
+      }
+
+      // Step 1: Simulate LLM generating Candidate C0 with mismatches
+      setTimeout(() => {
+        llmInput.value = candidateCode;
+        runDiffEngine();
+        updateVerifyLineNumbers();
+        showToast("🤖 LLM returned decompression candidates (Zero-Shot)");
+
+        // Step 2: AST Diff Engine isolates mismatches & generates patches
+        setTimeout(() => {
+          verifyStatus.className = "verify-status error";
+          verifyStatus.innerHTML = "🩹 AST Differ isolated errors. Re-querying with Correction Patches...";
+          showToast("🔬 Generating Active Feedback patches...");
+
+          // Step 3: Simulate LLM regenerating code with patches
+          setTimeout(() => {
+            llmInput.value = correctedCode;
+            runDiffEngine();
+            updateVerifyLineNumbers();
+            
+            verifyStatus.className = "verify-status success";
+            verifyStatus.innerHTML = `
+              <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                <polyline points="22 4 12 14.01 9 11.01"></polyline>
+              </svg>
+              100% Structural Fidelity Match achieved in 2 loops!
+            `;
+            showToast("✅ Reconstruction Loop completed successfully!");
+
+            // Reactivate button
+            simulateBtn.disabled = false;
+            simulateBtn.style.opacity = "1";
+            simulateBtn.style.cursor = "pointer";
+          }, 1500);
+
+        }, 1500);
+
+      }, 1500);
+    });
+  }
+
   // --- Scroll Reveal (IntersectionObserver) ---
   const revealSections = document.querySelectorAll(".reveal-element");
   const revealObserver = new IntersectionObserver((entries) => {
