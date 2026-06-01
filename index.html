@@ -103,6 +103,7 @@
             <div class="panel-header-switcher">
               <button class="switcher-btn active" id="btn-mode-code">CGE Code</button>
               <button class="switcher-btn" id="btn-mode-visual">Visual AST</button>
+              <button class="switcher-btn" id="btn-mode-verify">CLNR Verify</button>
             </div>
             <button class="utility-btn" id="copy-btn">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -115,9 +116,34 @@
           
           <div class="editor-body">
             <!-- Mode 1: Code Text View -->
-            <div class="mode-container active" id="container-code">
-              <div class="output-scroller">
+            <div class="mode-container active" id="container-code" style="flex-direction: column;">
+              <div class="output-scroller" style="flex-grow: 1;">
                 <pre><code id="cge-output" class="output-code"></code></pre>
+              </div>
+              
+              <!-- Verify Live in LLM Bridge -->
+              <div class="llm-bridge-panel">
+                <div class="llm-bridge-info">
+                  <span class="llm-bridge-title">Verify AST Comprehension</span>
+                  <span class="llm-bridge-subtitle">Test compressed code directly in real models</span>
+                </div>
+                <div class="llm-bridge-actions">
+                  <button class="utility-btn accent" id="llm-prompt-btn">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/>
+                      <rect x="8" y="2" width="8" height="4" rx="1" ry="1"/>
+                    </svg>
+                    Copy with Prompt
+                  </button>
+                  <div class="llm-deep-links">
+                    <a href="https://claude.ai" target="_blank" class="llm-link-icon" title="Test in Anthropic Claude">
+                      <span>Claude</span>
+                    </a>
+                    <a href="https://chat.openai.com" target="_blank" class="llm-link-icon" title="Test in OpenAI ChatGPT">
+                      <span>ChatGPT</span>
+                    </a>
+                  </div>
+                </div>
               </div>
             </div>
 
@@ -170,33 +196,38 @@
               </div>
             </div>
 
-          </div>
+            <!-- Mode 3: CLNR Verifier -->
+            <div class="mode-container" id="container-verify">
+              <div class="verify-layout">
+                <div class="verify-instructions">
+                  <h4>Decompression Feedback Loop</h4>
+                  <p>Paste the LLM's reconstructed code below. The Diff Engine will extract structural identifiers and verify against the source AST.</p>
+                </div>
+                
+                <div class="verify-editor-container">
+                  <div class="gutter" id="verify-gutter-lines"></div>
+                  <textarea
+                    id="llm-reconstructed-input"
+                    class="textarea-editor verify-textarea"
+                    spellcheck="false"
+                    placeholder="Paste reconstructed LLM code here..."
+                  ></textarea>
+                </div>
 
-          <!-- Verify Live in LLM Bridge -->
-          <div class="llm-bridge-panel">
-            <div class="llm-bridge-info">
-              <span class="llm-bridge-title">Verify AST Comprehension</span>
-              <span class="llm-bridge-subtitle">Test compressed code directly in real models</span>
-            </div>
-            <div class="llm-bridge-actions">
-              <button class="utility-btn accent" id="llm-prompt-btn">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/>
-                  <rect x="8" y="2" width="8" height="4" rx="1" ry="1"/>
-                </svg>
-                Copy with Prompt
-              </button>
-              <div class="llm-deep-links">
-                <a href="https://claude.ai" target="_blank" class="llm-link-icon" title="Test in Anthropic Claude">
-                  <span>Claude</span>
-                </a>
-                <a href="https://chat.openai.com" target="_blank" class="llm-link-icon" title="Test in OpenAI ChatGPT">
-                  <span>ChatGPT</span>
-                </a>
+                <div class="verify-results" id="verify-results">
+                  <div class="verify-status" id="verify-status">Awaiting Input...</div>
+                  <div class="verify-diff-list" id="verify-diff-list"></div>
+                  
+                  <div class="patch-action" id="patch-action" style="display: none;">
+                    <button class="utility-btn accent" id="copy-patch-btn">
+                      Copy Correction Patch
+                    </button>
+                  </div>
+                </div>
               </div>
             </div>
-          </div>
 
+          </div>
         </div>
       </div>
     </section>

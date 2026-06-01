@@ -12,8 +12,8 @@ function run() {
     process.exit(1);
   }
 
-  const inputFile = path.resolve(args[0]);
-  const outputFile = path.resolve(args[1]);
+  const inputFile = path.resolve(args[0] as string);
+  const outputFile = path.resolve(args[1] as string);
 
   console.log(`Loading and compiling file: ${inputFile}`);
   if (!fs.existsSync(inputFile)) {

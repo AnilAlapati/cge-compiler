@@ -1095,9 +1095,19 @@ document.addEventListener("DOMContentLoaded", () => {
   // Mode Swapping DOM nodes
   const btnModeCode   = document.getElementById("btn-mode-code");
   const btnModeVisual = document.getElementById("btn-mode-visual");
+  const btnModeVerify = document.getElementById("btn-mode-verify");
   const containerCode = document.getElementById("container-code");
   const containerVisual = document.getElementById("container-visual");
+  const containerVerify = document.getElementById("container-verify");
   const astTreeView   = document.getElementById("ast-tree-view");
+
+  // CLNR DOM nodes
+  const llmInput          = document.getElementById("llm-reconstructed-input");
+  const verifyGutterLines = document.getElementById("verify-gutter-lines");
+  const verifyStatus      = document.getElementById("verify-status");
+  const verifyDiffList    = document.getElementById("verify-diff-list");
+  const patchAction       = document.getElementById("patch-action");
+  const copyPatchBtn      = document.getElementById("copy-patch-btn");
 
   // Drawer DOM nodes
   const astDrawer         = document.getElementById("ast-drawer");
@@ -1330,22 +1340,29 @@ document.addEventListener("DOMContentLoaded", () => {
     currentOutputMode = newMode;
     closeDrawer();
 
+    btnModeCode.classList.remove("active");
+    btnModeVisual.classList.remove("active");
+    btnModeVerify.classList.remove("active");
+    containerCode.classList.remove("active");
+    containerVisual.classList.remove("active");
+    containerVerify.classList.remove("active");
+
     if (newMode === "code") {
       btnModeCode.classList.add("active");
-      btnModeVisual.classList.remove("active");
       containerCode.classList.add("active");
-      containerVisual.classList.remove("active");
-    } else {
-      btnModeCode.classList.remove("active");
+    } else if (newMode === "visual") {
       btnModeVisual.classList.add("active");
-      containerCode.classList.remove("active");
       containerVisual.classList.add("active");
       renderVisualAST();
+    } else if (newMode === "verify") {
+      btnModeVerify.classList.add("active");
+      containerVerify.classList.add("active");
     }
   }
 
   btnModeCode.addEventListener("click", () => switchMode("code"));
   btnModeVisual.addEventListener("click", () => switchMode("visual"));
+  btnModeVerify.addEventListener("click", () => switchMode("verify"));
   drawerCloseBtn.addEventListener("click", closeDrawer);
 
   // --- Metrics Update ---
@@ -1516,6 +1533,102 @@ ${textContent}`;
     }).catch(() => {
       showToast("⚠️ Unable to copy prompt wrapper automatically");
     });
+  });
+
+  // --- CLNR Diff Engine ---
+  let currentPatches = [];
+
+  function runDiffEngine() {
+    const pastedCode = llmInput.value.trim();
+    
+    if (!pastedCode) {
+      verifyStatus.className = "verify-status";
+      verifyStatus.innerHTML = "Awaiting Input...";
+      verifyDiffList.innerHTML = "";
+      patchAction.style.display = "none";
+      return;
+    }
+
+    // Parse the pasted code using the same compiler to extract AST identifiers
+    const reconstructedResult = compiler.compile(pastedCode, currentLang, "reconstructed");
+    
+    const origNodes = compiledResult.nodes || [];
+    const reconNodes = reconstructedResult.nodes || [];
+    
+    const origNames = origNodes.map(n => n.name);
+    const reconNames = reconNodes.map(n => n.name);
+    
+    const missing = origNames.filter(name => !reconNames.includes(name));
+    const extra = reconNames.filter(name => !origNames.includes(name));
+    
+    verifyDiffList.innerHTML = "";
+    currentPatches = [];
+    
+    if (missing.length === 0 && extra.length === 0) {
+      verifyStatus.className = "verify-status success";
+      verifyStatus.innerHTML = `
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+          <polyline points="22 4 12 14.01 9 11.01"></polyline>
+        </svg>
+        100% Structural Fidelity Match
+      `;
+      patchAction.style.display = "none";
+    } else {
+      verifyStatus.className = "verify-status error";
+      verifyStatus.innerHTML = `
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"></circle>
+          <line x1="15" y1="9" x2="9" y2="15"></line>
+          <line x1="9" y1="9" x2="15" y2="15"></line>
+        </svg>
+        Fidelity Mismatch Detected
+      `;
+      
+      missing.forEach(m => {
+        const div = document.createElement("div");
+        div.className = "diff-item";
+        
+        // Try to guess if it was renamed
+        let patchMsg = `[PATCH: Missing identifier '${m}'. Ensure it is implemented strictly as '${m}']`;
+        if (extra.length > 0) {
+          // just pick the first extra as a likely hallucination mapping
+          patchMsg = `[PATCH: Hallucinated identifier '${extra[0]}'. It should be exactly '${m}']`;
+        }
+        
+        div.textContent = patchMsg;
+        verifyDiffList.appendChild(div);
+        currentPatches.push(patchMsg);
+      });
+      
+      patchAction.style.display = "flex";
+    }
+  }
+
+  function updateVerifyLineNumbers() {
+    if (!verifyGutterLines) return;
+    const lines = llmInput.value.split("\n");
+    verifyGutterLines.innerHTML = lines.map((_, i) => `<span>${i + 1}</span>`).join("");
+    verifyGutterLines.scrollTop = llmInput.scrollTop;
+  }
+
+  llmInput.addEventListener("input", () => {
+    runDiffEngine();
+    updateVerifyLineNumbers();
+  });
+
+  llmInput.addEventListener("scroll", () => {
+    if (verifyGutterLines) {
+      verifyGutterLines.scrollTop = llmInput.scrollTop;
+    }
+  });
+  
+  copyPatchBtn.addEventListener("click", () => {
+    if (currentPatches.length > 0) {
+      navigator.clipboard.writeText(currentPatches.join("\\n")).then(() => {
+        showToast("🩹 Copied Correction Patches!");
+      });
+    }
   });
 
   // --- Scroll Reveal (IntersectionObserver) ---
