@@ -1096,9 +1096,11 @@ document.addEventListener("DOMContentLoaded", () => {
   const btnModeCode   = document.getElementById("btn-mode-code");
   const btnModeVisual = document.getElementById("btn-mode-visual");
   const btnModeVerify = document.getElementById("btn-mode-verify");
+  const btnModeAudit  = document.getElementById("btn-mode-audit");
   const containerCode = document.getElementById("container-code");
   const containerVisual = document.getElementById("container-visual");
   const containerVerify = document.getElementById("container-verify");
+  const containerAudit  = document.getElementById("container-audit");
   const astTreeView   = document.getElementById("ast-tree-view");
 
   // CLNR DOM nodes
@@ -1343,9 +1345,11 @@ document.addEventListener("DOMContentLoaded", () => {
     btnModeCode.classList.remove("active");
     btnModeVisual.classList.remove("active");
     btnModeVerify.classList.remove("active");
+    btnModeAudit.classList.remove("active");
     containerCode.classList.remove("active");
     containerVisual.classList.remove("active");
     containerVerify.classList.remove("active");
+    containerAudit.style.display = "none";
 
     if (newMode === "code") {
       btnModeCode.classList.add("active");
@@ -1357,12 +1361,16 @@ document.addEventListener("DOMContentLoaded", () => {
     } else if (newMode === "verify") {
       btnModeVerify.classList.add("active");
       containerVerify.classList.add("active");
+    } else if (newMode === "audit") {
+      btnModeAudit.classList.add("active");
+      containerAudit.style.display = "flex";
     }
   }
 
   btnModeCode.addEventListener("click", () => switchMode("code"));
   btnModeVisual.addEventListener("click", () => switchMode("visual"));
   btnModeVerify.addEventListener("click", () => switchMode("verify"));
+  btnModeAudit.addEventListener("click", () => switchMode("audit"));
   drawerCloseBtn.addEventListener("click", closeDrawer);
 
   // --- Metrics Update ---
@@ -1699,6 +1707,167 @@ ${textContent}`;
 
       }, 1500);
     });
+  }
+  // --- Project Compaction & ROI Audit ---
+  const auditDropzone      = document.getElementById("audit-dropzone");
+  const auditFileInput     = document.getElementById("audit-file-input");
+  const auditUploadTrigger = document.getElementById("audit-upload-trigger");
+  const auditProgress      = document.getElementById("audit-progress");
+  const auditProgressStatus= document.getElementById("audit-progress-status");
+  const auditProgressPercent= document.getElementById("audit-progress-percent");
+  const auditProgressBar   = document.getElementById("audit-progress-bar");
+  const auditResults       = document.getElementById("audit-results");
+
+  const auditTotalFiles    = document.getElementById("audit-total-files");
+  const auditOrigTokens    = document.getElementById("audit-orig-tokens");
+  const auditCompTokens    = document.getElementById("audit-comp-tokens");
+  const auditSavings       = document.getElementById("audit-savings");
+  const auditOrigCost      = document.getElementById("audit-orig-cost");
+  const auditCompCost      = document.getElementById("audit-comp-cost");
+  const auditCostSaved     = document.getElementById("audit-cost-saved");
+  const auditRoiSaved      = document.getElementById("audit-roi-saved");
+
+  // Trigger file select dialog
+  if (auditUploadTrigger && auditFileInput) {
+    auditUploadTrigger.addEventListener("click", (e) => {
+      e.stopPropagation();
+      auditFileInput.click();
+    });
+  }
+
+  if (auditDropzone && auditFileInput) {
+    auditDropzone.addEventListener("click", () => {
+      auditFileInput.click();
+    });
+
+    // Drag-over styling
+    auditDropzone.addEventListener("dragover", (e) => {
+      e.preventDefault();
+      auditDropzone.style.borderColor = "#10b981";
+      auditDropzone.style.background = "rgba(16, 185, 129, 0.1)";
+    });
+
+    auditDropzone.addEventListener("dragleave", () => {
+      auditDropzone.style.borderColor = "#4b5563";
+      auditDropzone.style.background = "rgba(31, 41, 55, 0.4)";
+    });
+
+    auditDropzone.addEventListener("drop", (e) => {
+      e.preventDefault();
+      auditDropzone.style.borderColor = "#4b5563";
+      auditDropzone.style.background = "rgba(31, 41, 55, 0.4)";
+      
+      const files = e.dataTransfer.files;
+      if (files.length > 0) {
+        processZipFile(files[0]);
+      }
+    });
+
+    auditFileInput.addEventListener("change", (e) => {
+      const files = e.target.files;
+      if (files.length > 0) {
+        processZipFile(files[0]);
+      }
+    });
+  }
+
+  async function processZipFile(file) {
+    if (!file.name.endsWith(".zip")) {
+      showToast("⚠️ Only .zip files are supported for project audit!");
+      return;
+    }
+
+    if (typeof JSZip === "undefined") {
+      showToast("⚠️ Loading unzipping library, please try again in a second...");
+      return;
+    }
+
+    auditProgress.style.display = "block";
+    auditResults.style.display = "none";
+    auditDropzone.style.display = "none";
+
+    try {
+      auditProgressStatus.textContent = "Extracting zip archive...";
+      auditProgressPercent.textContent = "10%";
+      auditProgressBar.style.width = "10%";
+
+      const zip = await JSZip.loadAsync(file);
+      const allFiles = Object.keys(zip.files).filter(name => {
+        const ext = name.split(".").pop().toLowerCase();
+        return ["ts", "tsx", "js", "jsx", "py", "rs"].includes(ext) && !zip.files[name].dir;
+      });
+
+      if (allFiles.length === 0) {
+        showToast("⚠️ No compatible source files (.ts, .py, .rs) found in zip!");
+        auditDropzone.style.display = "flex";
+        auditProgress.style.display = "none";
+        return;
+      }
+
+      let totalOrigChars = 0;
+      let totalCompChars = 0;
+      let processedCount = 0;
+
+      for (let i = 0; i < allFiles.length; i++) {
+        const name = allFiles[i];
+        const ext = name.split(".").pop().toLowerCase();
+        let lang = "typescript";
+        if (ext === "py") lang = "python";
+        if (ext === "rs") lang = "rust";
+
+        const percent = Math.round(((i + 1) / allFiles.length) * 90) + 10;
+        auditProgressStatus.textContent = `Compiling [${i + 1}/${allFiles.length}]: ${name.split("/").pop()}`;
+        auditProgressPercent.textContent = `${percent}%`;
+        auditProgressBar.style.width = `${percent}%`;
+
+        // Read file content
+        const content = await zip.files[name].async("string");
+        
+        try {
+          const compiled = compiler.compile(content, lang, name);
+          totalOrigChars += content.length;
+          totalCompChars += compiled.text.length;
+        } catch (compileErr) {
+          console.warn(`Could not compile file ${name}:`, compileErr);
+        }
+        
+        processedCount++;
+        // Small delay to keep UI responsive
+        await new Promise(r => setTimeout(r, 20));
+      }
+
+      // Calculate final stats
+      const totalOrigTokens = Math.ceil(totalOrigChars / 4) + (processedCount * 12);
+      const totalCompTokens = Math.ceil(totalCompChars / 4) + (processedCount * 12);
+      const savingsPercent = Math.round((1 - (totalCompTokens / totalOrigTokens)) * 100);
+
+      // Average GPT-4o Pricing: $2.50 per 1M tokens. 
+      // Estimate over 1,000 developer prompts:
+      const origCost = (totalOrigTokens * 1000 * 2.50) / 1_000_000;
+      const compCost = (totalCompTokens * 1000 * 2.50) / 1_000_000;
+      const moneySaved = origCost - compCost;
+
+      // Populate dashboard
+      auditTotalFiles.textContent = processedCount.toLocaleString();
+      animateNumber(auditOrigTokens, totalOrigTokens, " tkn", 400);
+      animateNumber(auditCompTokens, totalCompTokens, " tkn", 400);
+      animateNumber(auditSavings, savingsPercent, "%", 400);
+
+      auditOrigCost.textContent = `$${origCost.toFixed(2)}`;
+      auditCompCost.textContent = `$${compCost.toFixed(2)}`;
+      auditCostSaved.textContent = `Saved: ${savingsPercent}% of total bill!`;
+      auditRoiSaved.textContent = `-$${moneySaved.toFixed(2)}`;
+
+      auditProgress.style.display = "none";
+      auditResults.style.display = "flex";
+      showToast("💼 Codebase Compaction & ROI Audit completed!");
+
+    } catch (err) {
+      console.error(err);
+      showToast("💀 Failed to process zip archive!");
+      auditDropzone.style.display = "flex";
+      auditProgress.style.display = "none";
+    }
   }
 
   // --- Scroll Reveal (IntersectionObserver) ---
