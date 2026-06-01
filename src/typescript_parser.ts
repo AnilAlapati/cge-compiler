@@ -40,28 +40,33 @@ export class TypeScriptParser implements CGEParser {
       }
       // 2. Interfaces / Types
       else if (ts.isInterfaceDeclaration(node) || ts.isTypeAliasDeclaration(node)) {
-        types.push(this.formatTypeDeclaration(node));
-        if (this.isExported(node)) {
+        const isExport = this.isExported(node);
+        const prefix = isExport ? "EXPORT " : "";
+        types.push(`${prefix}${this.formatTypeDeclaration(node)}`);
+        if (isExport) {
           exportsList.push(node.name.text);
         }
       }
       // 3. Classes
       else if (ts.isClassDeclaration(node)) {
         const className = node.name ? node.name.text : "AnonymousClass";
-        if (this.isExported(node)) {
+        const isClassExport = this.isExported(node);
+        if (isClassExport) {
           exportsList.push(className);
         }
         
         node.members.forEach((member) => {
           if (ts.isPropertyDeclaration(member)) {
-            state.push(this.formatProperty(member));
+            const prefix = isClassExport ? "EXPORT " : "";
+            state.push(`${prefix}${className}.${this.formatProperty(member)}`);
           } else if (ts.isMethodDeclaration(member)) {
             const isPrivate = this.hasModifier(member, ts.SyntaxKind.PrivateKeyword);
             const methodStr = this.formatMethod(member);
+            const prefix = (isClassExport && !isPrivate) ? "EXPORT " : "";
             if (isPrivate) {
-              privateOps.push(methodStr);
+              privateOps.push(`${className}.${methodStr}`);
             } else {
-              ops.push(methodStr);
+              ops.push(`${prefix}${className}.${methodStr}`);
             }
           }
         });
@@ -74,13 +79,14 @@ export class TypeScriptParser implements CGEParser {
         node.declarationList.declarations.forEach((decl) => {
           if (isExport && ts.isIdentifier(decl.name) && decl.name.text.startsWith("use") && decl.initializer && (ts.isArrowFunction(decl.initializer) || ts.isFunctionExpression(decl.initializer))) {
             exportsList.push(decl.name.text);
-            ops.push(this.formatExportedHook(decl.name.text, decl.initializer));
+            ops.push(`EXPORT ${this.formatExportedHook(decl.name.text, decl.initializer)}`);
           } else {
             const name = decl.name.getText();
             const typeStr = decl.type ? this.mapType(decl.type) : "any";
             const initStr = decl.initializer ? this.exprToString(decl.initializer) : "";
             const prefix = isConst ? "CONST " : "";
-            const formatted = `${prefix}${name}:${typeStr}${initStr ? " = " + initStr : ""}`;
+            const exportPrefix = isExport ? "EXPORT " : "";
+            const formatted = `${exportPrefix}${prefix}${name}:${typeStr}${initStr ? " = " + initStr : ""}`;
             state.push(formatted);
             if (isExport) {
               exportsList.push(name);
@@ -93,9 +99,10 @@ export class TypeScriptParser implements CGEParser {
         const funcName = node.name ? node.name.text : "anonymous";
         const isExport = this.isExported(node);
         const funcStr = this.formatFunction(node);
+        const prefix = isExport ? "EXPORT " : "";
         if (isExport) {
           exportsList.push(funcName);
-          ops.push(funcStr);
+          ops.push(`${prefix}${funcStr}`);
         } else {
           privateOps.push(funcStr);
         }

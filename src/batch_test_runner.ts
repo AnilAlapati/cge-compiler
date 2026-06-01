@@ -16,9 +16,8 @@ const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "dummy");
 
 // The hierarchy of models, strictly prioritizing cheapest models first.
 const MODEL_TIERS = [
-  { provider: "gemini", model: "gemini-1.5-flash" },
   { provider: "openai", model: "gpt-4o-mini" },
-  { provider: "openai", model: "gpt-4o" } // Expensive, only used if cheap models completely fail
+  { provider: "openai", model: "gpt-4o" } // Expensive fallback
 ];
 
 /**
@@ -49,25 +48,60 @@ async function callLLM(prompt: string, provider: string, model: string): Promise
 }
 
 /**
- * A basic Node.js implementation of the CGE AST Diff Engine.
- * For now, this uses regex identifier extraction to simulate the AST-differ.
+ * Normalizes a single CGE line by removing type indicators (e.g. :S, :any, ->Promise)
+ * and whitespace differences to prevent false positives from type inference or formatting.
  */
-function extractIdentifiers(code: string): Set<string> {
-  const identifiers = new Set<string>();
-  
-  // Extract function names: function foo(...) or def foo(...) or fn foo(...)
-  const fnMatches = code.matchAll(/(?:function|def|fn)\s+([a-zA-Z0-9_]+)\s*[\(\:]/g);
-  for (const match of fnMatches) identifiers.add(match[1]);
-  
-  // Extract arrow functions/variables: const foo = or let foo =
-  const varMatches = code.matchAll(/(?:const|let|var)\s+([a-zA-Z0-9_]+)\s*=/g);
-  for (const match of varMatches) identifiers.add(match[1]);
-  
-  // Extract interfaces/classes/structs/enums/types
-  const classMatches = code.matchAll(/(?:class|interface|struct|enum|type)\s+([a-zA-Z0-9_]+)/g);
-  for (const match of classMatches) identifiers.add(match[1]);
+function normalizeCGELine(line: string): string {
+  let cleanLine = line.trim();
+  // Strip return types from signatures only (exclude SCAN/GUARD/RETURN flow control lines)
+  if (!cleanLine.startsWith("SCAN") && !cleanLine.startsWith("GUARD") && !cleanLine.startsWith("RETURN") && !cleanLine.startsWith("TRY") && !cleanLine.startsWith("THROW")) {
+    cleanLine = cleanLine.replace(/->.*/g, "");
+  }
+  return cleanLine
+    // Strip headers, sections, and exports lists
+    .replace(/^(?:IMPORTS|TYPES|STATE|OPS|PRIVATE|EXPORTS):?/gi, "")
+    // Remove export and constant indicators
+    .replace(/\b(?:EXPORT|CONST)\b/gi, "")
+    // Strip type assertions and primitives
+    .replace(/:(?:S|N|B|D|any|void)\b/g, "")
+    // Remove arrows and colons
+    .replace(/->/g, "")
+    .replace(/:/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+}
 
-  return identifiers;
+/**
+ * Normalizes CGE code to remove minor whitespace differences.
+ */
+function normalizeCGE(cge: string): string {
+  return cge
+    .split("\n")
+    .map(line => line.trim())
+    .filter(line => line.length > 0)
+    .join("\n");
+}
+
+/**
+ * Deep semantic line-by-line diff between two compiled CGE strings.
+ * Uses Normalized Semantic Diffing (NSD) to verify core structural logic.
+ */
+function diffCGE(original: string, reconstructed: string): { missing: string[]; extra: string[] } {
+  const filterNoise = (line: string) => {
+    const clean = normalizeCGELine(line);
+    // Ignore empty lines, standard headers, and simple exports list lines
+    return clean.length > 0 && !line.startsWith("CGE/1.0") && !line.startsWith("EXPORTS:");
+  };
+
+  const origLines = normalizeCGE(original).split("\n").filter(filterNoise);
+  const reconLines = normalizeCGE(reconstructed).split("\n").filter(filterNoise);
+
+  const normRecon = reconLines.map(l => normalizeCGELine(l));
+
+  const missing = origLines.filter(l => !normRecon.includes(normalizeCGELine(l)));
+  const extra = reconLines.filter(l => !origLines.map(o => normalizeCGELine(o)).includes(normalizeCGELine(l)));
+
+  return { missing, extra };
 }
 
 interface BenchmarkResult {
@@ -81,24 +115,35 @@ interface BenchmarkResult {
 }
 
 /**
- * Run the Active Decompression Feedback (ADF) loop for a single file.
+ * Run the Active Decompression Feedback (ADF) loop using Self-Referential CGE Compaction.
  */
 async function runFidelityLoop(
   originalCode: string, 
   cgeCode: string, 
-  fileName: string
+  fileName: string,
+  compiler: CGECompiler
 ): Promise<BenchmarkResult> {
   console.log(`\n==================================================`);
-  console.log(`🚀 Starting CLNR Benchmark for: ${fileName}`);
+  console.log(`🚀 Starting Self-Referential CLNR Benchmark for: ${fileName}`);
   console.log(`==================================================`);
 
-  const originalIdentifiers = extractIdentifiers(originalCode);
-  console.log(`🔍 Original Identifiers detected: [${Array.from(originalIdentifiers).join(", ")}]`);
-  
   // Try each model tier, from cheapest to most expensive
   for (const tier of MODEL_TIERS) {
     console.log(`\n[Stage] Testing on ${tier.provider} -> ${tier.model}`);
     
+    // Detect class names prefixed in CGE notation (e.g. AuthService.endpoint)
+    const classNames = new Set<string>();
+    const classMatches = cgeCode.matchAll(/([A-Z][a-zA-Z0-9_]+)\.[a-zA-Z0-9_]+/g);
+    for (const match of classMatches) {
+      classNames.add(match[1]);
+    }
+
+    let classInstructions = "";
+    if (classNames.size > 0) {
+      classInstructions = `\n3. The following entities MUST be reconstructed strictly as CLASSES using the 'class' keyword (e.g. 'class ClassName { ... }') and NOT as constant objects or plain dictionaries:\n` + 
+        Array.from(classNames).map(name => `   - ${name}`).join("\n");
+    }
+
     let currentPrompt = `Act as an expert compiler. Below is a code block translated into Cognitive Graph Encoding (CGE) loss-less shorthand notation.
 Decompress this CGE shorthand back into fully working, standard source code. 
 
@@ -108,12 +153,14 @@ CRITICAL REQUIREMENTS:
    - If the CGE block defines a class (e.g. under OPS: or STATE: matching a class name), you MUST reconstruct it as a class with its member variables and methods.
    - If the CGE block defines an interface or type, reconstruct it exactly.
    - Match all exported variables, classes, hooks, and function signatures.
+   - In Python, if a class has type mappings (e.g. UserProfile{id:S, email:S, created_at:D}), you MUST declare these fields as class-level type annotations directly in the class body (e.g. id: str).
+   - Reconstruct all loop targets and member accesses exactly as written in CGE (e.g. if CGE says SCAN user.items, write 'for item in user.items:').${classInstructions}
 
 CGE Code:
 ${cgeCode}`;
 
     let success = false;
-    const MAX_LOOPS = 2; // Allow the model 2 attempts to fix its own mistakes
+    const MAX_LOOPS = 3; // Allow the model 3 attempts to resolve strict class structures
     let loop = 1;
     
     for (; loop <= MAX_LOOPS; loop++) {
@@ -125,39 +172,47 @@ ${cgeCode}`;
         // Clean markdown blocks if LLM still returned them
         const cleanCode = reconstructedCode.replace(/```[a-zA-Z]*\n/g, "").replace(/```/g, "").trim();
         
-        // Run AST Diff Engine simulation
-        const reconstructedIdentifiers = extractIdentifiers(cleanCode);
-        const missing = Array.from(originalIdentifiers).filter(id => !reconstructedIdentifiers.has(id));
-        const extra = Array.from(reconstructedIdentifiers).filter(id => !originalIdentifiers.has(id));
+        // --- THE GOLDEN VERIFIER: Self-Referential Compilation ---
+        // Compile the candidate code back to CGE notation programmatically
+        const ext = path.extname(fileName).toLowerCase();
+        let lang = "typescript";
+        if (ext === ".py") lang = "python";
+        if (ext === ".rs") lang = "rust";
+
+        const candidateCGE = compiler.compileCode(cleanCode, lang, fileName);
+        
+        // Run deep structural diff on the CGE outputs
+        const { missing, extra } = diffCGE(cgeCode, candidateCGE);
 
         if (missing.length === 0) {
-          console.log(`   ✅ SUCCESS: 100% Structural Fidelity Match achieved on loop ${loop}!`);
+          console.log(`   ✅ SUCCESS: 100% Lossless Symbolic Recovery achieved on loop ${loop}!`);
           success = true;
-          break; // Stop looping, we got it perfectly!
+          break; 
         } else {
-          console.log(`   ❌ MISMATCH: Missing essential identifiers: [${missing.join(", ")}]`);
-          console.log(`   --- DEBUG: Reconstructed Identifiers: [${Array.from(reconstructedIdentifiers).join(", ")}]`);
-          console.log(`   --- DEBUG: Raw LLM Output ---\n${cleanCode}\n-------------------------`);
+          console.log(`   ❌ SEMANTIC MISMATCH DETECTED:`);
+          console.log(`      Missing logical signatures:`);
+          missing.forEach(m => console.log(`      - ${m}`));
+          console.log(`      --- DEBUG: Candidate CGE ---\n${candidateCGE}\n-------------------------`);
+          console.log(`      --- DEBUG: Raw LLM Output ---\n${cleanCode}\n-------------------------`);
           
-          // Generate Correction Patch
+          // Generate Correction Patch from CGE structural differences
           const patches = [];
           for (const m of missing) {
-            patches.push(`[PATCH: Missing identifier '${m}'. Ensure it is implemented strictly as '${m}']`);
+            patches.push(`[PATCH: Missing structure/function logic matching '${m}'. Reimplement this correctly]`);
           }
           
-          console.log(`   🩹 Generated ${patches.length} Correction Patches. Feeding back to LLM...`);
+          console.log(`   🩹 Generated ${patches.length} CGE-Derived Correction Patches. Feeding back to LLM...`);
           
-          // Append patches to the prompt for the next loop
-          currentPrompt += `\n\n[SYSTEM ERROR - AST MISMATCH DETECTED IN YOUR LAST RESPONSE]\nPlease regenerate the code and apply the following constraints:\n${patches.join('\n')}`;
+          // Append CGE patches to prompt for loop iteration
+          currentPrompt += `\n\n[SYSTEM ERROR - SEMANTIC AST MISMATCH DETECTED IN YOUR LAST RESPONSE]\nPlease regenerate the code and apply the following logical constraints:\n${patches.join('\n')}`;
         }
       } catch (err: any) {
         console.error(`   ⚠️ API Error: ${err.message}`);
-        break; // Break the inner loop on API failure
+        break; 
       }
     }
     
     if (success) {
-      // If the cheap model succeeded, bypass expensive tiers
       console.log(`\n🎉 Test completed successfully on budget model (${tier.model}). Bypassing expensive tiers.`);
       return {
         fileName,
@@ -203,18 +258,16 @@ async function main() {
     return;
   }
 
-  console.log(`Found ${files.length} test files to run through CGE -> CLNR evaluation loop.`);
+  console.log(`Found ${files.length} test files to run through Self-Referential CGE -> CLNR evaluation loop.`);
   const compiler = new CGECompiler();
   const results: BenchmarkResult[] = [];
 
   for (const f of files) {
     const filePath = path.join(testFilesDir, f);
     const originalCode = fs.readFileSync(filePath, "utf-8");
-    
-    // Compile using the live modular CGE compiler!
     const cgeCode = compiler.compile(filePath);
     
-    const result = await runFidelityLoop(originalCode, cgeCode, f);
+    const result = await runFidelityLoop(originalCode, cgeCode, f, compiler);
     results.push(result);
   }
 

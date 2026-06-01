@@ -43,10 +43,10 @@ function runTests() {
   console.log("TypeScript CGE Output:\n", tsCGE);
   
   assert.ok(tsCGE.includes("CGE/1.0 AuthService (TypeScript)"), "TS Header assertion failed");
-  assert.ok(tsCGE.includes("User{id:S, email:S, isActive:B}"), "TS Interface type folding assertion failed");
-  assert.ok(tsCGE.includes("useAuth(email:S)"), "TS Exported Hook assertion failed");
+  assert.ok(tsCGE.includes("EXPORT User{id:S, email:S, isActive:B}"), "TS Interface type folding assertion failed");
+  assert.ok(tsCGE.includes("EXPORT useAuth(email:S)"), "TS Exported Hook assertion failed");
   assert.ok(tsCGE.includes("GUARD !email THROW new Error(\"no_email\")"), "TS Hook Guard statement assertion failed");
-  assert.ok(tsCGE.includes("login(email:S)->Promise<S>:\n    GUARD !email THROW new Error(\"invalid\")"), "TS Method Guard statement assertion failed");
+  assert.ok(tsCGE.includes("EXPORT AuthService.login(email:S)->Promise<S>:\n    GUARD !email THROW new Error(\"invalid\")"), "TS Method Guard statement assertion failed");
   assert.ok(tsCGE.includes("EXPORTS: User, useAuth, AuthService"), "TS Exports list assertion failed");
   console.log("✅ TypeScript Parser: PASSED");
 
