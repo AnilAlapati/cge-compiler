@@ -81,10 +81,15 @@
         <!-- Input Panel -->
         <div class="editor-card" id="input-card">
           <div class="card-header">
-            <span class="file-name">source_code.<span id="ext-label">ts</span></span>
+            <div class="panel-header-switcher" id="input-switcher">
+              <button class="switcher-btn active" id="btn-input-code">📝 Single File</button>
+              <button class="switcher-btn" id="btn-input-zip">📦 Project Zip</button>
+            </div>
             <span class="tag-label">Source Input</span>
           </div>
-          <div class="editor-body">
+          
+          <!-- Mode 1: Code Input -->
+          <div class="editor-body mode-container active" id="input-container-code" style="display: flex;">
             <div class="gutter" id="gutter-lines"></div>
             <textarea
               id="code-input"
@@ -92,6 +97,132 @@
               spellcheck="false"
               placeholder="Input code..."
             ></textarea>
+          </div>
+
+          <!-- Mode 2: Zip Input -->
+          <div class="editor-body mode-container" id="input-container-zip" style="display: none; padding: 20px; flex-direction: column; gap: 16px;">
+            <div class="audit-intro">
+              <p style="font-size: 0.875rem; color: #9ca3af; margin: 0; line-height: 1.5;">
+                Upload a codebase as a <strong>.zip</strong> archive. The compiler will recursively extract all files and compute your token & cost savings.
+              </p>
+            </div>
+            <!-- Upload Area -->
+            <div class="audit-dropzone" id="audit-dropzone" style="border: 2px dashed #4b5563; border-radius: 12px; padding: 40px 20px; text-align: center; background: rgba(31, 41, 55, 0.4); cursor: pointer; transition: all 0.3s ease; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; height: 100%;">
+              <!-- Normal State -->
+              <div id="dropzone-normal-state" style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px;">
+                <div style="font-size: 3rem; animation: float 3s ease-in-out infinite;">📦</div>
+                <div style="font-weight: 600; font-size: 1rem; color: #f3f4f6;">Drag & Drop Zip file here</div>
+                <div style="color: #9ca3af; font-size: 0.8rem; line-height: 1.4; max-width: 280px; margin: 0 auto;">
+                  Supports <span style="color: #3b82f6; font-weight: 600;">JS/TypeScript</span>, <span style="color: #10b981; font-weight: 600;">Python</span>, and <span style="color: #f59e0b; font-weight: 600;">Rust</span> codebase archives.
+                </div>
+                <button class="utility-btn accent" id="audit-upload-trigger" style="background: #3b82f6; color: #fff; padding: 8px 16px; border: none; border-radius: 6px; cursor: pointer; font-weight: 500; outline: none; margin-top: 8px;">
+                  Browse Zip File
+                </button>
+              </div>
+
+              <!-- Processing State -->
+              <div id="dropzone-processing-state" style="display: none; flex-direction: column; align-items: center; justify-content: center; gap: 16px; width: 100%;">
+                <!-- Glowing Spinning Loader -->
+                <div style="position: relative; width: 60px; height: 60px; border-radius: 50%; background: conic-gradient(from 180deg at 50% 50%, #10b981 0deg, #3b82f6 360deg); animation: spin 1s linear infinite; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 15px rgba(59, 130, 246, 0.4);">
+                  <div style="width: 50px; height: 50px; border-radius: 50%; background: #111827; display: flex; align-items: center; justify-content: center;">
+                    <span style="font-size: 1.5rem;">⚡</span>
+                  </div>
+                </div>
+                <div style="text-align: center;">
+                  <div style="font-weight: 700; color: #fff; font-size: 1rem; margin-bottom: 4px;" id="dropzone-status-title">Processing Codebase...</div>
+                  <div style="font-size: 0.8rem; color: #9ca3af;" id="dropzone-status-subtitle">Extracting zip files...</div>
+                </div>
+                <!-- Mini Progress Bar -->
+                <div style="width: 80%; height: 6px; background: #1f2937; border-radius: 3px; overflow: hidden; margin-top: 4px; display: inline-block;">
+                  <div id="dropzone-progress-bar" style="width: 0%; height: 100%; background: linear-gradient(90deg, #10b981, #3b82f6); transition: width 0.1s ease;"></div>
+                </div>
+              </div>
+
+              <input type="file" id="audit-file-input" accept=".zip" style="display: none;" />
+            </div>
+          </div>
+
+          <!-- Mode 3: Project Audit & ROI Dashboard -->
+          <div class="mode-container audit-container" id="container-audit" style="display: none;">
+            <div class="audit-intro">
+              <h4 class="audit-title">
+                💼 Project Token Compaction & ROI Audit
+              </h4>
+              <p class="audit-subtitle">
+                Compaction audit calculations & monetary ROI savings.
+              </p>
+            </div>
+
+            <!-- Results Dashboard -->
+            <div class="audit-results-wrapper" id="audit-results">
+              
+              <!-- Metrics Grid -->
+              <div class="audit-metrics-grid">
+                <div class="audit-metric-card files">
+                  <span class="audit-metric-label">Files Audited</span>
+                  <span id="audit-total-files" class="audit-metric-value blue">0</span>
+                </div>
+                <div class="audit-metric-card original">
+                  <span class="audit-metric-label">Original Tokens</span>
+                  <span id="audit-orig-tokens" class="audit-metric-value red">0</span>
+                </div>
+                <div class="audit-metric-card cge">
+                  <span class="audit-metric-label">CGE Tokens</span>
+                  <span id="audit-comp-tokens" class="audit-metric-value emerald">0</span>
+                </div>
+                <div class="audit-metric-card savings">
+                  <span class="audit-metric-label">Compaction Savings</span>
+                  <span id="audit-savings" class="audit-metric-value gold">0%</span>
+                </div>
+              </div>
+
+              <!-- File Breakdown Section -->
+              <div id="audit-file-breakdown" class="audit-breakdown-card">
+                <div class="audit-breakdown-header">
+                  <span class="audit-breakdown-title">📂 File Type & Exclusions Breakdown</span>
+                  <span id="audit-breakdown-summary" class="audit-breakdown-summary">0 processed / 0 bypassed</span>
+                </div>
+                <!-- Breakdown progress visualization -->
+                <div id="audit-breakdown-bar-container" class="audit-breakdown-progress-container">
+                  <div id="audit-breakdown-bar-processed" class="audit-progress-bar compiled" style="width: 0%;"></div>
+                  <div id="audit-breakdown-bar-excluded" class="audit-progress-bar bypassed" style="width: 0%;"></div>
+                </div>
+                <!-- Breakdown list -->
+                <div id="audit-breakdown-list" class="audit-chips-grid">
+                  <!-- Dynamic extension cards will go here -->
+                </div>
+              </div>
+
+              <!-- ROI Price Comparison Cards -->
+              <div class="audit-cost-comparison">
+                <!-- Standard Cost Card -->
+                <div class="audit-cost-card legacy">
+                  <span class="audit-cost-card-title legacy">🔴 Verbatim Source Cost</span>
+                  <p class="audit-cost-desc">Cost to process uncompressed codebase over 1,000 queries:</p>
+                  <span id="audit-orig-cost" class="audit-cost-value red">$0.00</span>
+                  <span class="audit-cost-subtitle">GPT-4o input rates ($2.50 / 1M tokens)</span>
+                </div>
+                <!-- CGE Cost Card -->
+                <div class="audit-cost-card cge">
+                  <span class="audit-cost-card-title cge">🟢 CGE Compacted Cost</span>
+                  <p class="audit-cost-desc">Cost using CGE AST Compaction overhead:</p>
+                  <span id="audit-comp-cost" class="audit-cost-value emerald">$0.00</span>
+                  <span id="audit-cost-saved" class="audit-cost-saved-tag">Saved: 0%</span>
+                </div>
+              </div>
+
+              <!-- ROI Highlight Banner -->
+              <div class="audit-roi-banner">
+                <div class="audit-roi-left">
+                  <span class="audit-roi-banner-title">🎓 Academic & Financial Savings ROI</span>
+                  <p class="audit-roi-banner-desc">Recursive AST compaction proves massive dollar economies under real production prompt frequencies.</p>
+                </div>
+                <div id="audit-roi-saved" class="audit-roi-badge">
+                  -$0.00
+                </div>
+              </div>
+
+            </div>
           </div>
         </div>
 
@@ -107,7 +238,6 @@
               <button class="switcher-btn active" id="btn-mode-code">CGE Code</button>
               <button class="switcher-btn" id="btn-mode-visual">Visual AST</button>
               <button class="switcher-btn" id="btn-mode-verify">CLNR Verify</button>
-              <button class="switcher-btn" id="btn-mode-audit">💼 Project Audit</button>
             </div>
             <button class="utility-btn" id="copy-btn">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -234,95 +364,6 @@
                   </div>
                 </div>
             </div>
-
-            <!-- Mode 4: Project Audit & ROI Dashboard -->
-            <div class="mode-container" id="container-audit" style="display: none; flex-direction: column; gap: 20px; padding: 20px; color: #f3f4f6; overflow-y: auto; height: 100%;">
-              <div class="audit-intro" style="margin-bottom: 10px;">
-                <h4 style="font-family: 'Outfit', sans-serif; font-size: 1.25rem; font-weight: 700; background: linear-gradient(135deg, #10b981 0%, #3b82f6 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin: 0;">
-                  💼 Project Token Compaction & ROI Audit
-                </h4>
-                <p style="font-size: 0.875rem; color: #9ca3af; margin-top: 4px; margin-bottom: 0; line-height: 1.4;">
-                  Upload a `.zip` archive. CGE will recursively extract and parse all source files, compile them, and compute exact prompt token & monetary ROI savings.
-                </p>
-              </div>
-
-              <!-- Upload Area -->
-              <div class="audit-dropzone" id="audit-dropzone" style="border: 2px dashed #4b5563; border-radius: 12px; padding: 40px 20px; text-align: center; background: rgba(31, 41, 55, 0.4); cursor: pointer; transition: all 0.3s ease; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px;">
-                <div style="font-size: 3rem;">📦</div>
-                <div style="font-weight: 600; font-size: 1rem;">Drag & Drop Zip file here</div>
-                <div style="color: #9ca3af; font-size: 0.8rem;">Supports standard codebase .zip files</div>
-                <input type="file" id="audit-file-input" accept=".zip" style="display: none;" />
-                <button class="utility-btn accent" id="audit-upload-trigger" style="background: #3b82f6; color: #fff; padding: 8px 16px; border: none; border-radius: 6px; cursor: pointer; font-weight: 500; outline: none;">
-                  Browse Zip File
-                </button>
-              </div>
-
-              <!-- Progress & Loading State -->
-              <div class="audit-progress" id="audit-progress" style="display: none; background: rgba(17, 24, 39, 0.6); padding: 16px; border-radius: 8px; border: 1px solid #374151;">
-                <div style="display: flex; justify-content: space-between; font-size: 0.85rem; font-weight: 600; margin-bottom: 8px;">
-                  <span id="audit-progress-status" style="color: #9ca3af;">Compiling files...</span>
-                  <span id="audit-progress-percent" style="color: #10b981;">0%</span>
-                </div>
-                <div style="width: 100%; height: 6px; background: #1f2937; border-radius: 3px; overflow: hidden;">
-                  <div id="audit-progress-bar" style="width: 0%; height: 100%; background: #10b981; transition: width 0.1s ease;"></div>
-                </div>
-              </div>
-
-              <!-- Results Dashboard -->
-              <div class="audit-results" id="audit-results" style="display: none; flex-direction: column; gap: 20px;">
-                
-                <!-- Metrics Grid -->
-                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 16px;">
-                  <div style="background: rgba(31, 41, 55, 0.3); border: 1px solid #374151; padding: 12px; border-radius: 8px; text-align: center;">
-                    <span style="display: block; font-size: 0.75rem; color: #9ca3af; text-transform: uppercase; margin-bottom: 4px;">Files Audited</span>
-                    <span id="audit-total-files" style="font-size: 1.5rem; font-weight: 700; color: #3b82f6;">0</span>
-                  </div>
-                  <div style="background: rgba(31, 41, 55, 0.3); border: 1px solid #374151; padding: 12px; border-radius: 8px; text-align: center;">
-                    <span style="display: block; font-size: 0.75rem; color: #9ca3af; text-transform: uppercase; margin-bottom: 4px;">Original Tokens</span>
-                    <span id="audit-orig-tokens" style="font-size: 1.5rem; font-weight: 700; color: #ef4444;">0</span>
-                  </div>
-                  <div style="background: rgba(31, 41, 55, 0.3); border: 1px solid #374151; padding: 12px; border-radius: 8px; text-align: center;">
-                    <span style="display: block; font-size: 0.75rem; color: #9ca3af; text-transform: uppercase; margin-bottom: 4px;">CGE Tokens</span>
-                    <span id="audit-comp-tokens" style="font-size: 1.5rem; font-weight: 700; color: #10b981;">0</span>
-                  </div>
-                  <div style="background: rgba(31, 41, 55, 0.3); border: 1px solid #374151; padding: 12px; border-radius: 8px; text-align: center;">
-                    <span style="display: block; font-size: 0.75rem; color: #9ca3af; text-transform: uppercase; margin-bottom: 4px;">Compaction Savings</span>
-                    <span id="audit-savings" style="font-size: 1.5rem; font-weight: 700; color: #f59e0b;">0%</span>
-                  </div>
-                </div>
-
-                <!-- ROI Price Comparison Cards -->
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
-                  <!-- Standard Cost Card -->
-                  <div style="background: rgba(239, 68, 68, 0.05); border: 1px solid rgba(239, 68, 68, 0.2); padding: 16px; border-radius: 12px; display: flex; flex-direction: column; gap: 8px;">
-                    <span style="font-weight: 700; color: #fca5a5; font-size: 0.95rem; display: block; margin: 0;">🔴 Verbatim Source Cost</span>
-                    <span style="font-size: 0.8rem; color: #fca5a5; opacity: 0.8; display: block; margin: 0;">Cost to process uncompressed codebase over 1,000 queries:</span>
-                    <span id="audit-orig-cost" style="font-size: 1.75rem; font-weight: 800; color: #ef4444; margin-top: auto; display: block;">$0.00</span>
-                    <span style="font-size: 0.7rem; color: #9ca3af; display: block; margin: 0;">GPT-4o input rates ($2.50 / 1M tokens)</span>
-                  </div>
-                  <!-- CGE Cost Card -->
-                  <div style="background: rgba(16, 185, 129, 0.05); border: 1px solid rgba(16, 185, 129, 0.2); padding: 16px; border-radius: 12px; display: flex; flex-direction: column; gap: 8px;">
-                    <span style="font-weight: 700; color: #a7f3d0; font-size: 0.95rem; display: block; margin: 0;">🟢 CGE Compacted Cost</span>
-                    <span style="font-size: 0.8rem; color: #a7f3d0; opacity: 0.8; display: block; margin: 0;">Cost using CGE AST Compaction overhead:</span>
-                    <span id="audit-comp-cost" style="font-size: 1.75rem; font-weight: 800; color: #10b981; margin-top: auto; display: block;">$0.00</span>
-                    <span id="audit-cost-saved" style="font-weight: 700; color: #f59e0b; font-size: 0.85rem; margin-top: 4px; display: block;">Saved: 0%</span>
-                  </div>
-                </div>
-
-                <!-- ROI Highlight Banner -->
-                <div style="background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(16, 185, 129, 0.1) 100%); border: 1px solid rgba(59, 130, 246, 0.2); border-radius: 12px; padding: 16px; display: flex; align-items: center; gap: 16px; justify-content: space-between;">
-                  <div>
-                    <span style="font-weight: 700; color: #fff; display: block; font-size: 0.95rem;">🎓 Academic & Financial Savings ROI</span>
-                    <span style="font-size: 0.8rem; color: #9ca3af;">Recursive AST compaction proves massive dollar economies under real production prompt frequencies.</span>
-                  </div>
-                  <div style="font-size: 1.25rem; font-weight: 800; color: #f59e0b; background: rgba(31, 41, 55, 0.6); padding: 8px 12px; border-radius: 6px; border: 1px solid #4b5563;" id="audit-roi-saved">
-                    -$0.00
-                  </div>
-                </div>
-
-              </div>
-            </div>
-
           </div>
         </div>
       </div>

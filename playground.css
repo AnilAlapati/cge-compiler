@@ -1517,12 +1517,6 @@ body {
 }
 
 .verify-status {
-  font-family: 'Outfit', sans-serif;
-  font-weight: 600;
-  font-size: 0.9rem;
-  display: flex;
-  align-items: center;
-  gap: 8px;
 }
 
 .verify-status.success {
@@ -1563,3 +1557,522 @@ body {
   display: flex;
   justify-content: flex-end;
 }
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes float {
+  0% { transform: translateY(0px); }
+  50% { transform: translateY(-8px); }
+  100% { transform: translateY(0px); }
+}
+
+/* =========================================================================
+   CGE Audit Dashboard — Premium Glassmorphic ROI Audit styles
+   ========================================================================= */
+
+.audit-container {
+  display: none; 
+  flex-direction: column; 
+  gap: 24px; 
+  padding: 24px; 
+  color: var(--text-primary); 
+  overflow-y: auto; 
+  height: 100%;
+  animation: auditFadeIn 0.6s var(--transition-easing);
+}
+
+@keyframes auditFadeIn {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.audit-intro {
+  margin-bottom: 4px;
+}
+
+.audit-title {
+  font-family: var(--font-heading);
+  font-size: 1.35rem;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+  background: linear-gradient(135deg, var(--accent-emerald) 0%, var(--accent-blue) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.audit-subtitle {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  margin-top: 6px;
+  margin-bottom: 0;
+  line-height: 1.5;
+}
+
+.audit-results-wrapper {
+  display: none;
+  flex-direction: column;
+  gap: 24px;
+}
+
+/* Metrics Grid & Cards */
+.audit-metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+}
+
+@media (min-width: 480px) {
+  .audit-metrics-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+.audit-metric-card {
+  background: rgba(10, 10, 12, 0.4);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  padding: 18px 12px;
+  border-radius: 12px;
+  text-align: center;
+  transition: all 0.3s var(--transition-easing);
+  position: relative;
+  overflow: hidden;
+}
+
+.audit-metric-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: transparent;
+  transition: background 0.3s ease;
+}
+
+/* Metric Hover Themes */
+.audit-metric-card.files:hover::before { background: linear-gradient(90deg, transparent, #38bdf8, transparent); }
+.audit-metric-card.original:hover::before { background: linear-gradient(90deg, transparent, #94a3b8, transparent); }
+.audit-metric-card.cge:hover::before { background: linear-gradient(90deg, transparent, #c084fc, transparent); }
+.audit-metric-card.savings:hover::before { background: linear-gradient(90deg, transparent, #fbbf24, transparent); }
+
+.audit-metric-card:hover {
+  transform: translateY(-4px);
+  background: rgba(255, 255, 255, 0.03);
+  border-color: rgba(255, 255, 255, 0.1);
+  box-shadow: 0 12px 20px -10px rgba(0, 0, 0, 0.7);
+}
+
+.audit-metric-label {
+  display: block;
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 8px;
+}
+
+.audit-metric-value {
+  font-family: var(--font-heading);
+  font-size: 1.6rem;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+}
+
+.audit-metric-value.blue {
+  color: #38bdf8;
+  text-shadow: 0 0 15px rgba(56, 189, 248, 0.2);
+}
+.audit-metric-value.red {
+  color: #94a3b8;
+  text-shadow: 0 0 15px rgba(148, 163, 184, 0.1);
+}
+.audit-metric-value.emerald {
+  color: #c084fc;
+  text-shadow: 0 0 15px rgba(192, 132, 252, 0.25);
+}
+.audit-metric-value.gold {
+  color: #fbbf24;
+  text-shadow: 0 0 15px rgba(251, 191, 36, 0.25);
+}
+
+/* File Type Breakdown Card */
+.audit-breakdown-card {
+  background: rgba(10, 10, 12, 0.3);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 16px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  transition: border-color 0.3s ease;
+}
+
+.audit-breakdown-card:hover {
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+.audit-breakdown-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  padding-bottom: 12px;
+}
+
+.audit-breakdown-title {
+  font-family: var(--font-heading);
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.audit-breakdown-summary {
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.audit-breakdown-progress-container {
+  width: 100%;
+  height: 8px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 6px;
+  overflow: hidden;
+  display: flex;
+  box-shadow: inset 0 1px 3px rgba(0,0,0,0.4);
+}
+
+.audit-progress-bar {
+  height: 100%;
+  transition: width 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+  position: relative;
+}
+
+.audit-progress-bar.compiled {
+  background: linear-gradient(90deg, #8b5cf6, #22d3ee);
+  box-shadow: 0 0 10px rgba(34, 211, 238, 0.3);
+}
+
+.audit-progress-bar.bypassed {
+  background: rgba(255, 255, 255, 0.1);
+  box-shadow: none;
+}
+
+.audit-chips-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 12px;
+  margin-top: 4px;
+}
+
+/* Extension Chip Cards */
+.audit-chip-card {
+  background: rgba(255, 255, 255, 0.02);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  padding: 10px 12px;
+  border-radius: 10px;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  transition: all 0.2s ease;
+  cursor: default;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.audit-chip-card:hover {
+  background: rgba(255, 255, 255, 0.04);
+  transform: translateY(-2px);
+}
+
+.audit-chip-card.compiled {
+  border: 1px solid rgba(139, 92, 246, 0.15);
+}
+.audit-chip-card.compiled:hover {
+  border-color: rgba(139, 92, 246, 0.35);
+  box-shadow: 0 4px 12px rgba(139, 92, 246, 0.08);
+}
+
+.audit-chip-card.bypassed {
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+.audit-chip-card.bypassed:hover {
+  border-color: rgba(255, 255, 255, 0.12);
+  box-shadow: 0 4px 12px rgba(255, 255, 255, 0.04);
+}
+
+.audit-chip-left {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  flex-grow: 1;
+}
+
+.audit-chip-ext {
+  font-family: var(--font-code);
+  font-weight: 700;
+  color: var(--text-primary);
+  font-size: 0.82rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.audit-chip-badge {
+  font-size: 0.58rem;
+  font-weight: 800;
+  padding: 2px 6px;
+  border-radius: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  flex-shrink: 0;
+}
+
+.audit-chip-badge.compiled {
+  background: rgba(139, 92, 246, 0.12);
+  color: #c084fc;
+  border: 1px solid rgba(139, 92, 246, 0.2);
+}
+
+.audit-chip-badge.bypassed {
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--text-secondary);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.audit-chip-count {
+  font-size: 0.72rem;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+/* Cost & ROI Comparison Section */
+.audit-cost-comparison {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 20px;
+}
+
+@media (min-width: 580px) {
+  .audit-cost-comparison {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.audit-cost-card {
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  padding: 20px;
+  border-radius: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  position: relative;
+  transition: all 0.3s var(--transition-easing);
+  overflow: hidden;
+}
+
+.audit-cost-card::after {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle, rgba(255,255,255,0.02) 0%, transparent 60%);
+  pointer-events: none;
+}
+
+.audit-cost-card.legacy {
+  background: rgba(255, 255, 255, 0.01);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.audit-cost-card.legacy:hover {
+  border-color: rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.02);
+  box-shadow: 0 8px 24px rgba(255, 255, 255, 0.02);
+  transform: translateY(-2px);
+}
+
+.audit-cost-card.cge {
+  background: rgba(139, 92, 246, 0.02);
+  border: 1px solid rgba(139, 92, 246, 0.15);
+}
+
+.audit-cost-card.cge:hover {
+  border-color: rgba(139, 92, 246, 0.35);
+  background: rgba(139, 92, 246, 0.04);
+  box-shadow: 0 8px 24px rgba(139, 92, 246, 0.06);
+  transform: translateY(-2px);
+}
+
+.audit-cost-card-title {
+  font-family: var(--font-heading);
+  font-weight: 700;
+  font-size: 0.95rem;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.audit-cost-card-title.legacy {
+  color: #a3a3a3;
+}
+.audit-cost-card-title.cge {
+  color: #c084fc;
+}
+
+.audit-cost-desc {
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+  line-height: 1.45;
+  margin: 0;
+  min-height: 36px;
+}
+
+.audit-cost-value {
+  font-family: var(--font-heading);
+  font-size: 1.9rem;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+  margin-top: auto;
+  display: block;
+}
+
+.audit-cost-value.red {
+  color: #f5f5f7;
+  text-shadow: 0 0 15px rgba(255, 255, 255, 0.05);
+}
+.audit-cost-value.emerald {
+  color: #22d3ee;
+  text-shadow: 0 0 20px rgba(34, 211, 238, 0.35);
+}
+
+.audit-cost-subtitle {
+  font-size: 0.68rem;
+  color: var(--text-muted);
+  display: block;
+}
+
+.audit-cost-saved-tag {
+  align-self: flex-start;
+  font-weight: 700;
+  color: #22d3ee;
+  font-size: 0.78rem;
+  background: rgba(34, 211, 238, 0.1);
+  padding: 3px 8px;
+  border-radius: 6px;
+  border: 1px solid rgba(34, 211, 238, 0.2);
+  margin-top: 4px;
+}
+
+/* ROI Luxury Gold Banner */
+.audit-roi-banner {
+  background: linear-gradient(135deg, rgba(251, 191, 36, 0.02) 0%, rgba(34, 211, 238, 0.02) 100%);
+  border: 1px solid rgba(251, 191, 36, 0.15);
+  border-radius: 16px;
+  padding: 20px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  justify-content: space-between;
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s var(--transition-easing);
+}
+
+.audit-roi-banner::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 4px;
+  height: 100%;
+  background: linear-gradient(180deg, #fbbf24, #22d3ee);
+}
+
+.audit-roi-banner:hover {
+  border-color: rgba(251, 191, 36, 0.35);
+  background: linear-gradient(135deg, rgba(251, 191, 36, 0.04) 0%, rgba(34, 211, 238, 0.04) 100%);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+  transform: translateY(-2px);
+}
+
+.audit-roi-left {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex-grow: 1;
+}
+
+.audit-roi-banner-title {
+  font-family: var(--font-heading);
+  font-weight: 700;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.95rem;
+}
+
+.audit-roi-banner-title::after {
+  content: 'CGE ROI';
+  font-size: 0.55rem;
+  font-weight: 800;
+  background: rgba(34, 211, 238, 0.1);
+  color: #22d3ee;
+  padding: 2px 5px;
+  border-radius: 3px;
+  border: 1px solid rgba(34, 211, 238, 0.2);
+  letter-spacing: 0.5px;
+}
+
+.audit-roi-banner-desc {
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+  line-height: 1.4;
+  margin: 0;
+}
+
+.audit-roi-badge {
+  font-family: var(--font-heading);
+  font-size: 1.45rem;
+  font-weight: 900;
+  color: #fbbf24;
+  background: rgba(10, 10, 12, 0.6);
+  padding: 10px 18px;
+  border-radius: 10px;
+  border: 1px solid rgba(251, 191, 36, 0.25);
+  text-shadow: 0 0 12px rgba(251, 191, 36, 0.25);
+  white-space: nowrap;
+  transition: all 0.3s ease;
+}
+
+.audit-roi-banner:hover .audit-roi-badge {
+  color: #fff;
+  border-color: #fbbf24;
+  background: rgba(251, 191, 36, 0.15);
+  box-shadow: 0 0 15px rgba(251, 191, 36, 0.2);
+}
+

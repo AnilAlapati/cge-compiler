@@ -1096,12 +1096,21 @@ document.addEventListener("DOMContentLoaded", () => {
   const btnModeCode   = document.getElementById("btn-mode-code");
   const btnModeVisual = document.getElementById("btn-mode-visual");
   const btnModeVerify = document.getElementById("btn-mode-verify");
-  const btnModeAudit  = document.getElementById("btn-mode-audit");
+  
   const containerCode = document.getElementById("container-code");
   const containerVisual = document.getElementById("container-visual");
   const containerVerify = document.getElementById("container-verify");
   const containerAudit  = document.getElementById("container-audit");
   const astTreeView   = document.getElementById("ast-tree-view");
+  const editorGrid    = document.querySelector(".editor-grid");
+  const outputCard    = document.getElementById("output-card");
+  const compileBridge = document.querySelector(".compile-bridge");
+
+  // Input Swapper DOM nodes
+  const btnInputCode = document.getElementById("btn-input-code");
+  const btnInputZip  = document.getElementById("btn-input-zip");
+  const inputContainerCode = document.getElementById("input-container-code");
+  const inputContainerZip  = document.getElementById("input-container-zip");
 
   // CLNR DOM nodes
   const llmInput          = document.getElementById("llm-reconstructed-input");
@@ -1123,6 +1132,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const drawerCodeAfter   = document.getElementById("drawer-code-after");
 
   // General Metrics (Unified Performance Panel)
+  const metricsSection   = document.getElementById("metrics");
   const metricRatio      = document.getElementById("metric-ratio");
   const metricSavings    = document.getElementById("metric-savings");
   const metricPercent    = document.getElementById("metric-percent");
@@ -1345,7 +1355,7 @@ document.addEventListener("DOMContentLoaded", () => {
     btnModeCode.classList.remove("active");
     btnModeVisual.classList.remove("active");
     btnModeVerify.classList.remove("active");
-    btnModeAudit.classList.remove("active");
+    
     containerCode.classList.remove("active");
     containerVisual.classList.remove("active");
     containerVerify.classList.remove("active");
@@ -1362,15 +1372,65 @@ document.addEventListener("DOMContentLoaded", () => {
       btnModeVerify.classList.add("active");
       containerVerify.classList.add("active");
     } else if (newMode === "audit") {
-      btnModeAudit.classList.add("active");
       containerAudit.style.display = "flex";
     }
   }
 
+  let currentInputMode = "code";
+  let hasActiveAudit = false;
+  function switchInputMode(newMode) {
+    currentInputMode = newMode;
+    btnInputCode.classList.remove("active");
+    btnInputZip.classList.remove("active");
+    inputContainerCode.classList.remove("active");
+    inputContainerCode.style.display = "none";
+    inputContainerZip.style.display = "none";
+    if (containerAudit) containerAudit.style.display = "none";
+
+    btnModeCode.style.display = "none";
+    btnModeVisual.style.display = "none";
+    btnModeVerify.style.display = "none";
+
+    if (newMode === "code") {
+      btnInputCode.classList.add("active");
+      inputContainerCode.classList.add("active");
+      inputContainerCode.style.display = "flex";
+      
+      // Restore standard two-column layout
+      if (outputCard) outputCard.style.display = "flex";
+      if (compileBridge) compileBridge.style.display = "flex";
+      if (editorGrid) editorGrid.style.gridTemplateColumns = "1fr 36px 1fr";
+      
+      btnModeCode.style.display = "inline-block";
+      btnModeVisual.style.display = "inline-block";
+      btnModeVerify.style.display = "inline-block";
+      
+      if (metricsSection) metricsSection.style.display = "block";
+      
+      if (currentOutputMode === "audit") {
+        switchMode("code");
+      } else {
+        switchMode(currentOutputMode);
+      }
+    } else if (newMode === "zip") {
+      btnInputZip.classList.add("active");
+      inputContainerZip.style.display = "flex";
+      
+      // Hide right panel and set left panel to 100% full-width
+      if (outputCard) outputCard.style.display = "none";
+      if (compileBridge) compileBridge.style.display = "none";
+      if (editorGrid) editorGrid.style.gridTemplateColumns = "1fr";
+      
+      if (metricsSection) metricsSection.style.display = "none";
+    }
+  }
+
+  btnInputCode.addEventListener("click", () => switchInputMode("code"));
+  btnInputZip.addEventListener("click", () => switchInputMode("zip"));
+
   btnModeCode.addEventListener("click", () => switchMode("code"));
   btnModeVisual.addEventListener("click", () => switchMode("visual"));
   btnModeVerify.addEventListener("click", () => switchMode("verify"));
-  btnModeAudit.addEventListener("click", () => switchMode("audit"));
   drawerCloseBtn.addEventListener("click", closeDrawer);
 
   // --- Metrics Update ---
@@ -1712,10 +1772,6 @@ ${textContent}`;
   const auditDropzone      = document.getElementById("audit-dropzone");
   const auditFileInput     = document.getElementById("audit-file-input");
   const auditUploadTrigger = document.getElementById("audit-upload-trigger");
-  const auditProgress      = document.getElementById("audit-progress");
-  const auditProgressStatus= document.getElementById("audit-progress-status");
-  const auditProgressPercent= document.getElementById("audit-progress-percent");
-  const auditProgressBar   = document.getElementById("audit-progress-bar");
   const auditResults       = document.getElementById("audit-results");
 
   const auditTotalFiles    = document.getElementById("audit-total-files");
@@ -1726,8 +1782,25 @@ ${textContent}`;
   const auditCompCost      = document.getElementById("audit-comp-cost");
   const auditCostSaved     = document.getElementById("audit-cost-saved");
   const auditRoiSaved      = document.getElementById("audit-roi-saved");
+  const auditBreakdownSummary = document.getElementById("audit-breakdown-summary");
+  const auditBreakdownBarProcessed = document.getElementById("audit-breakdown-bar-processed");
+  const auditBreakdownBarExcluded = document.getElementById("audit-breakdown-bar-excluded");
+  const auditBreakdownList = document.getElementById("audit-breakdown-list");
+
+  // Dropzone state variables
+  const dropzoneNormalState = document.getElementById("dropzone-normal-state");
+  const dropzoneProcessingState = document.getElementById("dropzone-processing-state");
+  const dropzoneStatusTitle = document.getElementById("dropzone-status-title");
+  const dropzoneStatusSubtitle = document.getElementById("dropzone-status-subtitle");
+  const dropzoneProgressBar = document.getElementById("dropzone-progress-bar");
 
   // Trigger file select dialog
+  if (auditFileInput) {
+    auditFileInput.addEventListener("click", (e) => {
+      e.stopPropagation();
+    });
+  }
+
   if (auditUploadTrigger && auditFileInput) {
     auditUploadTrigger.addEventListener("click", (e) => {
       e.stopPropagation();
@@ -1736,8 +1809,11 @@ ${textContent}`;
   }
 
   if (auditDropzone && auditFileInput) {
-    auditDropzone.addEventListener("click", () => {
-      auditFileInput.click();
+    auditDropzone.addEventListener("click", (e) => {
+      // Only trigger if click wasn't on the input/button directly
+      if (e.target !== auditFileInput && e.target !== auditUploadTrigger) {
+        auditFileInput.click();
+      }
     });
 
     // Drag-over styling
@@ -1782,43 +1858,149 @@ ${textContent}`;
       return;
     }
 
-    auditProgress.style.display = "block";
-    auditResults.style.display = "none";
-    auditDropzone.style.display = "none";
+    if (auditResults) auditResults.style.display = "none";
+
+    // Show dropzone processing UI
+    if (dropzoneNormalState) dropzoneNormalState.style.display = "none";
+    if (dropzoneProcessingState) dropzoneProcessingState.style.display = "flex";
+    if (dropzoneStatusTitle) dropzoneStatusTitle.textContent = "Extracting Codebase...";
+    if (dropzoneStatusSubtitle) dropzoneStatusSubtitle.textContent = "Reading zip archive...";
+    if (dropzoneProgressBar) dropzoneProgressBar.style.width = "10%";
 
     try {
-      auditProgressStatus.textContent = "Extracting zip archive...";
-      auditProgressPercent.textContent = "10%";
-      auditProgressBar.style.width = "10%";
-
       const zip = await JSZip.loadAsync(file);
-      const allFiles = Object.keys(zip.files).filter(name => {
-        const ext = name.split(".").pop().toLowerCase();
-        return ["ts", "tsx", "js", "jsx", "py", "rs"].includes(ext) && !zip.files[name].dir;
+      // Premium smooth pause so the user actually sees the beautiful conic-gradient spinner unzipping
+      await new Promise(r => setTimeout(r, 1200));
+      
+      // Smart filter: exclude standard dependency, build, git, and lock files
+      let allZipEntries = Object.keys(zip.files).filter(name => {
+        if (zip.files[name].dir) return false;
+        
+        const lowerName = name.toLowerCase();
+        const skipPatterns = [
+          'node_modules/',
+          '.git/',
+          'dist/',
+          'build/',
+          '.next/',
+          '.nuxt/',
+          'out/',
+          '.cache/',
+          'bower_components/',
+          'package-lock.json',
+          'yarn.lock',
+          'pnpm-lock.yaml'
+        ];
+        
+        return !skipPatterns.some(pat => lowerName.includes(pat));
       });
 
-      if (allFiles.length === 0) {
+      // Guard against massive zips (e.g. capping entries to 5,000 files)
+      const MAX_TOTAL_FILES = 5000;
+      if (allZipEntries.length > MAX_TOTAL_FILES) {
+        showToast(`⚠️ Capped extraction at first ${MAX_TOTAL_FILES} files to prevent memory issues.`);
+        allZipEntries = allZipEntries.slice(0, MAX_TOTAL_FILES);
+      }
+
+      let processedFiles = [];
+      const extensionCounts = {};
+      
+      for (const name of allZipEntries) {
+        const parts = name.split(".");
+        let ext = "no-ext";
+        if (parts.length > 1) {
+          ext = parts.pop().toLowerCase();
+        }
+        
+        extensionCounts[ext] = (extensionCounts[ext] || 0) + 1;
+        
+        if (["ts", "tsx", "js", "jsx", "py", "rs"].includes(ext)) {
+          processedFiles.push(name);
+        }
+      }
+
+      // Capping total active compiled files to keep the compiler responsive
+      const MAX_COMPILE_FILES = 1000;
+      if (processedFiles.length > MAX_COMPILE_FILES) {
+        showToast(`⚡ Capped compiler at first ${MAX_COMPILE_FILES} source files to prevent browser lag.`);
+        processedFiles.length = MAX_COMPILE_FILES;
+      }
+
+      if (processedFiles.length === 0) {
         showToast("⚠️ No compatible source files (.ts, .py, .rs) found in zip!");
-        auditDropzone.style.display = "flex";
-        auditProgress.style.display = "none";
+        if (dropzoneNormalState) dropzoneNormalState.style.display = "flex";
+        if (dropzoneProcessingState) dropzoneProcessingState.style.display = "none";
         return;
+      }
+
+      // Generate HTML breakdown of extensions
+      const processedExts = ["ts", "tsx", "js", "jsx", "py", "rs"];
+      let totalProcessed = 0;
+      let totalExcluded = 0;
+      
+      const breakdownHTML = Object.entries(extensionCounts)
+        .sort((a, b) => b[1] - a[1]) // Sort by count descending
+        .map(([ext, count]) => {
+          const isProcessed = processedExts.includes(ext);
+          if (isProcessed) {
+            totalProcessed += count;
+          } else {
+            totalExcluded += count;
+          }
+          
+          const label = isProcessed ? "Compiled" : "Bypassed";
+          const chipClass = isProcessed ? "compiled" : "bypassed";
+          const badgeClass = isProcessed ? "compiled" : "bypassed";
+          
+          return `
+            <div class="audit-chip-card ${chipClass}">
+              <div class="audit-chip-left">
+                <span class="audit-chip-ext" title=".${ext}">.${ext}</span>
+                <span class="audit-chip-count">${count} ${count === 1 ? 'file' : 'files'}</span>
+              </div>
+              <span class="audit-chip-badge ${badgeClass}">${label}</span>
+            </div>
+          `;
+        }).join("");
+
+
+      if (auditBreakdownList) auditBreakdownList.innerHTML = breakdownHTML;
+      if (auditBreakdownSummary) {
+        auditBreakdownSummary.textContent = `${totalProcessed} compiled / ${totalExcluded} bypassed`;
+      }
+      
+      const totalFilesCount = totalProcessed + totalExcluded;
+      if (totalFilesCount > 0) {
+        const processedPercent = (totalProcessed / totalFilesCount) * 100;
+        const excludedPercent = (totalExcluded / totalFilesCount) * 100;
+        if (auditBreakdownBarProcessed) auditBreakdownBarProcessed.style.width = `${processedPercent}%`;
+        if (auditBreakdownBarExcluded) auditBreakdownBarExcluded.style.width = `${excludedPercent}%`;
       }
 
       let totalOrigChars = 0;
       let totalCompChars = 0;
       let processedCount = 0;
 
-      for (let i = 0; i < allFiles.length; i++) {
-        const name = allFiles[i];
+      for (let i = 0; i < processedFiles.length; i++) {
+        const name = processedFiles[i];
         const ext = name.split(".").pop().toLowerCase();
-        let lang = "typescript";
-        if (ext === "py") lang = "python";
-        if (ext === "rs") lang = "rust";
+        
+        const extensionToLanguage = {
+          "ts": "typescript",
+          "tsx": "typescript",
+          "js": "typescript",
+          "jsx": "typescript",
+          "py": "python",
+          "rs": "rust"
+        };
+        const lang = extensionToLanguage[ext] || "typescript";
 
-        const percent = Math.round(((i + 1) / allFiles.length) * 90) + 10;
-        auditProgressStatus.textContent = `Compiling [${i + 1}/${allFiles.length}]: ${name.split("/").pop()}`;
-        auditProgressPercent.textContent = `${percent}%`;
-        auditProgressBar.style.width = `${percent}%`;
+        const percent = Math.round(((i + 1) / processedFiles.length) * 80) + 20;
+
+        // Update dropzone progress
+        if (dropzoneStatusTitle) dropzoneStatusTitle.textContent = `Compiling [${i + 1}/${processedFiles.length}]`;
+        if (dropzoneStatusSubtitle) dropzoneStatusSubtitle.textContent = name.split("/").pop();
+        if (dropzoneProgressBar) dropzoneProgressBar.style.width = `${percent}%`;
 
         // Read file content
         const content = await zip.files[name].async("string");
@@ -1832,8 +2014,8 @@ ${textContent}`;
         }
         
         processedCount++;
-        // Small delay to keep UI responsive
-        await new Promise(r => setTimeout(r, 20));
+        // Keep UI responsive and let users read the beautiful cycling compile statuses
+        await new Promise(r => setTimeout(r, 80));
       }
 
       // Calculate final stats
@@ -1858,15 +2040,25 @@ ${textContent}`;
       auditCostSaved.textContent = `Saved: ${savingsPercent}% of total bill!`;
       auditRoiSaved.textContent = `-$${moneySaved.toFixed(2)}`;
 
-      auditProgress.style.display = "none";
-      auditResults.style.display = "flex";
+      if (auditResults) auditResults.style.display = "flex";
       showToast("💼 Codebase Compaction & ROI Audit completed!");
+      hasActiveAudit = true;
+
+      // Hide dropzone container and show full-width results dashboard inside left card
+      if (inputContainerZip) inputContainerZip.style.display = "none";
+      if (containerAudit) containerAudit.style.display = "flex";
+
+      // Reset dropzone processing UI
+      if (dropzoneNormalState) dropzoneNormalState.style.display = "flex";
+      if (dropzoneProcessingState) dropzoneProcessingState.style.display = "none";
 
     } catch (err) {
       console.error(err);
       showToast("💀 Failed to process zip archive!");
-      auditDropzone.style.display = "flex";
-      auditProgress.style.display = "none";
+
+      // Reset dropzone processing UI on error
+      if (dropzoneNormalState) dropzoneNormalState.style.display = "flex";
+      if (dropzoneProcessingState) dropzoneProcessingState.style.display = "none";
     }
   }
 
@@ -1882,6 +2074,15 @@ ${textContent}`;
   }, { threshold: 0.05, rootMargin: "0px 0px -20px 0px" });
 
   revealSections.forEach(section => revealObserver.observe(section));
+
+  // --- Warn before page unload if an audit was completed ---
+  window.addEventListener("beforeunload", (e) => {
+    if (hasActiveAudit) {
+      e.preventDefault();
+      e.returnValue = "Your project compaction audit metrics will be lost if you refresh. Do you want to continue?";
+      return e.returnValue;
+    }
+  });
 
   // --- Initial load ---
   codeInput.value = templates[currentLang];
