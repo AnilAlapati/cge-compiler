@@ -1,0 +1,4 @@
+File Name,Original Chars,CGE Chars,Compression Ratio,Successful Model,Loops Needed,Success Status
+"auth_service.ts",445,376,"1.18x","gpt-4o-mini",1,true
+"session.rs",357,364,"0.98x","gpt-4o-mini",1,true
+"user_profile.py",434,470,"0.92x","gpt-4o-mini",1,true
