@@ -7,7 +7,11 @@
     "test": "ts-node src/test_runner.ts",
     "compile": "ts-node src/cge_compiler_runner.ts",
     "cge-copy": "ts-node src/cli/clipboard_tool.ts",
-    "build": "node build.js"
+    "build:cli": "npx esbuild src/cli/index.ts --bundle --platform=node --outfile=dist/cli.js",
+    "build": "node build.js && npm run build:cli"
+  },
+  "bin": {
+    "cge-cli": "./dist/cli.js"
   },
   "repository": {
     "type": "git",
@@ -23,6 +27,7 @@
   "homepage": "https://github.com/AnilAlapati/cge-compiler#readme",
   "devDependencies": {
     "@types/node": "^25.9.1",
+    "esbuild": "^0.28.0",
     "terser": "^5.48.0",
     "ts-node": "^10.9.2",
     "tsx": "^4.22.4",
