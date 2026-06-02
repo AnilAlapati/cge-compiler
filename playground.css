@@ -252,17 +252,23 @@ body {
   display: flex;
   align-items: center;
   gap: 6px;
+  opacity: 0.5; /* Dim inactive */
+  filter: grayscale(80%);
 }
 
 .segment-tab:hover {
   color: var(--text-primary);
+  opacity: 0.8;
+  filter: grayscale(20%);
 }
 
 .segment-tab.active {
-  background: var(--bg-hover);
-  color: var(--text-primary);
-  border: 1px solid rgba(255, 255, 255, 0.04);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+  background: rgba(255, 255, 255, 0.1);
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4), 0 0 1px rgba(255, 255, 255, 0.3) inset;
+  opacity: 1;
+  filter: grayscale(0%);
 }
 
 /* Precision Editor Cards */
