@@ -1,0 +1,638 @@
+// --- File: src/batch_test_runner.ts ---
+CGE/1.0 batch_test_runner (TypeScript)
+
+IMPORTS:
+  dotenv from dotenv
+  OpenAI from openai
+  GoogleGenerativeAI from @google/generative-ai
+  fs from fs
+  path from path
+  CGECompiler from ./cge_compiler
+
+TYPES:
+  BenchmarkResult{fileName:S, originalSize:N, compressedSize:N, ratio:S, successfulModel:S, loopsNeeded:N, success:B}
+
+STATE:
+  CONST openai:any = new OpenAI({apiKey:process.env.OPENAI_API_KEY||"dummy"})
+  CONST genAI:any = new GoogleGenerativeAI(process.env.GEMINI_API_KEY||"dummy")
+  CONST MODEL_TIERS:any = [{provider:"openai",model:"gpt-4o-mini"},{provider:"openai",model:"gpt-4o"}]
+
+PRIVATE:
+  callLLM(prompt:S, provider:S, model:S)->Promise<S>:
+    IF provider==="openai": response = await openai.chat.completions.create({model:model,messages:[{role:"user",content:prompt}],temperature:0.1}), RETURN response.choices[0].message.content||""
+    IF provider==="gemini": geminiModel = genAI.getGenerativeModel({model:model}), result = await geminiModel.generateContent({contents:[{role:"user",parts:[{text:prompt}]}],generationConfig:{temperature:0.1}}), RETURN result.response.text()
+    THROW new Error(`Unsupported provider: ${provider}`)
+  normalizeCGELine(line:S)->S:
+    cleanLine = line.trim()
+    IF !cleanLine.startsWith("SCAN")&&!cleanLine.startsWith("GUARD")&&!cleanLine.startsWith("RETURN")&&!cleanLine.startsWith("TRY")&&!cleanLine.startsWith("THROW"): cleanLine=cleanLine.replace(/->.*/g,"")
+    RETURN cleanLine.replace(/^(?:IMPORTS|TYPES|STATE|OPS|PRIVATE|EXPORTS):?/gi,"").replace(/\b(?:EXPORT|CONST)\b/gi,"").replace(/:(?:S|N|B|D|any|void)\b/g,"").replace(/->/g,"").replace(/:/g,"").replace(/\s+/g," ").trim()
+  normalizeCGE(cge:S)->S:
+    RETURN cge.split("
+").map((line)=>line.trim()).filter((line)=>line.length>0).join("
+")
+  diffCGE(original:S, reconstructed:S)->{ missing: string[]; extra: string[] }:
+    filterNoise = (line)=>clean = normalizeCGELine(line)
+RETURN clean.length>0&&!line.startsWith("CGE/1.0")&&!line.startsWith("EXPORTS:")
+    origLines = normalizeCGE(original).split("
+").filter(filterNoise)
+    reconLines = normalizeCGE(reconstructed).split("
+").filter(filterNoise)
+    normRecon = reconLines.map((l)=>normalizeCGELine(l))
+    missing = origLines.filter((l)=>!normRecon.includes(normalizeCGELine(l)))
+    extra = reconLines.filter((l)=>!origLines.map((o)=>normalizeCGELine(o)).includes(normalizeCGELine(l)))
+    RETURN {missing,extra}
+  runFidelityLoop(originalCode:S, cgeCode:S, fileName:S, compiler:CGECompiler)->Promise<BenchmarkResult>:
+    SCAN MODEL_TIERS FOR const tier -> classNames = new Set(), classMatches = cgeCode.matchAll(/([A-Z][a-zA-Z0-9_]+)\.[a-zA-Z0-9_]+/g), SCAN classMatches FOR const match -> classNames.add(match[1]), classInstructions = "", IF classNames.size>0: classInstructions=`
+3. The following entities MUST be reconstructed strictly as CLASSES using the 'class' keyword (e.g. 'class ClassName { ... }') and NOT as constant objects or plain dictionaries:
+`+Array.from(classNames).map((name)=>`   - ${name}`).join("
+"), currentPrompt = `Act as an expert compiler. Below is a code block translated into Cognitive Graph Encoding (CGE) loss-less shorthand notation.
+Decompress this CGE shorthand back into fully working, standard source code. 
+
+CRITICAL REQUIREMENTS:
+1. Do NOT wrap in markdown code fences or explain anything, just return the raw code.
+2. STRICTLY preserve the original programming constructs. 
+   - If the CGE block defines a class (e.g. under OPS: or STATE: matching a class name), you MUST reconstruct it as a class with its member variables and methods.
+   - If the CGE block defines an interface or type, reconstruct it exactly.
+   - Match all exported variables, classes, hooks, and function signatures.
+   - In Python, if a class has type mappings (e.g. UserProfile{id:S, email:S, created_at:D}), you MUST declare these fields as class-level type annotations directly in the class body (e.g. id: str).
+   - Reconstruct all loop targets and member accesses exactly as written in CGE (e.g. if CGE says SCAN user.items, write 'for item in user.items:').${classInstructions}
+
+CGE Code:
+${cgeCode}`, success = false, MAX_LOOPS = 3, loop = 1, SCAN  FOR i -> TRY: reconstructedCode = await callLLM(currentPrompt,tier.provider,tier.model), cleanCode = reconstructedCode.replace(/```[a-zA-Z]*\n/g,"").replace(/```/g,"").trim(), ext = path.extname(fileName).toLowerCase(), lang = "typescript", IF ext===".py": lang="python", IF ext===".rs": lang="rust", candidateCGE = compiler.compileCode(cleanCode,lang,fileName), DESTRUCTURE { missing, extra } = diffCGE(cgeCode,candidateCGE), IF missing.length===0: success=true, break; ELSE missing.forEach((m)=>console.log(`      - ${m}`)), patches = [], SCAN missing FOR const m -> patches.push(`[PATCH: Missing structure/function logic matching '${m}'. Reimplement this correctly]`), currentPrompt+=`
+
+[SYSTEM ERROR - SEMANTIC AST MISMATCH DETECTED IN YOUR LAST RESPONSE]
+Please regenerate the code and apply the following logical constraints:
+${patches.join("
+")}` CATCH: break;, IF success: RETURN {fileName,originalSize:originalCode.length,compressedSize:cgeCode.length,ratio:(originalCode.length/cgeCode.length).toFixed(2)+"x",successfulModel:tier.model,loopsNeeded:loop,success:true} ELSE
+    RETURN {fileName,originalSize:originalCode.length,compressedSize:cgeCode.length,ratio:(originalCode.length/cgeCode.length).toFixed(2)+"x",successfulModel:"None (Failed)",loopsNeeded:0,success:false}
+  main()->void:
+    testFilesDir = path.resolve("./test_files")
+    IF !fs.existsSync(testFilesDir): process.exit(1)
+    files = fs.readdirSync(testFilesDir).filter((f)=>ext = path.extname(f).toLowerCase()
+RETURN [".ts",".py",".rs"].includes(ext))
+    IF files.length===0: RETURN void
+    compiler = new CGECompiler()
+    results = []
+    SCAN files FOR const f -> filePath = path.join(testFilesDir,f), originalCode = fs.readFileSync(filePath,"utf-8"), cgeCode = compiler.compile(filePath), result = await runFidelityLoop(originalCode,cgeCode,f,compiler), results.push(result)
+    timestamp = new Date().toISOString().replace(/[:.]/g,"-")
+    resultsDir = path.resolve("./test_results")
+    IF !fs.existsSync(resultsDir): fs.mkdirSync(resultsDir,{recursive:true})
+    csvPath = path.join(resultsDir,`batch_run_${timestamp}.csv`)
+    csvContent = "File Name,Original Chars,CGE Chars,Compression Ratio,Successful Model,Loops Needed,Success Status
+"
+    SCAN results FOR const r -> csvContent+=`"${r.fileName}",${r.originalSize},${r.compressedSize},"${r.ratio}","${r.successfulModel}",${r.loopsNeeded},${r.success}
+`
+    fs.writeFileSync(csvPath,csvContent,"utf-8")
+
+
+// --- File: src/cge_compiler.ts ---
+CGE/1.0 cge_compiler (TypeScript)
+
+IMPORTS:
+  * as fs from fs
+  * as path from path
+  CGEParser from ./cge_parser
+  TypeScriptParser from ./typescript_parser
+  PythonParser from ./python_parser
+  RustParser from ./rust_parser
+
+STATE:
+  EXPORT CGECompiler.filePaths:S[]
+
+OPS:
+  EXPORT CGECompiler.compileCode(code:S, language:S, fileName:S)->S:
+    parser = this.getParserForLanguage(language)
+    parsed = parser.parse(code,fileName)
+    compName = fileName?path.basename(fileName,path.extname(fileName)):"Component"
+    isHook = compName.startsWith("use")
+    langLabel = language==="typescript"?(isHook?"(ReactHook)":"(TypeScript)"):`(${language.charAt(0).toUpperCase()+language.slice(1)})`
+    header = `CGE/1.0 ${compName}${langLabel}
+`
+    output = header+"
+"
+    IF parsed.imports.length>0: output+=`IMPORTS:
+  ${parsed.imports.join("
+  ")}
+
+`
+    IF parsed.types.length>0: output+=`TYPES:
+  ${parsed.types.join("
+  ")}
+
+`
+    IF parsed.state.length>0: output+=`STATE:
+  ${parsed.state.join("
+  ")}
+
+`
+    IF parsed.ops.length>0: output+=`OPS:
+  ${parsed.ops.join("
+
+  ")}
+
+`
+    IF parsed.privateOps.length>0: output+=`PRIVATE:
+  ${parsed.privateOps.join("
+  ")}
+
+`
+    IF parsed.exports.length>0: output+=`EXPORTS: ${parsed.exports.join(", ")}
+`
+    RETURN output.trim()+"
+"
+
+  EXPORT CGECompiler.compile(filePath:S)->S:
+    resolvedPath = path.resolve(filePath)
+    GUARD !fs.existsSync(resolvedPath) THROW new Error(`Source file not found: ${filePath}`)
+    code = fs.readFileSync(resolvedPath,"utf-8")
+    ext = path.extname(resolvedPath).toLowerCase()
+    language = this.getLanguageFromExtension(ext)
+    RETURN this.compileCode(code,language,path.basename(resolvedPath))
+
+PRIVATE:
+  CGECompiler.getLanguageFromExtension(ext:S)->S:
+    switch (ext) {
+      case ".ts":
+      case ".tsx":
+      case ".js":
+      case
+  CGECompiler.getParserForLanguage(language:S)->CGEParser:
+    switch (language.toLowerCase()) {
+      case "typescript":
+      case "ts":
+    
+
+EXPORTS: CGECompiler
+
+
+// --- File: src/cge_compiler_runner.ts ---
+CGE/1.0 cge_compiler_runner (TypeScript)
+
+IMPORTS:
+  CGECompiler from ./cge_compiler
+  * as fs from fs
+  * as path from path
+
+PRIVATE:
+  run()->void:
+    args = process.argv.slice(2)
+    IF args.length<2: process.exit(1)
+    inputFile = path.resolve(args[0]asstring)
+    outputFile = path.resolve(args[1]asstring)
+    IF !fs.existsSync(inputFile): process.exit(1)
+    inputStats = fs.statSync(inputFile)
+    filesToCompile = []
+    function walkDir(dir: string) {
+    const files = fs.readdirSync(dir);
+    for (
+    IF inputStats.isDirectory(): walkDir(inputFile) ELSE filesToCompile.push(inputFile)
+    IF filesToCompile.length===0: process.exit(1)
+    TRY: compiler = new CGECompiler(filesToCompile), combinedOutput = "", totalOrigChars = 0, totalOrigLines = 0, totalOrigWords = 0, SCAN filesToCompile FOR const file -> cgeOutput = compiler.compile(file), combinedOutput+=`// --- File: ${path.relative(process.cwd(),file)} ---
+`+cgeOutput+"
+
+", originalText = fs.readFileSync(file,"utf-8"), totalOrigChars+=originalText.length, totalOrigLines+=originalText.split("
+").length, totalOrigWords+=originalText.split(/\s+/).length, outDir = path.dirname(outputFile), IF !fs.existsSync(outDir): fs.mkdirSync(outDir,{recursive:true}), fs.writeFileSync(outputFile,combinedOutput,"utf-8"), origTokens = Math.ceil(totalOrigChars/4), compChars = combinedOutput.length, compLines = combinedOutput.split("
+").length, compWords = combinedOutput.split(/\s+/).length, compTokens = Math.ceil(compChars/4) CATCH: process.exit(1)
+
+
+// --- File: src/cge_parser.ts ---
+CGE/1.0 cge_parser (TypeScript)
+
+TYPES:
+  EXPORT CGEParser{}
+
+EXPORTS: CGEParser
+
+
+// --- File: src/cli/clipboard_tool.ts ---
+CGE/1.0 clipboard_tool (TypeScript)
+
+IMPORTS:
+  CGECompiler from ../cge_compiler
+  * as fs from fs
+  * as path from path
+  spawnSync from child_process
+
+PRIVATE:
+  run()->void:
+    args = process.argv.slice(2)
+    targetDir = args.length>0?path.resolve(args[0]asstring):process.cwd()
+    IF !fs.existsSync(targetDir): process.exit(1)
+    inputStats = fs.statSync(targetDir)
+    filesToCompile = []
+    skipPatterns = ["node_modules",".git","dist","build",".next"]
+    function walkDir(dir: string) {
+    const files = fs.readdirSync(dir);
+    for (
+    IF inputStats.isDirectory(): walkDir(targetDir) ELSE filesToCompile.push(targetDir)
+    IF filesToCompile.length===0: process.exit(1)
+    TRY: compiler = new CGECompiler(filesToCompile), combinedOutput = "", SCAN filesToCompile FOR const file -> cgeOutput = compiler.compile(file), combinedOutput+=`// --- File: ${path.relative(process.cwd(),file)} ---
+`+cgeOutput+"
+
+", isMac = process.platform==="darwin", isWin = process.platform==="win32", cmd = "", cmdArgs = [], IF isMac: cmd="pbcopy" ELSE IF isWin: cmd="clip" ELSE cmd="xclip", cmdArgs=["-selection","clipboard"], child = spawnSync(cmd,cmdArgs,{input:combinedOutput,encoding:"utf-8"}), IF child.error:  ELSE CATCH: process.exit(1)
+
+
+// --- File: src/python_parser.ts ---
+CGE/1.0 python_parser (TypeScript)
+
+IMPORTS:
+  CGEParser from ./cge_parser
+
+OPS:
+  EXPORT PythonParser.parse(code:S, fileName:S)->{
+    imports: string[];
+    types: string[];
+    state: string[];
+    ops: string[];
+    privateOps: string[];
+    exports: string[];
+  }:
+    lines = code.split("
+")
+    imports = []
+    types = []
+    state = []
+    ops = []
+    privateOps = []
+    exportsList = []
+    currentClass = null
+    currentBlock = null
+    mapPythonType = (pyType)=>GUARD !pyType RETURN "any"
+clean = pyType.trim()
+switch (clean) {
+        case "str": return "S";
+        case "int":
+        cas
+IF clean.startsWith("List[")||clean.endsWith("[]"): inner = clean.startsWith("List[")?clean.substring(5,clean.length-1):clean.slice(0,-2), RETURN `${mapPythonType(inner)}[]`
+IF clean.startsWith("Dict["): parts = clean.substring(5,clean.length-1).split(","), key = parts[0].trim()||"S", val = parts[1].trim()||"any", RETURN `Map<${mapPythonType(key)}, ${mapPythonType(val)}>`
+GUARD clean.startsWith("Optional[") RETURN mapPythonType(clean.substring(9,clean.length-1))+"?"
+RETURN clean
+    getIndent = (line)=>match = line.match(/^(\s*)/)
+RETURN match&&match[0]?match[0].length:0
+    translateStatement = (stmt)=>clean = stmt.trim()
+GUARD !clean RETURN ""
+raiseGuard = clean.match(/^if\s+(.+?):\s*raise\s+(\w+)\((.*)\)$/)
+IF raiseGuard: cond = raiseGuard[1]||"", errType = raiseGuard[2]||"", errArgs = raiseGuard[3]||"", RETURN `GUARD ${cond} THROW "${errType}:${errArgs.replace(/['"]/g,"")}"`
+returnGuard = clean.match(/^if\s+(.+?):\s*return\s*(.*)$/)
+IF returnGuard: cond = returnGuard[1]||"", val = returnGuard[2].trim()||"void", RETURN `GUARD ${cond} RETURN ${val}`
+GUARD clean.startsWith("return ") RETURN `RETURN ${clean.substring(7).trim()}`
+GUARD clean==="return" RETURN "RETURN void"
+GUARD clean.startsWith("raise ") RETURN `THROW ${clean.substring(6).trim()}`
+GUARD clean.startsWith("try:") RETURN "TRY:"
+RETURN clean
+    flushCurrentBlock = ()=>GUARD !currentBlock RETURN void
+bodyTranslated = []
+i = 0
+while (i < currentBlock.bodyLines.length) {
+        const line = currentBlock.bo
+bodyStr = bodyTranslated.join("
+")
+retType = mapPythonType(currentBlock.ret)
+signature = `${currentBlock.name}(${currentBlock.params})->${retType}:${bodyStr?"\n"+bodyStr:"void"}`
+IF currentBlock.isPrivate: privateOps.push(signature) ELSE ops.push(signature)
+currentBlock=null
+    flushCurrentClass = ()=>GUARD !currentClass RETURN void
+types.push(`${currentClass.name}{${currentClass.fields.join(", ")}}`)
+exportsList.push(currentClass.name)
+currentClass=null
+    SCAN  FOR i -> line = lines[lineIndex], IF line===undefined: continue;, clean = line.trim(), IF !clean||clean.startsWith("#"): continue;, indent = getIndent(line), IF currentBlock: IF indent>currentBlock.indent: currentBlock.bodyLines.push(line), continue; ELSE flushCurrentBlock(), IF currentClass&&indent===0: flushCurrentClass(), importMatch1 = clean.match(/^import\s+(.+)$/), importMatch2 = clean.match(/^from\s+([\w\.]+)\s+import\s+(.+)$/), IF importMatch1: imp = importMatch1[1]||"", imports.push(imp), continue;, IF importMatch2: fromMod = importMatch2[1]||"", imp = importMatch2[2]||"", imports.push(`${imp} from ${fromMod}`), continue;, classMatch = clean.match(/^class\s+(\w+)(?:\((.+)\))?:$/), IF classMatch: flushCurrentClass(), className = classMatch[1]||"UnknownClass", currentClass={name:className,fields:[]}, continue;, defMatch = clean.match(/^(?:async\s+)?def\s+(\w+)\((.*?)\)(?:\s*->\s*(.+?))?:$/), IF defMatch: name = defMatch[1]||"anonymous", paramsRaw = defMatch[2]||"", ret = defMatch[3]||"None", isPrivate = name.startsWith("_"), params = paramsRaw.split(",").map((p)=>p.trim()).filter((p)=>p&&p!=="self"&&p!=="cls").map((p)=>parts = p.split(":")
+pName = parts[0].trim()||""
+pType = parts[1]?mapPythonType(parts[1]):"any"
+RETURN `${pName}:${pType}`).join(", "), currentBlock={name,isPrivate,type:currentClass?"method":"func",params,ret,indent,bodyLines:[]}, IF !currentClass&&!isPrivate: exportsList.push(name), continue;, varMatch = clean.match(/^([\w_]+)(?:\s*:\s*([^=]+))?(?:\s*=\s*(.+))?$/), IF varMatch: name = varMatch[1]||"", rawType = varMatch[2].trim()||"any", init = varMatch[3].trim()||"", isConst = name===name.toUpperCase(), IF currentClass: fieldType = mapPythonType(rawType), currentClass.fields.push(`${name}:${fieldType}`) ELSE prefix = isConst?"CONST":"", fieldType = mapPythonType(rawType), initStr = init?`=${init}`:"", state.push(`${prefix}${name}:${fieldType}${initStr}`), IF !name.startsWith("_"): exportsList.push(name)
+    flushCurrentBlock()
+    flushCurrentClass()
+    RETURN {imports,types,state,ops,privateOps,exports:exportsList}
+
+EXPORTS: PythonParser
+
+
+// --- File: src/rust_parser.ts ---
+CGE/1.0 rust_parser (TypeScript)
+
+IMPORTS:
+  CGEParser from ./cge_parser
+
+OPS:
+  EXPORT RustParser.parse(code:S, fileName:S)->{
+    imports: string[];
+    types: string[];
+    state: string[];
+    ops: string[];
+    privateOps: string[];
+    exports: string[];
+  }:
+    lines = code.split("
+")
+    imports = []
+    types = []
+    state = []
+    ops = []
+    privateOps = []
+    exportsList = []
+    mapRustType = (rustType)=>GUARD !rustType RETURN "any"
+clean = rustType.trim()
+switch (clean) {
+        case "String":
+        case "&str": return "S";
+       
+IF clean.startsWith("Vec<"): inner = clean.substring(4,clean.length-1), RETURN `${mapRustType(inner)}[]`
+GUARD clean.startsWith("Option<") RETURN mapRustType(clean.substring(7,clean.length-1))+"?"
+IF clean.startsWith("Result<"): inner = clean.substring(7,clean.length-1).split(",")[0], RETURN mapRustType(inner)
+RETURN clean
+    activeStruct = null
+    activeEnum = null
+    activeBlock = null
+    braceCount = 0
+    translateStatement = (stmt)=>clean = stmt.trim().replace(/;$/,"")
+GUARD !clean RETURN ""
+guardReturn = clean.match(/^if\s+(.+?)\s*\{\s*return\s*(.*?)\s*;?\s*\}/)
+IF guardReturn: cond = guardReturn[1]||"", val = guardReturn[2]||"void", RETURN `GUARD ${cond} RETURN ${val}`
+guardPanic = clean.match(/^if\s+(.+?)\s*\{\s*panic!\((.*?)\)\s*;?\s*\}/)
+IF guardPanic: cond = guardPanic[1]||"", err = guardPanic[2]||"", RETURN `GUARD ${cond} THROW ${err}`
+GUARD clean.startsWith("return ") RETURN `RETURN ${clean.substring(7)}`
+RETURN clean
+    flushBlock = ()=>GUARD !activeBlock RETURN void
+bodyTranslated = []
+i = 0
+while (i < activeBlock.bodyLines.length) {
+        const line = activeBlock.body
+retType = mapRustType(activeBlock.ret)
+signature = `${activeBlock.name}(${activeBlock.params})->${retType}:${bodyTranslated.length>0?"\n"+bodyTranslated.join("\n"):"void"}`
+IF activeBlock.isPublic: ops.push(signature) ELSE privateOps.push(signature)
+activeBlock=null
+    flushStruct = ()=>GUARD !activeStruct RETURN void
+types.push(`${activeStruct.name}{${activeStruct.fields.join(", ")}}`)
+exportsList.push(activeStruct.name)
+activeStruct=null
+    flushEnum = ()=>GUARD !activeEnum RETURN void
+types.push(`${activeEnum.name} = ${activeEnum.variants.join("|")}`)
+exportsList.push(activeEnum.name)
+activeEnum=null
+    SCAN  FOR i -> line = lines[lineIndex], IF line===undefined: continue;, clean = line.trim(), IF !clean||clean.startsWith("//")||clean.startsWith("/*"): continue;, opens = (line.match(/\{/g)||[]).length, closes = (line.match(/\}/g)||[]).length, braceCount+=opens-closes, IF activeBlock: IF braceCount>0||(braceCount===0&&opens>0): activeBlock.bodyLines.push(line), continue; ELSE flushBlock(), continue;, IF activeStruct: IF clean.startsWith("}"): flushStruct(), continue;, fieldMatch = clean.match(/^pub\s+(\w+)\s*:\s*([^,]+)/)||clean.match(/^(\w+)\s*:\s*([^,]+)/), IF fieldMatch: name = fieldMatch[1]||"", type = mapRustType(fieldMatch[2]), activeStruct.fields.push(`${name}:${type}`), continue;, IF activeEnum: IF clean.startsWith("}"): flushEnum(), continue;, variant = clean.replace(/,$/,""), IF variant&&!variant.startsWith("pub"): activeEnum.variants.push(variant), continue;, useMatch = clean.match(/^use\s+(.+);/), IF useMatch: imp = useMatch[1]||"", imports.push(imp), continue;, structMatch = clean.match(/^pub\s+struct\s+(\w+)/)||clean.match(/^struct\s+(\w+)/), IF structMatch: flushStruct(), sName = structMatch[1]||"UnknownStruct", activeStruct={name:sName,fields:[]}, continue;, enumMatch = clean.match(/^pub\s+enum\s+(\w+)/)||clean.match(/^enum\s+(\w+)/), IF enumMatch: flushEnum(), eName = enumMatch[1]||"UnknownEnum", activeEnum={name:eName,variants:[]}, continue;, fnMatch = clean.match(/^(pub\s+)?(?:async\s+)?fn\s+(\w+)\s*\((.*?)\)(?:\s*->\s*(.+?))?\s*\{/), IF fnMatch: isPublic = !!fnMatch[1], name = fnMatch[2]||"anonymous", paramsRaw = fnMatch[3]||"", ret = fnMatch[4].trim()||"()", params = paramsRaw.split(",").map((p)=>p.trim()).filter((p)=>p&&p!=="self"&&p!=="&self"&&p!=="&mut self").map((p)=>parts = p.split(":")
+pName = parts[0].trim()||""
+pType = parts[1]?mapRustType(parts[1]):"any"
+RETURN `${pName}:${pType}`).join(", "), activeBlock={name,isPublic,params,ret,bodyLines:[]}, IF isPublic: exportsList.push(name), continue;, constMatch = clean.match(/^(pub\s+)?const\s+(\w+)\s*:\s*(.+?)\s*=\s*(.+);/), IF constMatch: name = constMatch[2]||"", type = mapRustType(constMatch[3]), val = constMatch[4]||"", state.push(`CONST ${name}:${type} = ${val}`), IF constMatch[1]: exportsList.push(name), continue;
+    flushBlock()
+    flushStruct()
+    flushEnum()
+    RETURN {imports,types,state,ops,privateOps,exports:exportsList}
+
+EXPORTS: RustParser
+
+
+// --- File: src/test_runner.ts ---
+CGE/1.0 test_runner (TypeScript)
+
+IMPORTS:
+  CGECompiler from ./cge_compiler
+  * as assert from assert
+
+PRIVATE:
+  runTests()->void:
+    compiler = new CGECompiler()
+    tsCode = `
+    import { useState } from "react";
+    
+    export interface User {
+      id: string;
+      email: string;
+      isActive: boolean;
+    }
+
+    export const useAuth = (email: string) => {
+      if (!email) throw new Error("no_email");
+      return { loggedIn: true };
+    };
+
+    export class AuthService {
+      private endpoint: string = "api/auth";
+
+      public async login(email: string): Promise<string> {
+        if (!email) {
+          throw new Error("invalid");
+        }
+        return "token123";
+      }
+    }
+  `
+    tsCGE = compiler.compileCode(tsCode,"typescript","AuthService.ts")
+    assert.ok(tsCGE.includes("CGE/1.0 AuthService (TypeScript)"),"TS Header assertion failed")
+    assert.ok(tsCGE.includes("EXPORT User{id:S, email:S, isActive:B}"),"TS Interface type folding assertion failed")
+    assert.ok(tsCGE.includes("EXPORT useAuth(email:S)"),"TS Exported Hook assertion failed")
+    assert.ok(tsCGE.includes("GUARD !email THROW new Error("no_email")"),"TS Hook Guard statement assertion failed")
+    assert.ok(tsCGE.includes("EXPORT AuthService.login(email:S)->Promise<S>:
+    GUARD !email THROW new Error("invalid")"),"TS Method Guard statement assertion failed")
+    assert.ok(tsCGE.includes("EXPORTS: User, useAuth, AuthService"),"TS Exports list assertion failed")
+    pyCode = `
+from datetime import datetime
+from typing import List, Optional
+
+class UserProfile:
+    id: str
+    email: str
+    created_at: datetime
+
+TOKEN_EXPIRY = 900000
+
+def _get_hash(password: str) -> str:
+    return "hashed"
+
+def verify_user(user: UserProfile) -> bool:
+    if not user:
+        raise ValueError("missing_user")
+    
+    for item in user.items:
+        if item.val == 10:
+            return True
+            
+    return False
+  `
+    pyCGE = compiler.compileCode(pyCode,"python","user_profile.py")
+    assert.ok(pyCGE.includes("CGE/1.0 user_profile (Python)"),"Python Header assertion failed")
+    assert.ok(pyCGE.includes("UserProfile{id:S, email:S, created_at:D}"),"Python Class mapping failed")
+    assert.ok(pyCGE.includes("CONST TOKEN_EXPIRY:any = 900000"),"Python Constant mapping failed")
+    assert.ok(pyCGE.includes("PRIVATE:
+  _get_hash(password:S)->S:"),"Python Private Op mapping failed")
+    assert.ok(pyCGE.includes("verify_user(user:UserProfile)->B:"),"Python Public Op mapping failed")
+    assert.ok(pyCGE.includes("GUARD not user THROW ValueError("missing_user")"),"Python Guard statement failed")
+    assert.ok(pyCGE.includes("SCAN user.items FOR item -> GUARD item.val == 10 RETURN True"),"Python SCAN loop statement failed")
+    rustCode = `
+    use std::collections::HashMap;
+
+    pub struct UserSession {
+        pub token: String,
+        pub user_id: u64,
+    }
+
+    pub enum UserRole {
+        Admin,
+        User,
+    }
+
+    const MAX_ATTEMPTS: u32 = 5;
+
+    pub fn validate(session: UserSession) -> bool {
+        if session.token.is_empty() {
+            return false;
+        }
+        true
+    }
+
+    fn internal_check() -> () {
+        println!("internal");
+    }
+  `
+    rustCGE = compiler.compileCode(rustCode,"rust","session.rs")
+    assert.ok(rustCGE.includes("CGE/1.0 session (Rust)"),"Rust Header assertion failed")
+    assert.ok(rustCGE.includes("UserSession{token:S, user_id:N}"),"Rust Struct mapping failed")
+    assert.ok(rustCGE.includes("UserRole = Admin|User"),"Rust Enum mapping failed")
+    assert.ok(rustCGE.includes("CONST MAX_ATTEMPTS:N = 5"),"Rust Constant mapping failed")
+    assert.ok(rustCGE.includes("validate(session:UserSession)->B:"),"Rust Public Op signature failed")
+    assert.ok(rustCGE.includes("GUARD session.token.is_empty() RETURN false"),"Rust Guard statement mapping failed")
+    assert.ok(rustCGE.includes("PRIVATE:
+  internal_check()->void:"),"Rust Private Op mapping failed")
+
+
+// --- File: src/typescript_parser.ts ---
+CGE/1.0 typescript_parser (TypeScript)
+
+IMPORTS:
+  * as ts from typescript
+  CGEParser from ./cge_parser
+  * as path from path
+
+OPS:
+  EXPORT TypeScriptParser.parse(code:S, fileName:S)->{
+    imports: string[];
+    types: string[];
+    state: string[];
+    ops: string[];
+    privateOps: string[];
+    exports: string[];
+  }:
+    sourceFileName = fileName||"temp.ts"
+    sourceFile = ts.createSourceFile(sourceFileName,code,ts.ScriptTarget.ES2022,true)
+    componentName = path.basename(sourceFileName,path.extname(sourceFileName))
+    imports = []
+    types = []
+    state = []
+    ops = []
+    privateOps = []
+    exportsList = []
+    ts.forEachChild(sourceFile,(node)=>IF ts.isImportDeclaration(node): importStr = this.formatImport(node), IF importStr: imports.push(importStr) ELSE IF ts.isInterfaceDeclaration(node)||ts.isTypeAliasDeclaration(node): isExport = this.isExported(node), prefix = isExport?"EXPORT":"", types.push(`${prefix}${this.formatTypeDeclaration(node)}`), IF isExport: exportsList.push(node.name.text) ELSE IF ts.isClassDeclaration(node): className = node.name?node.name.text:"AnonymousClass", isClassExport = this.isExported(node), IF isClassExport: exportsList.push(className), node.members.forEach((member)=>IF ts.isPropertyDeclaration(member): prefix = isClassExport?"EXPORT":"", state.push(`${prefix}${className}.${this.formatProperty(member)}`) ELSE IF ts.isMethodDeclaration(member): isPrivate = this.hasModifier(member,ts.SyntaxKind.PrivateKeyword), methodStr = this.formatMethod(member), prefix = (isClassExport&&!isPrivate)?"EXPORT":"", IF isPrivate: privateOps.push(`${className}.${methodStr}`) ELSE ops.push(`${prefix}${className}.${methodStr}`)) ELSE IF ts.isVariableStatement(node): isExport = this.isExported(node), isConst = (node.declarationList.flags&ts.NodeFlags.Const)!==0, node.declarationList.declarations.forEach((decl)=>IF isExport&&ts.isIdentifier(decl.name)&&decl.name.text.startsWith("use")&&decl.initializer&&(ts.isArrowFunction(decl.initializer)||ts.isFunctionExpression(decl.initializer)): exportsList.push(decl.name.text), ops.push(`EXPORT ${this.formatExportedHook(decl.name.text,decl.initializer)}`) ELSE name = decl.name.getText(), typeStr = decl.type?this.mapType(decl.type):"any", initStr = decl.initializer?this.exprToString(decl.initializer):"", prefix = isConst?"CONST":"", exportPrefix = isExport?"EXPORT":"", formatted = `${exportPrefix}${prefix}${name}:${typeStr}${initStr?"="+initStr:""}`, state.push(formatted), IF isExport: exportsList.push(name)) ELSE IF ts.isFunctionDeclaration(node): funcName = node.name?node.name.text:"anonymous", isExport = this.isExported(node), funcStr = this.formatFunction(node), prefix = isExport?"EXPORT":"", IF isExport: exportsList.push(funcName), ops.push(`${prefix}${funcStr}`) ELSE privateOps.push(funcStr))
+    RETURN {imports,types,state,ops,privateOps,exports:exportsList}
+
+PRIVATE:
+  TypeScriptParser.formatImport(node:ts.ImportDeclaration)->S:
+    moduleSpecifier = node.moduleSpecifier.getText().replace(/['"]/g,"")
+    GUARD !node.importClause RETURN ""
+    clause = node.importClause
+    parts = []
+    IF clause.name: parts.push(clause.name.text)
+    IF clause.namedBindings: IF ts.isNamespaceImport(clause.namedBindings): parts.push(`* as ${clause.namedBindings.name.text}`) ELSE IF ts.isNamedImports(clause.namedBindings): specifiers = clause.namedBindings.elements.map((el)=>el.name.text), parts.push(specifiers.join(","))
+    RETURN `${parts.join(", ")} from ${moduleSpecifier}`
+  TypeScriptParser.formatTypeDeclaration(node:ts.InterfaceDeclaration|ts.TypeAliasDeclaration)->S:
+    name = node.name.text
+    IF ts.isInterfaceDeclaration(node): fields = node.members.filter(ts.isPropertySignature).map((member)=>fieldName = member.name.getText()
+optional = member.questionToken?"?":""
+typeStr = this.mapType(member.type)
+RETURN `${fieldName}${optional}:${typeStr}`), RETURN `${name}{${fields.join(", ")}}` ELSE typeStr = this.mapType(node.type), IF ts.isTypeLiteralNode(node.type): fields = node.type.members.filter(ts.isPropertySignature).map((member)=>fieldName = member.name.getText()
+optional = member.questionToken?"?":""
+typeStr = this.mapType(member.type)
+RETURN `${fieldName}${optional}:${typeStr}`), RETURN `${name}{${fields.join(", ")}}`, RETURN `${name} = ${typeStr}`
+  TypeScriptParser.formatProperty(node:ts.PropertyDeclaration)->S:
+    name = node.name.getText()
+    typeStr = node.type?this.mapType(node.type):"any"
+    initStr = node.initializer?this.exprToString(node.initializer):""
+    isConst = this.hasModifier(node,ts.SyntaxKind.ReadonlyKeyword)
+    prefix = isConst?"CONST":""
+    RETURN `${prefix}${name}:${typeStr}${initStr?"="+initStr:""}`
+  TypeScriptParser.formatMethod(node:ts.MethodDeclaration)->S:
+    name = node.name.getText()
+    params = node.parameters.map((p)=>pName = p.name.getText()
+pType = p.type?this.mapType(p.type):"any"
+RETURN `${pName}:${pType}`).join(", ")
+    retType = node.type?this.mapType(node.type):"void"
+    bodyStr = node.body?this.summarizeBody(node.body,""):""
+    RETURN `${name}(${params})->${retType}:${bodyStr?"\n"+bodyStr:"void"}`
+  TypeScriptParser.formatFunction(node:ts.FunctionDeclaration)->S:
+    name = node.name?node.name.getText():"anonymous"
+    params = node.parameters.map((p)=>pName = p.name.getText()
+pType = p.type?this.mapType(p.type):"any"
+RETURN `${pName}:${pType}`).join(", ")
+    retType = node.type?this.mapType(node.type):"void"
+    bodyStr = node.body?this.summarizeBody(node.body,""):""
+    RETURN `${name}(${params})->${retType}:${bodyStr?"\n"+bodyStr:"void"}`
+  TypeScriptParser.formatExportedHook(name:S, init:ts.ArrowFunction|ts.FunctionExpression)->S:
+    params = init.parameters.map((p)=>pName = p.name.getText()
+pType = p.type?this.mapType(p.type):"any"
+RETURN `${pName}:${pType}`).join(", ")
+    bodyStr = ""
+    IF init.body: IF ts.isBlock(init.body): bodyStr=this.summarizeBody(init.body,"    ") ELSE bodyStr=`    RETURN ${this.exprToString(init.body)}`
+    RETURN `${name}(${params}) ->
+${bodyStr}`
+  TypeScriptParser.mapType(node:ts.TypeNode|undefined)->S:
+    GUARD !node RETURN "any"
+    switch (node.kind) {
+      case ts.SyntaxKind.StringKeyword: return "S";
+      c
+    IF ts.isTypeReferenceNode(node): name = node.typeName.getText(), GUARD name==="string" RETURN "S", GUARD name==="number" RETURN "N", GUARD name==="boolean" RETURN "B", GUARD name==="Date" RETURN "D", IF node.typeArguments&&node.typeArguments.length>0: args = node.typeArguments.map((t)=>this.mapType(t)).join(", "), RETURN `${name}<${args}>`, RETURN name
+    GUARD ts.isArrayTypeNode(node) RETURN `${this.mapType(node.elementType)}[]`
+    GUARD ts.isUnionTypeNode(node) RETURN node.types.map((t)=>this.mapType(t)).join("|")
+    GUARD ts.isLiteralTypeNode(node) RETURN node.literal.getText()
+    IF ts.isFunctionTypeNode(node): params = node.parameters.map((p)=>this.mapType(p.type)).join(", "), ret = this.mapType(node.type), RETURN `(${params})->${ret}`
+    RETURN node.getText()
+  TypeScriptParser.exprToString(expr:ts.Expression)->S:
+    GUARD ts.isIdentifier(expr) RETURN expr.text
+    GUARD ts.isStringLiteral(expr) RETURN `"${expr.text}"`
+    GUARD ts.isNoSubstitutionTemplateLiteral(expr) RETURN ``${expr.text}``
+    GUARD ts.isNumericLiteral(expr)||expr.kind===ts.SyntaxKind.TrueKeyword||expr.kind===ts.SyntaxKind.FalseKeyword||expr.kind===ts.SyntaxKind.NullKeyword RETURN expr.getText()
+    GUARD ts.isPropertyAccessExpression(expr) RETURN `${this.exprToString(expr.expression)}.${expr.name.text}`
+    GUARD ts.isAwaitExpression(expr) RETURN `await ${this.exprToString(expr.expression)}`
+    IF ts.isCallExpression(expr): caller = this.exprToString(expr.expression), args = expr.arguments.map((a)=>this.exprToString(a)).join(","), IF caller==="useCallback": callback = expr.arguments[0], deps = expr.arguments[1]?this.exprToString(expr.arguments[1]):"", IF callback&&(ts.isArrowFunction(callback)||ts.isFunctionExpression(callback)): params = callback.parameters.map((p)=>p.name.getText()).join(","), body = ts.isBlock(callback.body)?this.summarizeBody(callback.body,"").trim():this.exprToString(callback.body), RETURN `useCallback((${params})=>${body},${deps})`, RETURN `${caller}(${args})`
+    GUARD ts.isBinaryExpression(expr) RETURN `${this.exprToString(expr.left)}${expr.operatorToken.getText()}${this.exprToString(expr.right)}`
+    GUARD ts.isPrefixUnaryExpression(expr) RETURN `${ts.tokenToString(expr.operator)}${this.exprToString(expr.operand)}`
+    GUARD ts.isPostfixUnaryExpression(expr) RETURN `${this.exprToString(expr.operand)}${ts.tokenToString(expr.operator)}`
+    IF ts.isNewExpression(expr): cls = this.exprToString(expr.expression), args = expr.arguments?expr.arguments.map((a)=>this.exprToString(a)).join(","):"", RETURN `new ${cls}(${args})`
+    IF ts.isObjectLiteralExpression(expr): props = expr.properties.map((p)=>IF ts.isPropertyAssignment(p): name = p.name.getText(), val = this.exprToString(p.initializer), RETURN `${name}:${val}`
+GUARD ts.isShorthandPropertyAssignment(p) RETURN p.name.getText()
+GUARD ts.isSpreadAssignment(p) RETURN `...${this.exprToString(p.expression)}`
+RETURN p.getText()).join(","), RETURN `{${props}}`
+    IF ts.isArrayLiteralExpression(expr): elems = expr.elements.map((e)=>this.exprToString(e)).join(","), RETURN `[${elems}]`
+    IF ts.isArrowFunction(expr)||ts.isFunctionExpression(expr): params = expr.parameters.map((p)=>p.name.getText()).join(","), body = "...", IF expr.body: IF ts.isBlock(expr.body): body=this.summarizeBody(expr.body,"").trim() ELSE body=this.exprToString(expr.body), RETURN `(${params})=>${body}`
+    IF ts.isTemplateExpression(expr): result = "`"+expr.head.text, expr.templateSpans.forEach((span)=>result+=`${${this.exprToString(span.expression)}}${span.literal.text}`), RETURN result+"`"
+    RETURN expr.getText().replace(/\s+/g,"")
+  TypeScriptParser.summarizeBody(body:ts.Block, indent:S)->S:
+    lines = []
+    body.statements.forEach((stmt)=>summarized = this.summarizeStatement(stmt,indent)
+IF summarized: lines.push(summarized))
+    RETURN lines.join("
+")
+  TypeScriptParser.summarizeStatement(stmt:ts.Statement, indent:S)->S:
+    IF ts.isIfStatement(stmt): cond = this.exprToString(stmt.expression), isGuard = this.checkIfGuard(stmt.thenStatement), IF isGuard: action = this.summarizeStatement(stmt.thenStatement,"").trim(), RETURN `${indent}GUARD ${cond} ${action}` ELSE thenStr = this.summarizeStatement(stmt.thenStatement,"").trim(), elseStr = "", IF stmt.elseStatement: elseStr=" ELSE "+this.summarizeStatement(stmt.elseStatement,"").trim(), RETURN `${indent}IF ${cond}: ${thenStr}${elseStr}`
+    IF ts.isThrowStatement(stmt): expr = stmt.expression?this.exprToString(stmt.expression):"", RETURN `${indent}THROW ${expr}`
+    IF ts.isReturnStatement(stmt): expr = stmt.expression?this.exprToString(stmt.expression):"void", RETURN `${indent}RETURN ${expr}`
+    IF ts.isTryStatement(stmt): tryLines = [], stmt.tryBlock.statements.forEach((s)=>line = this.summarizeStatement(s,"").trim()
+IF line: tryLines.push(line)), catchStr = "", IF stmt.catchClause: catchLines = [], stmt.catchClause.block.statements.forEach((s)=>line = this.summarizeStatement(s,"").trim()
+IF line: catchLines.push(line)), catchStr=` CATCH: ${catchLines.join(", ")}`, RETURN `${indent}TRY: ${tryLines.join(", ")}${catchStr}`
+    IF ts.isVariableStatement(stmt): decls = stmt.declarationList.declarations, summaries = decls.map((decl)=>name = decl.name.getText()
+init = decl.initializer?this.exprToString(decl.initializer):""
+IF init: GUARD ts.isObjectBindingPattern(decl.name)||ts.isArrayBindingPattern(decl.name) RETURN `DESTRUCTURE ${name} = ${init}`, RETURN `${name} = ${init}`
+RETURN name), RETURN `${indent}${summaries.join(", ")}`
+    IF ts.isExpressionStatement(stmt): exprStr = this.exprToString(stmt.expression), GUARD exprStr.startsWith("console.")||exprStr.startsWith("logger.") RETURN "", RETURN `${indent}${exprStr}`
+    IF ts.isBlock(stmt): sep = indent===""?",":"\n", RETURN stmt.statements.map((s)=>this.summarizeStatement(s,indent)).filter(Boolean).join(sep)
+    IF ts.isForOfStatement(stmt)||ts.isForInStatement(stmt)||ts.isForStatement(stmt): loopVar = ts.isForOfStatement(stmt)||ts.isForInStatement(stmt)?stmt.initializer.getText():"i", expr = ts.isForOfStatement(stmt)||ts.isForInStatement(stmt)?this.exprToString(stmt.expression):"", body = this.summarizeStatement(stmt.statement,"").trim(), RETURN `${indent}SCAN ${expr} FOR ${loopVar} -> ${body}`
+    RETURN `${indent}${stmt.getText().trim().substring(0,80)}`
+  TypeScriptParser.checkIfGuard(stmt:ts.Statement)->B:
+    GUARD ts.isThrowStatement(stmt)||ts.isReturnStatement(stmt) RETURN true
+    IF ts.isBlock(stmt)&&stmt.statements.length===1: first = stmt.statements[0], RETURN !!first&&this.checkIfGuard(first)
+    RETURN false
+  TypeScriptParser.isExported(node:ts.Node)->B:
+    RETURN ((ts.getCombinedModifierFlags(nodeasts.Declaration)&ts.ModifierFlags.Export)!==0||(!!node.parent&&node.parent.kind===ts.SyntaxKind.SourceFile&&ts.isExportAssignment(node)))
+  TypeScriptParser.hasModifier(node:ts.Node, kind:ts.SyntaxKind)->B:
+    modifiers = ts.canHaveModifiers(node)?ts.getModifiers(node):undefined
+    RETURN !!modifiers&&modifiers.some((m)=>m.kind===kind)
+
+EXPORTS: TypeScriptParser
+
+
