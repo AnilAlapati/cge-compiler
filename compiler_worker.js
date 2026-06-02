@@ -1078,6 +1078,7 @@ fn internal_hash(val: String) -> () {
 }`
 };
 
+// =========================================================================
 
 self.addEventListener('message', function(e) {
   const data = e.data;

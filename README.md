@@ -15,7 +15,7 @@ Large Language Models (LLMs) are revolutionary software engineering assistants, 
 2. **Context Amnesia**: Sliding-window context limits cause the LLM to forget earlier system instructions and constraints.
 3. **Attention Dilution**: Verbatim syntax boilerplate hides the actual logical transitions from the model.
 
-**CGE Compiler** solves this by programmatically parsing TypeScript files into an Abstract Syntax Tree (AST) and translating the structural logic into a unified, high-density notation called **Cognitive Graph Encoding (CGE)**.
+**CGE Compiler** solves this by programmatically parsing **TypeScript**, **Python**, and **Rust** files into Abstract Syntax Trees (AST) and translating structural logic into a unified, high-density notation called **Cognitive Graph Encoding (CGE)**.
 
 ```
        Original Source Code                     Cognitive Graph Encoding (CGE)
@@ -81,20 +81,32 @@ cd cge-compiler
 npm install
 ```
 
-### 2. Run the Compiler
-Compile any TypeScript file directly into CGE shorthand notation:
+### 2. Compile to a File
+Compile any file or directory directly into CGE shorthand notation file:
 ```bash
-npm run compile -- src/middleware.ts src/middleware.cge.txt
+# Usage: npm run compile -- <inputFileOrDir> <outputFile>
+npm run compile -- src/ test_results/compiled_project.cge
 ```
+
+### 3. Compile and Copy Directly to Clipboard
+Compiles files or directories and pipes the CGE shorthand directly to your clipboard for instant pasting into ChatGPT, Claude, or other LLMs:
+```bash
+# Usage: npm run cge-copy -- [targetDirOrFile]
+# If target is omitted, compiles the current directory.
+npm run cge-copy -- src/cli
+```
+
+### 4. Interactive Web Playground
+Upload full project directory ZIPs in the premium glassmorphic playground UI to view real-time compilation breakdowns, token reductions, and ROI dollar estimates. The playground utilizes background Web Workers for asynchronous compilation, ensuring the main UI thread remains smooth.
 
 ---
 
 ## 💼 Recruiter & Collaborator Reference
 
 This project highlights advanced skills in:
-* **Compiler & Language Engineering**: Operating with ASTs, lexical tokens, and source-to-source compilers using the **TypeScript Compiler API**.
-* **System Design & LLM Architecture**: Designing high-efficiency prompt-compression formats and state context management tools.
-* **Advanced TypeScript**: Leveraging deep static analysis tools to programmatically interpret code behavior.
+* **Compiler & Language Engineering**: Building robust parsers for TypeScript (using TypeScript Compiler API), Python (indentation-aware syntax mapping), and Rust (structural analysis).
+* **System Design & LLM Architecture**: Designing high-efficiency prompt-compression systems, verified by Closed-Loop Neural Reconstruction (CLNR) testing.
+* **Advanced Async Client Architectures**: Implementing Web Worker offloading in modern glassmorphic web dashboards for intensive multi-file compactions.
 
 ---
 
