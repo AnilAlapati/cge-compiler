@@ -1938,31 +1938,30 @@ ${textContent}`;
       let totalProcessed = 0;
       let totalExcluded = 0;
       
+      // Compute counts first
+      Object.entries(extensionCounts).forEach(([ext, count]) => {
+        if (processedExts.includes(ext)) {
+          totalProcessed += count;
+        } else {
+          totalExcluded += count;
+        }
+      });
+      
+      // Render ONLY the compiled extensions in the final chips list
       const breakdownHTML = Object.entries(extensionCounts)
+        .filter(([ext]) => processedExts.includes(ext))
         .sort((a, b) => b[1] - a[1]) // Sort by count descending
         .map(([ext, count]) => {
-          const isProcessed = processedExts.includes(ext);
-          if (isProcessed) {
-            totalProcessed += count;
-          } else {
-            totalExcluded += count;
-          }
-          
-          const label = isProcessed ? "Compiled" : "Bypassed";
-          const chipClass = isProcessed ? "compiled" : "bypassed";
-          const badgeClass = isProcessed ? "compiled" : "bypassed";
-          
           return `
-            <div class="audit-chip-card ${chipClass}">
+            <div class="audit-chip-card compiled">
               <div class="audit-chip-left">
                 <span class="audit-chip-ext" title=".${ext}">.${ext}</span>
                 <span class="audit-chip-count">${count} ${count === 1 ? 'file' : 'files'}</span>
               </div>
-              <span class="audit-chip-badge ${badgeClass}">${label}</span>
+              <span class="audit-chip-badge compiled">Compiled</span>
             </div>
           `;
         }).join("");
-
 
       if (auditBreakdownList) auditBreakdownList.innerHTML = breakdownHTML;
       if (auditBreakdownSummary) {
@@ -2014,8 +2013,10 @@ ${textContent}`;
         }
         
         processedCount++;
-        // Keep UI responsive and let users read the beautiful cycling compile statuses
-        await new Promise(r => setTimeout(r, 80));
+        // Keep UI active and responsive without artificial delay (yield to main thread every 15 files)
+        if (processedCount % 15 === 0) {
+          await new Promise(r => setTimeout(r, 0));
+        }
       }
 
       // Calculate final stats
