@@ -1,0 +1,72 @@
+<html><head><title>CGE Parser Diagnostic</title></head>
+<body style="background:#111;color:#eee;font-family:monospace;padding:20px;">
+<h2>CGE Parser Diagnostic</h2>
+<h3>Test: Multi-line arrow function declarations</h3>
+<pre id="normalized" style="background:#1a1a1a;padding:16px;border:1px solid #333;border-radius:6px;overflow-x:auto;"></pre>
+<h3>Parsed OPS (should contain full function bodies):</h3>
+<pre id="ops" style="background:#1a1a1a;padding:16px;border:1px solid #333;border-radius:6px;overflow-x:auto;"></pre>
+<h3>Parsed STATE:</h3>
+<pre id="state" style="background:#1a1a1a;padding:16px;border:1px solid #333;border-radius:6px;overflow-x:auto;"></pre>
+<h3>Full Result:</h3>
+<pre id="out" style="background:#1a1a1a;padding:16px;border:1px solid #333;border-radius:6px;overflow-x:auto;font-size:11px;"></pre>
+<script src="playground.js"></script>
+<script>
+const testCode = `import { db } from "@/config/firebase";
+import { collection, doc, getDoc, getDocs, query, where, addDoc } from "firebase/firestore";
+
+export interface FollowDocument {
+  id: string;
+  followerId: string;
+  followingId: string;
+}
+
+export const FOLLOWS_COLLECTION = "follows";
+
+export const isFollowing = async (
+  followerId: string,
+  followingId: string
+): Promise<boolean> => {
+  const followRef = doc(db, FOLLOWS_COLLECTION, followerId + "_" + followingId);
+  const followSnap = await getDoc(followRef);
+  return followSnap.exists();
+};
+
+export const followUser = async (
+  followerId: string,
+  followingId: string
+): Promise<void> => {
+  if (!followerId || !followingId) {
+    throw new Error("Invalid IDs");
+  }
+  const followData = {
+    followerId,
+    followingId,
+    createdAt: Date.now()
+  };
+  await addDoc(collection(db, FOLLOWS_COLLECTION), followData);
+};
+
+export async function getFollowers(userId: string): Promise<string[]> {
+  const q = query(collection(db, FOLLOWS_COLLECTION), where("followingId", "==", userId));
+  const snapshot = await getDocs(q);
+  return snapshot.docs.map(d => d.data().followerId);
+}`;
+
+const parser = new TypeScriptClientParser();
+
+// Show normalized lines
+const rawLines = testCode.split("\\n");
+const normalized = parser.normalizeLines(rawLines);
+document.getElementById('normalized').textContent = 
+  "NORMALIZED LINES:\\n" + normalized.map((l, i) => \`\${i}: \${l}\`).join("\\n");
+
+const result = parser.parse(testCode);
+
+document.getElementById('ops').textContent = result.ops.length > 0 
+  ? result.ops.join("\\n\\n") 
+  : "⚠️ NO OPS FOUND - parser is still broken";
+
+document.getElementById('state').textContent = result.state.join("\\n");
+
+document.getElementById('out').textContent = JSON.stringify(result, null, 2);
+</script></body></html>
