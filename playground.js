@@ -2469,6 +2469,9 @@ document.addEventListener("DOMContentLoaded", () => {
     if (currentOutputMode === "visual") {
       renderVisualAST();
     }
+    
+    // Check if we should prompt the user for feedback
+    if (window.triggerFeedbackAutoPrompt) window.triggerFeedbackAutoPrompt();
   }
 
   // --- Debounced compile handler ---
@@ -3025,6 +3028,9 @@ ${textContent}`;
       if (auditResults) auditResults.style.display = "flex";
       showToast("💼 Codebase Compaction & ROI Audit completed!");
       hasActiveAudit = true;
+      
+      // Check if we should prompt the user for feedback
+      if (window.triggerFeedbackAutoPrompt) window.triggerFeedbackAutoPrompt();
 
       // Hide dropzone container and show full-width results dashboard inside left card
       if (inputContainerZip) inputContainerZip.style.display = "none";
@@ -3065,6 +3071,101 @@ ${textContent}`;
       return e.returnValue;
     }
   });
+
+  // --- Feedback UI Logic ---
+  const feedbackFab = document.getElementById("feedback-fab");
+  const feedbackModal = document.getElementById("feedback-modal");
+  const feedbackClose = document.getElementById("feedback-close");
+  const feedbackForm = document.getElementById("feedback-form");
+  const fbSubmitBtn = document.getElementById("fb-submit-btn");
+
+  const openFeedbackModal = () => {
+    if (feedbackModal) {
+      feedbackModal.classList.add("active");
+    }
+  };
+
+  const closeFeedbackModal = () => {
+    if (feedbackModal) {
+      feedbackModal.classList.remove("active");
+      // Record that we showed the modal or they closed it to prevent spam
+      localStorage.setItem("cge_last_feedback_prompt", Date.now().toString());
+    }
+  };
+
+  if (feedbackFab) feedbackFab.addEventListener("click", openFeedbackModal);
+  if (feedbackClose) feedbackClose.addEventListener("click", closeFeedbackModal);
+  if (feedbackModal) {
+    feedbackModal.addEventListener("click", (e) => {
+      if (e.target === feedbackModal) closeFeedbackModal();
+    });
+  }
+
+  if (feedbackForm) {
+    feedbackForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      
+      const formData = new FormData(feedbackForm);
+      const actionUrl = feedbackForm.getAttribute("action");
+      
+      fbSubmitBtn.textContent = "Sending...";
+      fbSubmitBtn.disabled = true;
+
+      // Mock submit if user hasn't added Formspree ID yet
+      if (actionUrl.includes("YOUR_FORM_ID_HERE")) {
+        setTimeout(() => {
+          showToast("✅ Feedback sent! (Dev Mode: Endpoint needed)");
+          console.log("Feedback payload:", Object.fromEntries(formData.entries()));
+          feedbackForm.reset();
+          closeFeedbackModal();
+          fbSubmitBtn.textContent = "Send Feedback";
+          fbSubmitBtn.disabled = false;
+        }, 800);
+        return;
+      }
+
+      // Real submit to Formspree
+      try {
+        const response = await fetch(actionUrl, {
+          method: "POST",
+          body: formData,
+          headers: {
+            'Accept': 'application/json'
+          }
+        });
+        
+        if (response.ok) {
+          showToast("✅ Thank you for your feedback!");
+          feedbackForm.reset();
+          closeFeedbackModal();
+        } else {
+          showToast("❌ Oops! There was a problem submitting your feedback.");
+        }
+      } catch (err) {
+        showToast("❌ Oops! Network error. Please try again later.");
+      } finally {
+        fbSubmitBtn.textContent = "Send Feedback";
+        fbSubmitBtn.disabled = false;
+      }
+    });
+  }
+
+  // --- Auto-Prompt Feedback Logic ---
+  let hasAutoPrompted = false;
+  window.triggerFeedbackAutoPrompt = () => {
+    if (hasAutoPrompted) return;
+    
+    const lastPrompt = localStorage.getItem("cge_last_feedback_prompt");
+    const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
+    
+    // Auto-prompt if they've never been prompted, or it's been > 7 days
+    if (!lastPrompt || (Date.now() - parseInt(lastPrompt)) > SEVEN_DAYS_MS) {
+      hasAutoPrompted = true;
+      setTimeout(() => {
+        openFeedbackModal();
+      }, 5000);
+    }
+  };
 
   // --- Initial load ---
   codeInput.value = templates[currentLang];
