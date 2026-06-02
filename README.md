@@ -179,7 +179,6 @@ While CGE is incredibly powerful, aggressive compression inherently involves tra
 * **Heavy Decorators**: Frameworks like NestJS or Angular that rely heavily on metadata decorators may lose some wiring context.
 * **Complex Generics**: Highly nested or inferred generics may be simplified into `any` or `T`.
 * **Code generation / Macros**: Rust macros or C++ preprocessor directives are largely bypassed.
-
 ---
 
 ## 💼 Skills & Technical Implementation
