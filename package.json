@@ -4,7 +4,9 @@
   "description": "[![TypeScript](https://img.shields.io/badge/Language-TypeScript-blue.svg)](https://www.typescriptlang.org/) [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](https://opensource.org/licenses/MIT) [![Build Status](https://img.shields.io/badge/Build-Passing-brightgreen.svg)]()",
   "main": "index.js",
   "scripts": {
-    "test": "ts-node src/test_runner.ts"
+    "test": "ts-node src/test_runner.ts",
+    "compile": "ts-node src/cge_compiler_runner.ts",
+    "cge-copy": "ts-node src/cli/clipboard_tool.ts"
   },
   "repository": {
     "type": "git",

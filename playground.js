@@ -1980,6 +1980,20 @@ ${textContent}`;
       let totalCompChars = 0;
       let processedCount = 0;
 
+      // Instantiate a background worker for AST logic to prevent main thread blocking
+      const worker = new Worker("compiler_worker.js");
+      let workerIdCounter = 0;
+      const pendingCompiles = new Map();
+
+      worker.onmessage = (e) => {
+        const { id, type, result, error } = e.data;
+        if (pendingCompiles.has(id)) {
+          if (type === 'success') pendingCompiles.get(id).resolve(result);
+          else pendingCompiles.get(id).reject(new Error(error));
+          pendingCompiles.delete(id);
+        }
+      };
+
       for (let i = 0; i < processedFiles.length; i++) {
         const name = processedFiles[i];
         const ext = name.split(".").pop().toLowerCase();
@@ -2005,7 +2019,13 @@ ${textContent}`;
         const content = await zip.files[name].async("string");
         
         try {
-          const compiled = compiler.compile(content, lang, name);
+          // Offload compilation to Web Worker
+          const compiled = await new Promise((resolve, reject) => {
+            const id = workerIdCounter++;
+            pendingCompiles.set(id, { resolve, reject });
+            worker.postMessage({ id, type: 'compile', content, lang, name });
+          });
+          
           totalOrigChars += content.length;
           totalCompChars += compiled.text.length;
         } catch (compileErr) {
@@ -2013,11 +2033,10 @@ ${textContent}`;
         }
         
         processedCount++;
-        // Keep UI active and responsive without artificial delay (yield to main thread every 15 files)
-        if (processedCount % 15 === 0) {
-          await new Promise(r => setTimeout(r, 0));
-        }
       }
+      
+      // Cleanup worker after zip processing completes
+      worker.terminate();
 
       // Calculate final stats
       const totalOrigTokens = Math.ceil(totalOrigChars / 4) + (processedCount * 12);

@@ -21,9 +21,52 @@ function run() {
     process.exit(1);
   }
 
+  const inputStats = fs.statSync(inputFile);
+  const filesToCompile: string[] = [];
+
+  function walkDir(dir: string) {
+    const files = fs.readdirSync(dir);
+    for (const file of files) {
+      const fullPath = path.join(dir, file);
+      if (fs.statSync(fullPath).isDirectory()) {
+        walkDir(fullPath);
+      } else {
+        const ext = path.extname(fullPath).toLowerCase();
+        if ([".ts", ".tsx", ".js", ".jsx", ".py", ".rs"].includes(ext)) {
+          filesToCompile.push(fullPath);
+        }
+      }
+    }
+  }
+
+  if (inputStats.isDirectory()) {
+    console.log(`Scanning directory: ${inputFile}`);
+    walkDir(inputFile);
+  } else {
+    filesToCompile.push(inputFile);
+  }
+
+  if (filesToCompile.length === 0) {
+    console.error("No supported files found to compile.");
+    process.exit(1);
+  }
+
   try {
-    const compiler = new CGECompiler([inputFile]);
-    const cgeOutput = compiler.compile(inputFile);
+    const compiler = new CGECompiler(filesToCompile);
+    let combinedOutput = "";
+    let totalOrigChars = 0;
+    let totalOrigLines = 0;
+    let totalOrigWords = 0;
+
+    for (const file of filesToCompile) {
+      const cgeOutput = compiler.compile(file);
+      combinedOutput += `// --- File: ${path.relative(process.cwd(), file)} ---\n` + cgeOutput + "\n\n";
+
+      const originalText = fs.readFileSync(file, "utf-8");
+      totalOrigChars += originalText.length;
+      totalOrigLines += originalText.split("\n").length;
+      totalOrigWords += originalText.split(/\s+/).length;
+    }
 
     // Ensure output directory exists
     const outDir = path.dirname(outputFile);
@@ -31,28 +74,24 @@ function run() {
       fs.mkdirSync(outDir, { recursive: true });
     }
 
-    fs.writeFileSync(outputFile, cgeOutput, "utf-8");
-    console.log(`Successfully compiled! Written to: ${outputFile}`);
+    fs.writeFileSync(outputFile, combinedOutput, "utf-8");
+    console.log(`Successfully compiled ${filesToCompile.length} files! Written to: ${outputFile}`);
 
     // Compute Compression Stats
-    const originalText = fs.readFileSync(inputFile, "utf-8");
-    const origChars = originalText.length;
-    const origLines = originalText.split("\n").length;
-    const origWords = originalText.split(/\s+/).length;
-    const origTokens = Math.ceil(origChars / 4);
+    const origTokens = Math.ceil(totalOrigChars / 4);
 
-    const compChars = cgeOutput.length;
-    const compLines = cgeOutput.split("\n").length;
-    const compWords = cgeOutput.split(/\s+/).length;
+    const compChars = combinedOutput.length;
+    const compLines = combinedOutput.split("\n").length;
+    const compWords = combinedOutput.split(/\s+/).length;
     const compTokens = Math.ceil(compChars / 4);
 
     console.log("\n============================================================");
     console.log("CGE COMPILATION STATS REPORT");
     console.log("============================================================");
-    console.log(`Original Code:    ${origLines} lines | ${origWords} words | ${origChars} chars | ~${origTokens} tokens`);
+    console.log(`Original Code:    ${totalOrigLines} lines | ${totalOrigWords} words | ${totalOrigChars} chars | ~${origTokens} tokens`);
     console.log(`Compressed (CGE): ${compLines} lines | ${compWords} words | ${compChars} chars | ~${compTokens} tokens`);
     console.log("------------------------------------------------------------");
-    console.log(`Line Reduction:   ${(origLines / compLines).toFixed(1)}x smaller (${origLines - compLines} lines saved)`);
+    console.log(`Line Reduction:   ${(totalOrigLines / compLines).toFixed(1)}x smaller (${totalOrigLines - compLines} lines saved)`);
     console.log(`Token Savings:     ~${(origTokens / compTokens).toFixed(1)}x smaller (~${origTokens - compTokens} tokens saved)`);
     console.log("============================================================");
 
