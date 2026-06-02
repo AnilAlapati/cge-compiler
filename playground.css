@@ -2076,3 +2076,80 @@ body {
   box-shadow: 0 0 15px rgba(251, 191, 36, 0.2);
 }
 
+/* =========================================================================
+   Why CGE? Section Styles — Intent & Value Proposition
+   ========================================================================= */
+.why-section {
+  padding: 60px 0 40px;
+  border-bottom: 1px solid var(--border-subtle);
+  text-align: center;
+}
+
+.why-title {
+  font-family: var(--font-heading);
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 8px;
+  letter-spacing: -0.5px;
+}
+
+.why-subtitle {
+  font-size: 0.92rem;
+  color: var(--text-secondary);
+  max-width: 620px;
+  margin: 0 auto 40px;
+  line-height: 1.55;
+  font-weight: 400;
+}
+
+.why-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 24px;
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
+.why-card {
+  background: rgba(10, 10, 12, 0.3);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 14px;
+  padding: 24px;
+  text-align: left;
+  transition: all 0.3s var(--transition-easing);
+  display: flex;
+  flex-direction: column;
+}
+
+.why-card:hover {
+  border-color: rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.02);
+  transform: translateY(-3px);
+  box-shadow: 0 12px 24px -10px rgba(0, 0, 0, 0.8);
+}
+
+.why-icon {
+  font-size: 1.6rem;
+  margin-bottom: 14px;
+}
+
+.why-card-title {
+  font-family: var(--font-heading);
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 8px;
+  letter-spacing: -0.2px;
+}
+
+.why-card-desc {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  line-height: 1.5;
+  margin: 0;
+}
+
+
