@@ -1741,29 +1741,93 @@ const templates = {
 export interface User {
   id: string;
   email: string;
+  role: "admin" | "user" | "guest";
   isActive: boolean;
 }
 
+export interface AuthSession {
+  token: string;
+  expiresAt: number;
+  scopes: string[];
+}
+
+export interface SecurityLog {
+  timestamp: number;
+  event: string;
+  ipAddress: string;
+}
+
+const SESSION_TIMEOUT_MS = 3600000;
+const MAX_RETRY_ATTEMPTS = 3;
+
 export const useAuthActions = (userId: string) => {
   const [user, setUser] = useState<User | null>(null);
+  const [session, setSession] = useState<AuthSession | null>(null);
+  const [logs, setLogs] = useState<SecurityLog[]>([]);
 
-  const login = async (email: string) => {
+  const login = async (email: string, mfaCode?: string) => {
     if (!email) {
-      throw new Error("Invalid email");
+      throw new Error("Invalid email address provided");
     }
-    const token = await api.auth.login(email);
+    if (email.indexOf("@") === -1) {
+      throw new Error("Email must contain @ character");
+    }
+    const token = await api.auth.login(email, mfaCode);
     return token;
   };
 
+  const logout = async () => {
+    if (!session) {
+      return false;
+    }
+    await api.auth.revoke(session.token);
+    setSession(null);
+    setUser(null);
+    return true;
+  };
+
   const verifySession = () => {
-    const sessions = getSessions();
-    for (const session of sessions) {
-      if (session.active) return true;
+    if (!session) {
+      return false;
+    }
+    if (Date.now() > session.expiresAt) {
+      return false;
+    }
+    const activeScopes = session.scopes;
+    for (const scope of activeScopes) {
+      if (scope === "admin") return true;
     }
     return false;
   };
 
-  return { user, login };
+  const auditLogs = () => {
+    const activeLogs = logs;
+    for (const log of activeLogs) {
+      if (log.event === "unauthorized") return true;
+    }
+    return false;
+  };
+
+  const hasPermission = (requiredScope: string) => {
+    if (!session) {
+      return false;
+    }
+    const scopes = session.scopes;
+    for (const scope of scopes) {
+      if (scope === requiredScope) return true;
+    }
+    return false;
+  };
+
+  return {
+    user,
+    session,
+    login,
+    logout,
+    verifySession,
+    auditLogs,
+    hasPermission
+  };
 };`,
 
   python: `from datetime import datetime
