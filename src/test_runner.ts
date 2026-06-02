@@ -133,6 +133,105 @@ def verify_user(user: UserProfile) -> bool:
   assert.ok(rustCGE.includes("GUARD session.token.is_empty() RETURN false"), "Rust Guard statement mapping failed");
   assert.ok(rustCGE.includes("PRIVATE:\n  internal_check()->void:"), "Rust Private Op mapping failed");
   console.log("✅ Rust Parser: PASSED");
+  
+  // =========================================================================
+  // 4. Go Compiler Tests
+  // =========================================================================
+  console.log("🔹 Running Go Parser Tests...");
+  const goCode = `
+    package main
+    import "time"
+
+    type Config struct {
+        Endpoint string
+        Timeout  int
+    }
+
+    type Processor interface {
+        Process(data string) (bool, error)
+    }
+
+    const DefaultLimit = 100
+    var activeSession = "active"
+
+    func (c *Config) Setup(endpoint string) bool {
+        if endpoint == "" {
+            panic("empty_endpoint")
+        }
+        return true
+    }
+
+    func doWork(items []string) {
+        for _, val := range items {
+            if val == "skip" {
+                continue
+            }
+        }
+    }
+  `;
+
+  const goCGE = compiler.compileCode(goCode, "go", "Config.go");
+  console.log("Go CGE Output:\n", goCGE);
+
+  assert.ok(goCGE.includes("CGE/1.0 Config (Go)"), "Go Header assertion failed");
+  assert.ok(goCGE.includes("EXPORT Config{Endpoint:S, Timeout:N}"), "Go Struct mapping failed");
+  assert.ok(goCGE.includes("EXPORT Processor{Process(data:S)->B|error}"), "Go Interface mapping failed");
+  assert.ok(goCGE.includes("EXPORT CONST DefaultLimit:any = 100"), "Go Constant mapping failed");
+  assert.ok(goCGE.includes("activeSession:any = \"active\""), "Go Global Variable mapping failed");
+  assert.ok(goCGE.includes("EXPORT Config.Setup(endpoint:S)->B:"), "Go Struct Method signature failed");
+  assert.ok(goCGE.includes("GUARD endpoint == \"\" THROW \"empty_endpoint\""), "Go Guard panic translation failed");
+  assert.ok(goCGE.includes("doWork(items:S[])->void:"), "Go global function signature failed");
+  assert.ok(goCGE.includes("SCAN items FOR val -> GUARD val == \"skip\""), "Go range SCAN loop translation failed");
+  console.log("✅ Go Parser: PASSED");
+
+  // =========================================================================
+  // 5. C++ Compiler Tests
+  // =========================================================================
+  console.log("🔹 Running C++ Parser Tests...");
+  const cppCode = `
+    #include <string>
+    #include <vector>
+
+    struct AuthSession {
+        std::string token;
+        int expiry;
+    };
+
+    class AuthManager {
+    private:
+        std::string secretKey;
+        void internalInit() {
+            // init
+        }
+    public:
+        int activeAttempts = 0;
+        bool login(std::string email) {
+            if (email.empty()) {
+                throw std::invalid_argument("empty_email");
+            }
+            return true;
+        }
+    };
+
+    const int MAX_LIMIT = 50;
+
+    int main() {
+        return 0;
+    }
+  `;
+
+  const cppCGE = compiler.compileCode(cppCode, "cpp", "auth_manager.cpp");
+  console.log("C++ CGE Output:\n", cppCGE);
+
+  assert.ok(cppCGE.includes("CGE/1.0 auth_manager (Cpp)"), "C++ Header assertion failed");
+  assert.ok(cppCGE.includes("EXPORT AuthSession{token:S, expiry:N}"), "C++ Struct mapping failed");
+  assert.ok(cppCGE.includes("EXPORT AuthManager{activeAttempts:N}"), "C++ Class mapping failed");
+  assert.ok(cppCGE.includes("AuthManager.secretKey:S"), "C++ Class Private Member failed");
+  assert.ok(cppCGE.includes("EXPORT AuthManager.login(email:S)->B:"), "C++ Class Method signature failed");
+  assert.ok(cppCGE.includes("GUARD email.empty() THROW std::invalid_argument(\"empty_email\")"), "C++ Guard throw failed");
+  assert.ok(cppCGE.includes("AuthManager.internalInit()->void:"), "C++ Private Method failed");
+  assert.ok(cppCGE.includes("EXPORT CONST MAX_LIMIT:N = 50"), "C++ Global Constant failed");
+  console.log("✅ C++ Parser: PASSED");
 
   console.log("\n🎉 ALL TESTS PASSED SUCCESSFULLY! 🧬");
 }

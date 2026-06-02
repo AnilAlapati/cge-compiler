@@ -55,7 +55,7 @@ export class RustParser implements CGEParser {
 
     let activeStruct: { name: string; fields: string[] } | null = null;
     let activeEnum: { name: string; variants: string[] } | null = null;
-    let activeBlock: { name: string; isPublic: boolean; params: string; ret: string; bodyLines: string[] } | null = null;
+    let activeBlock: { name: string; isPublic: boolean; params: string; ret: string; bodyLines: string[]; startBraceLevel: number } | null = null;
     let braceCount = 0;
 
     // Helper to clean up expressions
@@ -190,7 +190,7 @@ export class RustParser implements CGEParser {
       braceCount += opens - closes;
 
       if (activeBlock) {
-        if (braceCount > 0 || (braceCount === 0 && opens > 0)) {
+        if (braceCount >= activeBlock.startBraceLevel) {
           activeBlock.bodyLines.push(line);
           continue;
         } else {
@@ -283,6 +283,7 @@ export class RustParser implements CGEParser {
           params,
           ret,
           bodyLines: [],
+          startBraceLevel: clean.includes("{") ? braceCount : braceCount + 1
         };
 
         if (isPublic) {

@@ -30,7 +30,7 @@ function run() {
         walkDir(fullPath);
       } else {
         const ext = path.extname(fullPath).toLowerCase();
-        if ([".ts", ".tsx", ".js", ".jsx", ".py", ".rs"].includes(ext)) {
+        if ([".ts", ".tsx", ".js", ".jsx", ".py", ".rs", ".go", ".cpp", ".h", ".hpp"].includes(ext)) {
           filesToCompile.push(fullPath);
         }
       }

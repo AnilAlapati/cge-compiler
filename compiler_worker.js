@@ -846,9 +846,9 @@ class RustClientParser {
       braceCount += opens - closes;
 
       if (activeBlock) {
-        activeBlock.bodyLines.push(line);
-        activeBlock.rawText += `\n${line}`;
-        if (braceCount > 0 || (braceCount === 0 && opens > 0)) {
+        if (braceCount >= activeBlock.startBraceLevel) {
+          activeBlock.bodyLines.push(line);
+          activeBlock.rawText += `\n${line}`;
           continue;
         } else {
           flushBlock();
@@ -927,7 +927,7 @@ class RustClientParser {
             return `${parts[0]?.trim()}:${mapTypeToCGE(parts[1])}`;
           }).join(", ");
 
-        activeBlock = { name, isPublic, params, ret, bodyLines: [], rawText: line };
+        activeBlock = { name, isPublic, params, ret, bodyLines: [], rawText: line, startBraceLevel: clean.includes("{") ? braceCount : braceCount + 1 };
         if (isPublic) exports.push(name);
         continue;
       }
@@ -958,6 +958,744 @@ class RustClientParser {
   }
 }
 
+// Client-side Go CGE Parser
+class GoClientParser {
+  parse(code) {
+    const lines = code.split("\n");
+    const imports = [];
+    const types = [];
+    const state = [];
+    const ops = [];
+    const privateOps = [];
+    const exports = [];
+    const nodesMeta = [];
+
+    let activeStruct = null;
+    let activeInterface = null;
+    let activeBlock = null;
+    let inImportBlock = false;
+    let inVarBlock = false;
+    let inConstBlock = false;
+    let braceCount = 0;
+
+    const mapGoType = (goType) => {
+      if (!goType) return "any";
+      let clean = goType.trim();
+      if (clean.startsWith("*")) clean = clean.substring(1).trim();
+
+      switch (clean) {
+        case "string": return "S";
+        case "int":
+        case "int32":
+        case "int64":
+        case "uint":
+        case "uint32":
+        case "uint64":
+        case "float32":
+        case "float64":
+          return "N";
+        case "bool": return "B";
+        case "time.Time": return "D";
+        case "error": return "error";
+        case "interface{}":
+        case "any":
+          return "any";
+      }
+      if (clean.startsWith("[]")) {
+        return `${mapGoType(clean.substring(2))}[]`;
+      }
+      if (clean.startsWith("map[")) {
+        const bracketIndex = clean.indexOf("]");
+        if (bracketIndex > 4) {
+          const keyType = clean.substring(4, bracketIndex);
+          const valueType = clean.substring(bracketIndex + 1);
+          return `Map<${mapGoType(keyType)}, ${mapGoType(valueType)}>`;
+        }
+      }
+      return clean;
+    };
+
+    const translateGoStatement = (stmt) => {
+      const clean = stmt.trim();
+      if (!clean) return "";
+
+      const guardReturn = clean.match(/^if\s+(.+?)\s*\{\s*return\s*(.*?)\s*\}/);
+      if (guardReturn) return `GUARD ${guardReturn[1]} RETURN ${guardReturn[2] || "void"}`;
+
+      const guardPanic = clean.match(/^if\s+(.+?)\s*\{\s*panic\((.*?)\)\s*\}/);
+      if (guardPanic) return `GUARD ${guardPanic[1]} THROW ${guardPanic[2]}`;
+
+      if (clean.startsWith("return ")) return `RETURN ${clean.substring(7)}`;
+      return clean;
+    };
+
+    const isCapitalized = (str) => {
+      if (!str) return false;
+      const char = str.charAt(0);
+      return char === char.toUpperCase() && char !== char.toLowerCase();
+    };
+
+    const flushStruct = () => {
+      if (!activeStruct) return;
+      const prefix = isCapitalized(activeStruct.name) ? "EXPORT " : "";
+      types.push(`${prefix}${activeStruct.name}{${activeStruct.fields.join(", ")}}`);
+      if (isCapitalized(activeStruct.name)) exports.push(activeStruct.name);
+      activeStruct = null;
+    };
+
+    const flushInterface = () => {
+      if (!activeInterface) return;
+      const prefix = isCapitalized(activeInterface.name) ? "EXPORT " : "";
+      types.push(`${prefix}${activeInterface.name}{${activeInterface.methods.join(", ")}}`);
+      if (isCapitalized(activeInterface.name)) exports.push(activeInterface.name);
+      activeInterface = null;
+    };
+
+    const flushBlock = () => {
+      if (!activeBlock) return;
+      const bodyTranslated = [];
+      let i = 0;
+      while (i < activeBlock.bodyLines.length) {
+        const line = activeBlock.bodyLines[i];
+        const clean = line.trim();
+
+        if (clean.startsWith("if ") && clean.endsWith("{") && i + 2 < activeBlock.bodyLines.length) {
+          const next = activeBlock.bodyLines[i + 1].trim();
+          const third = activeBlock.bodyLines[i + 2].trim();
+          if (third === "}") {
+            const cond = clean.substring(3, clean.length - 1).trim();
+            if (next.startsWith("return ") || next === "return") {
+              const val = next.startsWith("return ") ? next.substring(7).trim() : "void";
+              const statementText = `GUARD ${cond} RETURN ${val}`;
+              bodyTranslated.push(`    ${statementText}`);
+              nodesMeta.push({
+                name: `Guard return (${cond.substring(0, 15)})`,
+                type: "Go Guard",
+                rule: "Guard Assertions",
+                desc: "Folds Go check and early return flow.",
+                before: `${line}\n${activeBlock.bodyLines[i+1]}\n${third}`,
+                after: statementText
+              });
+              i += 3;
+              continue;
+            }
+            if (next.startsWith("panic(")) {
+              const errMatch = next.match(/^panic\((.*?)\)/);
+              const err = errMatch ? errMatch[1] : next;
+              const statementText = `GUARD ${cond} THROW ${err}`;
+              bodyTranslated.push(`    ${statementText}`);
+              nodesMeta.push({
+                name: `Guard panic (${cond.substring(0, 15)})`,
+                type: "Go Guard Panic",
+                rule: "Guard Assertions",
+                desc: "Folds conditional panics into an inline THROW.",
+                before: `${line}\n${activeBlock.bodyLines[i+1]}\n${third}`,
+                after: statementText
+              });
+              i += 3;
+              continue;
+            }
+          }
+        }
+
+        const rangeMatch = clean.match(/^for\s+(.+?)\s*:=\s*range\s+(.+?)\s*\{$/) || clean.match(/^for\s+(.+?)\s*=\s*range\s+(.+?)\s*\{$/);
+        if (rangeMatch && i + 1 < activeBlock.bodyLines.length) {
+          const next = activeBlock.bodyLines[i + 1].trim();
+          if (next.endsWith("}")) {
+            const iteratorRaw = rangeMatch[1] || "";
+            const collection = rangeMatch[2] || "";
+            const iterator = iteratorRaw.replace(/^_\s*,\s*/, "").trim();
+            const statementText = `SCAN ${collection} FOR ${iterator} -> ${translateGoStatement(next)}`;
+            bodyTranslated.push(`    ${statementText}`);
+            nodesMeta.push({
+              name: `Range Loop (${iterator})`,
+              type: "Go Range Loop",
+              rule: "Logic Folding",
+              desc: "Folds a Go range iterator loop into a SCAN notation.",
+              before: `${line}\n${activeBlock.bodyLines[i+1]}`,
+              after: statementText
+            });
+            i += 2;
+            continue;
+          }
+        }
+
+        const trans = translateGoStatement(clean);
+        if (trans && trans !== "}") {
+          bodyTranslated.push(`    ${trans}`);
+        }
+        i++;
+      }
+
+      const nameWithReceiver = activeBlock.receiver ? `${activeBlock.receiver}.${activeBlock.name}` : activeBlock.name;
+      const signature = `${activeBlock.isExported ? "EXPORT " : ""}${nameWithReceiver}(${activeBlock.params})->${activeBlock.ret}:${bodyTranslated.length > 0 ? "\n" + bodyTranslated.join("\n") : " void"}`;
+
+      if (activeBlock.isExported) {
+        ops.push(signature);
+        exports.push(activeBlock.name);
+      } else {
+        privateOps.push(signature);
+      }
+
+      nodesMeta.push({
+        name: activeBlock.name,
+        type: activeBlock.receiver ? "Go Struct Method" : "Go Function",
+        rule: "Logic Extraction",
+        desc: `Processes the Go logic flow for function ${activeBlock.name}.`,
+        before: signature,
+        after: signature
+      });
+
+      activeBlock = null;
+    };
+
+    for (let idx = 0; idx < lines.length; idx++) {
+      const line = lines[idx];
+      const clean = line.trim();
+      if (!clean || clean.startsWith("//") || clean.startsWith("/*")) continue;
+
+      const opens = (line.match(/\{/g) || []).length;
+      const closes = (line.match(/\}/g) || []).length;
+      braceCount += opens - closes;
+
+      if (activeBlock) {
+        if (braceCount >= activeBlock.startBraceLevel) {
+          activeBlock.bodyLines.push(line);
+          continue;
+        } else {
+          flushBlock();
+          continue;
+        }
+      }
+
+      if (activeStruct) {
+        if (clean.startsWith("}")) {
+          flushStruct();
+          continue;
+        }
+        const fieldMatch = clean.match(/^(\w+)\s+([^\s`]+)/);
+        if (fieldMatch) {
+          const fName = fieldMatch[1];
+          const fType = mapGoType(fieldMatch[2]);
+          activeStruct.fields.push(`${fName}:${fType}`);
+        }
+        continue;
+      }
+
+      if (activeInterface) {
+        if (clean.startsWith("}")) {
+          flushInterface();
+          continue;
+        }
+        const methodMatch = clean.match(/^(\w+)\s*\((.*?)\)\s*(.*)/);
+        if (methodMatch) {
+          const mName = methodMatch[1];
+          const paramsRaw = methodMatch[2] || "";
+          const retRaw = methodMatch[3]?.trim() || "void";
+          const params = paramsRaw
+            .split(",")
+            .map(p => p.trim())
+            .filter(Boolean)
+            .map(p => {
+              const parts = p.split(/\s+/);
+              return parts.length === 2 ? `${parts[0]}:${mapGoType(parts[1])}` : `param:${mapGoType(p)}`;
+            })
+            .join(", ");
+          
+          let ret = mapGoType(retRaw);
+          if (retRaw.startsWith("(")) {
+            const cleanedRet = retRaw.replace(/[()]/g, "");
+            ret = cleanedRet.split(",").map(r => mapGoType(r.trim())).join("|");
+          }
+          activeInterface.methods.push(`${mName}(${params})->${ret}`);
+        }
+        continue;
+      }
+
+      if (inImportBlock) {
+        if (clean.startsWith(")")) {
+          inImportBlock = false;
+          continue;
+        }
+        const impMatch = clean.match(/^"(.+?)"/);
+        if (impMatch) imports.push(impMatch[1]);
+        continue;
+      }
+
+      if (inVarBlock || inConstBlock) {
+        if (clean.startsWith(")")) {
+          inVarBlock = false;
+          inConstBlock = false;
+          continue;
+        }
+        const stateMatch = clean.match(/^(\w+)\s*(?:[^\s=]*)\s*=\s*(.+)/);
+        if (stateMatch) {
+          const name = stateMatch[1];
+          const val = stateMatch[2];
+          const prefix = inConstBlock ? "CONST " : "";
+          const exportPrefix = isCapitalized(name) ? "EXPORT " : "";
+          state.push(`${exportPrefix}${prefix}${name}:any = ${val}`);
+          if (isCapitalized(name)) exports.push(name);
+        }
+        continue;
+      }
+
+      const singleImport = clean.match(/^import\s+"(.+?)"/);
+      if (singleImport) {
+        imports.push(singleImport[1]);
+        continue;
+      }
+
+      if (clean === "import (") {
+        inImportBlock = true;
+        continue;
+      }
+
+      const structMatch = clean.match(/^type\s+(\w+)\s+struct\s*\{/);
+      if (structMatch) {
+        flushStruct();
+        flushInterface();
+        activeStruct = { name: structMatch[1], fields: [] };
+        continue;
+      }
+
+      const interfaceMatch = clean.match(/^type\s+(\w+)\s+interface\s*\{/);
+      if (interfaceMatch) {
+        flushStruct();
+        flushInterface();
+        activeInterface = { name: interfaceMatch[1], methods: [] };
+        continue;
+      }
+
+      const fnMatch = clean.match(/^func\s+(?:\((.+?)\)\s+)?(\w+)\s*\((.*?)\)\s*(.*?)\s*\{/);
+      if (fnMatch) {
+        const receiverRaw = fnMatch[1] || "";
+        const name = fnMatch[2];
+        const paramsRaw = fnMatch[3] || "";
+        const retRaw = fnMatch[4]?.trim() || "void";
+
+        let receiver = "";
+        if (receiverRaw) {
+          const parts = receiverRaw.trim().split(/\s+/);
+          const rType = parts[1] || parts[0] || "";
+          receiver = rType.replace(/^\*/, "").trim();
+        }
+
+        const params = paramsRaw
+          .split(",")
+          .map(p => p.trim())
+          .filter(Boolean)
+          .map(p => {
+            const parts = p.split(/\s+/);
+            return parts.length === 2 ? `${parts[0]}:${mapGoType(parts[1])}` : `param:${mapGoType(p)}`;
+          })
+          .join(", ");
+
+        let ret = mapGoType(retRaw);
+        if (retRaw.startsWith("(")) {
+          const cleanedRet = retRaw.replace(/[()]/g, "");
+          ret = cleanedRet.split(",").map(r => mapGoType(r.trim())).join("|");
+        }
+
+        activeBlock = {
+          name,
+          isExported: isCapitalized(name),
+          receiver,
+          params,
+          ret,
+          bodyLines: [],
+          startBraceLevel: clean.includes("{") ? braceCount : braceCount + 1
+        };
+        continue;
+      }
+
+      const singleConst = clean.match(/^const\s+(\w+)\s*(?:[^\s=]*)\s*=\s*(.+)/);
+      if (singleConst) {
+        const name = singleConst[1];
+        const val = singleConst[2];
+        const prefix = isCapitalized(name) ? "EXPORT " : "";
+        state.push(`${prefix}CONST ${name}:any = ${val}`);
+        if (isCapitalized(name)) exports.push(name);
+        continue;
+      }
+
+      const singleVar = clean.match(/^var\s+(\w+)\s*(?:[^\s=]*)\s*=\s*(.+)/);
+      if (singleVar) {
+        const name = singleVar[1];
+        const val = singleVar[2];
+        const prefix = isCapitalized(name) ? "EXPORT " : "";
+        state.push(`${prefix}${name}:any = ${val}`);
+        if (isCapitalized(name)) exports.push(name);
+        continue;
+      }
+
+      if (clean === "var (") {
+        inVarBlock = true;
+        continue;
+      }
+      if (clean === "const (") {
+        inConstBlock = true;
+        continue;
+      }
+    }
+
+    flushStruct();
+    flushInterface();
+    flushBlock();
+
+    return { imports, types, state, ops, privateOps, exports, nodes: nodesMeta };
+  }
+}
+
+// Client-side C++ CGE Parser
+class CppClientParser {
+  parse(code) {
+    const lines = code.split("\n");
+    const imports = [];
+    const types = [];
+    const state = [];
+    const ops = [];
+    const privateOps = [];
+    const exports = [];
+    const nodesMeta = [];
+
+    let activeClass = null;
+    let activeEnum = null;
+    let activeBlock = null;
+    let currentAccess = "private";
+    let braceCount = 0;
+
+    const mapCppType = (cppType) => {
+      if (!cppType) return "any";
+      let clean = cppType.trim().replace(/\bconst\b/g, "").replace(/[&*]/g, "").trim();
+      if (clean.startsWith("std::")) clean = clean.substring(5);
+
+      switch (clean) {
+        case "string": return "S";
+        case "int":
+        case "float":
+        case "double":
+        case "long":
+        case "short":
+        case "size_t":
+        case "char":
+        case "int32_t":
+        case "int64_t":
+        case "uint32_t":
+        case "uint64_t":
+          return "N";
+        case "bool": return "B";
+        case "void": return "void";
+      }
+      if (clean.startsWith("vector<") || clean.startsWith("list<")) {
+        const inner = clean.substring(clean.indexOf("<") + 1, clean.lastIndexOf(">"));
+        return `${mapCppType(inner)}[]`;
+      }
+      if (clean.startsWith("map<") || clean.startsWith("unordered_map<")) {
+        const inner = clean.substring(clean.indexOf("<") + 1, clean.lastIndexOf(">"));
+        const parts = inner.split(",");
+        return `Map<${mapCppType(parts[0]?.trim() || "S")}, ${mapCppType(parts[1]?.trim() || "any")}>`;
+      }
+      return clean;
+    };
+
+    const translateCppStatement = (stmt) => {
+      const clean = stmt.trim().replace(/;$/, "");
+      if (!clean) return "";
+
+      const guardReturn = clean.match(/^if\s*\((.+?)\)\s*return\s*(.*?)$/);
+      if (guardReturn) return `GUARD ${guardReturn[1]} RETURN ${guardReturn[2] || "void"}`;
+
+      const guardThrow = clean.match(/^if\s*\((.+?)\)\s*throw\s+(.*?)$/);
+      if (guardThrow) return `GUARD ${guardThrow[1]} THROW ${guardThrow[2]}`;
+
+      if (clean.startsWith("return ")) return `RETURN ${clean.substring(7)}`;
+      if (clean.startsWith("throw ")) return `THROW ${clean.substring(6)}`;
+      return clean;
+    };
+
+    const flushClass = () => {
+      if (!activeClass) return;
+      types.push(`EXPORT ${activeClass.name}{${activeClass.fields.join(", ")}}`);
+      exports.push(activeClass.name);
+      activeClass = null;
+    };
+
+    const flushEnum = () => {
+      if (!activeEnum) return;
+      types.push(`EXPORT ${activeEnum.name} = ${activeEnum.variants.join("|")}`);
+      exports.push(activeEnum.name);
+      activeEnum = null;
+    };
+
+    const flushBlock = () => {
+      if (!activeBlock) return;
+      const bodyTranslated = [];
+      let i = 0;
+      while (i < activeBlock.bodyLines.length) {
+        const line = activeBlock.bodyLines[i];
+        const clean = line.trim();
+
+        if (clean.startsWith("if ") && clean.endsWith("{") && i + 2 < activeBlock.bodyLines.length) {
+          const next = activeBlock.bodyLines[i + 1].trim().replace(/;$/, "");
+          const third = activeBlock.bodyLines[i + 2].trim();
+          if (third === "}") {
+            const cond = clean.substring(clean.indexOf("(") + 1, clean.lastIndexOf(")")).trim();
+            if (next.startsWith("return ") || next === "return") {
+              const val = next.startsWith("return ") ? next.substring(7).trim() : "void";
+              const statementText = `GUARD ${cond} RETURN ${val}`;
+              bodyTranslated.push(`    ${statementText}`);
+              nodesMeta.push({
+                name: `Guard return (${cond.substring(0, 15)})`,
+                type: "C++ Guard",
+                rule: "Guard Assertions",
+                desc: "Folds C++ early return flow.",
+                before: `${line}\n${activeBlock.bodyLines[i+1]}\n${third}`,
+                after: statementText
+              });
+              i += 3;
+              continue;
+            }
+            if (next.startsWith("throw ")) {
+              const err = next.substring(6).trim();
+              const statementText = `GUARD ${cond} THROW ${err}`;
+              bodyTranslated.push(`    ${statementText}`);
+              nodesMeta.push({
+                name: `Guard throw (${cond.substring(0, 15)})`,
+                type: "C++ Guard Throw",
+                rule: "Guard Assertions",
+                desc: "Folds conditional throw into THROW.",
+                before: `${line}\n${activeBlock.bodyLines[i+1]}\n${third}`,
+                after: statementText
+              });
+              i += 3;
+              continue;
+            }
+          }
+        }
+
+        const forMatch = clean.match(/^for\s*\((.+?)\s*:\s*(.+?)\)\s*\{$/);
+        if (forMatch && i + 1 < activeBlock.bodyLines.length) {
+          const next = activeBlock.bodyLines[i + 1].trim().replace(/;$/, "");
+          if (next.endsWith("}")) {
+            const decl = forMatch[1] || "";
+            const collection = forMatch[2] || "";
+            const declParts = decl.trim().split(/\s+/);
+            const iterator = declParts[declParts.length - 1]?.replace(/[&*]/g, "") || "item";
+            const statementText = `SCAN ${collection} FOR ${iterator} -> ${translateCppStatement(next)}`;
+            bodyTranslated.push(`    ${statementText}`);
+            nodesMeta.push({
+              name: `Range Loop (${iterator})`,
+              type: "C++ Range Loop",
+              rule: "Logic Folding",
+              desc: "Folds C++ iterator loops into SCAN notation.",
+              before: `${line}\n${activeBlock.bodyLines[i+1]}`,
+              after: statementText
+            });
+            i += 2;
+            continue;
+          }
+        }
+
+        const trans = translateCppStatement(clean);
+        if (trans && trans !== "}") {
+          bodyTranslated.push(`    ${trans}`);
+        }
+        i++;
+      }
+
+      const nameWithClass = activeBlock.className ? `${activeBlock.className}.${activeBlock.name}` : activeBlock.name;
+      const signature = `${activeBlock.isPublic ? "EXPORT " : ""}${nameWithClass}(${activeBlock.params})->${activeBlock.ret}:${bodyTranslated.length > 0 ? "\n" + bodyTranslated.join("\n") : " void"}`;
+
+      if (activeBlock.isPublic) {
+        ops.push(signature);
+        exports.push(activeBlock.name);
+      } else {
+        privateOps.push(signature);
+      }
+
+      nodesMeta.push({
+        name: activeBlock.name,
+        type: activeBlock.className ? "C++ Class Method" : "C++ Function",
+        rule: "Logic Extraction",
+        desc: `Processes logic flow for C++ signature ${activeBlock.name}.`,
+        before: signature,
+        after: signature
+      });
+
+      activeBlock = null;
+    };
+
+    for (let idx = 0; idx < lines.length; idx++) {
+      const line = lines[idx];
+      const clean = line.trim();
+      if (!clean || clean.startsWith("//") || clean.startsWith("/*")) continue;
+
+      const opens = (line.match(/\{/g) || []).length;
+      const closes = (line.match(/\}/g) || []).length;
+      braceCount += opens - closes;
+
+      if (activeBlock) {
+        if (braceCount >= activeBlock.startBraceLevel) {
+          activeBlock.bodyLines.push(line);
+          continue;
+        } else {
+          flushBlock();
+          continue;
+        }
+      }
+
+      if (activeClass) {
+        if (clean.startsWith("};")) {
+          flushClass();
+          continue;
+        }
+        if (clean === "public:") { currentAccess = "public"; continue; }
+        if (clean === "private:") { currentAccess = "private"; continue; }
+        if (clean === "protected:") { currentAccess = "protected"; continue; }
+
+        const classMethodMatch = clean.match(/^(?:virtual\s+)?([^\s]+)\s+(\w+)\s*\((.*?)\)(?:\s*const)?\s*\{/);
+        if (classMethodMatch) {
+          const ret = mapCppType(classMethodMatch[1]);
+          const name = classMethodMatch[2];
+          const paramsRaw = classMethodMatch[3] || "";
+          const isPublic = activeClass.isStruct || currentAccess === "public";
+          const params = paramsRaw
+            .split(",")
+            .map(p => p.trim())
+            .filter(Boolean)
+            .map(p => {
+              const parts = p.split(/\s+/);
+              return parts.length >= 2 ? `${parts[parts.length - 1]?.replace(/[&*]/g, "")}:${mapCppType(parts.slice(0, -1).join(" "))}` : `param:${mapCppType(p)}`;
+            })
+            .join(", ");
+
+          activeBlock = {
+            name,
+            isPublic,
+            className: activeClass.name,
+            params,
+            ret,
+            bodyLines: [],
+            startBraceLevel: clean.includes("{") ? braceCount : braceCount + 1
+          };
+          continue;
+        }
+
+        const propMatch = clean.match(/^([^\s]+)\s+(\w+)\s*(?:=\s*[^;]+)?\s*;/);
+        if (propMatch) {
+          const type = mapCppType(propMatch[1]);
+          const name = propMatch[2];
+          if (activeClass.isStruct || currentAccess === "public") {
+            activeClass.fields.push(`${name}:${type}`);
+          }
+          const prefix = (activeClass.isStruct || currentAccess === "public") ? "EXPORT " : "";
+          state.push(`${prefix}${activeClass.name}.${name}:${type}`);
+        }
+        continue;
+      }
+
+      if (activeEnum) {
+        if (clean.startsWith("};")) {
+          flushEnum();
+          continue;
+        }
+        const val = clean.replace(/,$/, "").trim();
+        if (val) activeEnum.variants.push(val);
+        continue;
+      }
+
+      const includeMatch = clean.match(/^#include\s+["<](.+?)[">]/);
+      if (includeMatch) {
+        imports.push(includeMatch[1]);
+        continue;
+      }
+
+      const classMatch = clean.match(/^class\s+(\w+)\s*\{/);
+      if (classMatch) {
+        flushClass();
+        flushEnum();
+        activeClass = { name: classMatch[1], isStruct: false, fields: [] };
+        currentAccess = "private";
+        continue;
+      }
+
+      const structMatch = clean.match(/^struct\s+(\w+)\s*\{/);
+      if (structMatch) {
+        flushClass();
+        flushEnum();
+        activeClass = { name: structMatch[1], isStruct: true, fields: [] };
+        currentAccess = "public";
+        continue;
+      }
+
+      const enumMatch = clean.match(/^enum\s+(\w+)\s*\{/) || clean.match(/^enum\s+class\s+(\w+)\s*\{/);
+      if (enumMatch) {
+        flushClass();
+        flushEnum();
+        activeEnum = { name: enumMatch[1], variants: [] };
+        continue;
+      }
+
+      const globalFnMatch = clean.match(/^([^\s]+)\s+(\w+)\s*\((.*?)\)\s*\{/);
+      if (globalFnMatch) {
+        const ret = mapCppType(globalFnMatch[1]);
+        const name = globalFnMatch[2];
+        const paramsRaw = globalFnMatch[3] || "";
+        const isPublic = name !== "main";
+        const params = paramsRaw
+          .split(",")
+          .map(p => p.trim())
+          .filter(Boolean)
+          .map(p => {
+            const parts = p.split(/\s+/);
+            return parts.length >= 2 ? `${parts[parts.length - 1]?.replace(/[&*]/g, "")}:${mapCppType(parts.slice(0, -1).join(" "))}` : `param:${mapCppType(p)}`;
+          })
+          .join(", ");
+
+        activeBlock = {
+          name,
+          isPublic,
+          className: "",
+          params,
+          ret,
+          bodyLines: [],
+          startBraceLevel: clean.includes("{") ? braceCount : braceCount + 1
+        };
+        continue;
+      }
+
+      const constMatch = clean.match(/^const\s+([^\s]+)\s+(\w+)\s*=\s*(.+?);/);
+      if (constMatch) {
+        const type = mapCppType(constMatch[1]);
+        const name = constMatch[2];
+        const val = constMatch[3];
+        state.push(`EXPORT CONST ${name}:${type} = ${val}`);
+        exports.push(name);
+        continue;
+      }
+
+      const varMatch = clean.match(/^([^\s]+)\s+(\w+)\s*=\s*(.+?);/);
+      if (varMatch) {
+        const type = mapCppType(varMatch[1]);
+        const name = varMatch[2];
+        const val = varMatch[3];
+        if (name !== "using" && type !== "namespace") {
+          state.push(`EXPORT ${name}:${type} = ${val}`);
+          exports.push(name);
+        }
+        continue;
+      }
+    }
+
+    flushClass();
+    flushEnum();
+    flushBlock();
+
+    return { imports, types, state, ops, privateOps, exports, nodes: nodesMeta };
+  }
+}
+
 // Client-side Compiler Manager Orchestrator
 class CGEClientCompiler {
   compile(code, language, fileName) {
@@ -966,6 +1704,8 @@ class CGEClientCompiler {
       case "typescript": parser = new TypeScriptClientParser(); break;
       case "python": parser = new PythonClientParser(); break;
       case "rust": parser = new RustClientParser(); break;
+      case "go": parser = new GoClientParser(); break;
+      case "cpp": parser = new CppClientParser(); break;
       default: return { text: "Unsupported language.", nodes: [] };
     }
 
@@ -1075,6 +1815,75 @@ pub fn validate_token(token: AuthToken) -> bool {
 
 fn internal_hash(val: String) -> () {
     println!("internal hashing");
+}`,
+
+  go: `package main
+
+import (
+	"fmt"
+	"time"
+)
+
+type UserSession struct {
+	ID        string
+	Email     string
+	IsActive  bool
+	CreatedAt time.Time
+}
+
+const TokenExpirySeconds = 900
+
+func VerifySession(session *UserSession) bool {
+	if session == nil {
+		panic("missing session")
+	}
+	
+	for _, token := range session.Tokens {
+		if token.Expired {
+			return false
+		}
+	}
+	return true
+}
+
+func getHash(val string) string {
+	return "hashed_value"
+}`,
+
+  cpp: `#include <string>
+#include <vector>
+#include <stdexcept>
+
+struct AuthToken {
+    std::string value;
+    long expires_at;
+};
+
+class UserSession {
+public:
+    std::string id;
+    std::string email;
+    bool is_active;
+    std::vector<AuthToken> tokens;
+};
+
+const int MAX_ATTEMPTS = 5;
+
+bool verifySession(const UserSession& session) {
+    if (session.id.empty()) {
+        throw std::invalid_argument("missing id");
+    }
+    
+    for (auto& token : session.tokens) {
+        if (token.value.empty()) {
+            return false;
+        }
+    }
+    return true;
+}
+
+std::string getHash(std::string val) {
+    return "hash";
 }`
 };
 

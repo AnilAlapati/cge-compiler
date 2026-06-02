@@ -4,6 +4,8 @@ import { CGEParser } from "./cge_parser";
 import { TypeScriptParser } from "./typescript_parser";
 import { PythonParser } from "./python_parser";
 import { RustParser } from "./rust_parser";
+import { GoParser } from "./go_parser";
+import { CppParser } from "./cpp_parser";
 
 /**
  * CGECompiler
@@ -91,6 +93,12 @@ export class CGECompiler {
         return "python";
       case ".rs":
         return "rust";
+      case ".go":
+        return "go";
+      case ".cpp":
+      case ".h":
+      case ".hpp":
+        return "cpp";
       default:
         throw new Error(`Unsupported file extension: ${ext}`);
     }
@@ -107,6 +115,11 @@ export class CGECompiler {
       case "rust":
       case "rs":
         return new RustParser();
+      case "go":
+        return new GoParser();
+      case "cpp":
+      case "c++":
+        return new CppParser();
       default:
         throw new Error(`Unsupported parser language: ${language}`);
     }
