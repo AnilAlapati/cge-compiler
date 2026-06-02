@@ -87,6 +87,23 @@ Upload full project directory ZIPs in the premium glassmorphic UI to view real-t
 
 **Try it here:** [cge-compiler.vercel.app](https://cge-compiler.vercel.app)
 
+### 3. CLI Tool for AI Agents
+You can also run CGE locally to generate a `.cge` index folder for your entire repository. This is incredibly useful for autonomous agent workflows (like Claude Code or Aider). Instead of letting agents `grep` noisy source code, instruct them to search the `.cge` directory!
+
+```bash
+# Build the CLI tool
+npm run build
+
+# Link it globally
+npm link
+
+# Run it on your repository
+cge-cli build ./my-project
+```
+
+**Recommended System Prompt for your AI Agent:**
+> *"When exploring this repository, do not `grep` or `cat` the raw source code files. Instead, navigate to the `.cge/` directory and use `grep` there. You will receive completely flattened, dense structural mappings of the entire application, saving your context window."*
+
 ---
 
 ## 💼 Skills & Technical Implementation
