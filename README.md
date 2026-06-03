@@ -9,7 +9,7 @@
 ---
 
 > **🔬 Phase 1 Research Concluded (June 2026)**
-> We recently concluded our first major empirical study on whether structural code compression improves LLM reasoning. The short answer: *It doesn't.* By stripping out syntactical metadata, we inadvertently removed the exact clues LLMs use to infer architecture. You can read our full findings in our [Phase 1 Research Conclusion](./docs/interim_research_conclusion.md). We are currently pivoting to Phase 2: Architectural Augmentation.
+> We recently concluded our first major empirical study on whether structural code compression improves LLM reasoning. The short answer: *It doesn't.* By stripping out syntactical metadata, we inadvertently removed the exact clues LLMs use to infer architecture. You can read our full findings in our [Phase 1 Research Conclusion](https://github.com/AnilAlapati/cge-compiler/blob/main/docs/interim_research_conclusion.md). We are currently pivoting to Phase 2: Architectural Augmentation.
 
 ---
 
