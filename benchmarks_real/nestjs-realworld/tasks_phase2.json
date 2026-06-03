@@ -1,0 +1,88 @@
+[
+  {
+    "id": "task_1",
+    "question": "What are the routes that require authentication in the Article module?",
+    "expected": [
+      "GET articles/feed",
+      "POST articles",
+      "DELETE articles/:slug",
+      "PUT articles/:slug",
+      "POST articles/:slug/comments",
+      "DELETE articles/:slug/comments/:id",
+      "POST articles/:slug/favorite",
+      "DELETE articles/:slug/favorite"
+    ]
+  },
+  {
+    "id": "task_2",
+    "question": "Which entities are related to the User entity?",
+    "expected": [
+      "ArticleEntity",
+      "FollowsEntity"
+    ]
+  },
+  {
+    "id": "task_3",
+    "question": "What are the available endpoints in the Profile module?",
+    "expected": [
+      "GET profiles/:username",
+      "POST profiles/:username/follow",
+      "DELETE profiles/:username/follow"
+    ]
+  },
+  {
+    "id": "task_4",
+    "question": "What are the main services used in the Article module?",
+    "expected": [
+      "ArticleService"
+    ]
+  },
+  {
+    "id": "task_5",
+    "question": "What are the routes defined in the User module?",
+    "expected": [
+      "GET user",
+      "PUT user",
+      "POST users",
+      "DELETE users/:slug",
+      "POST users/login"
+    ]
+  },
+  {
+    "id": "task_6",
+    "question": "What middleware is applied to the Profile module routes?",
+    "expected": "AuthMiddleware"
+  },
+  {
+    "id": "task_7",
+    "question": "What are the data transfer objects (DTOs) used in the User module?",
+    "expected": [
+      "CreateUserDto",
+      "LoginUserDto",
+      "UpdateUserDto"
+    ]
+  },
+  {
+    "id": "task_8",
+    "question": "What are the main entities defined in the Article module?",
+    "expected": [
+      "ArticleEntity",
+      "Comment"
+    ]
+  },
+  {
+    "id": "task_9",
+    "question": "What are the routes that return articles in the Article module?",
+    "expected": [
+      "GET articles",
+      "GET articles/feed",
+      "GET articles/:slug",
+      "GET articles/:slug/comments"
+    ]
+  },
+  {
+    "id": "task_10",
+    "question": "What is the global prefix set for the API routes?",
+    "expected": "api"
+  }
+]

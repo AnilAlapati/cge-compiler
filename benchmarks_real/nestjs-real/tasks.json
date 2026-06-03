@@ -1,0 +1,27 @@
+[
+  {
+    "id": "nest-real-1",
+    "question": "Which endpoint does not require authentication?",
+    "expectedAnswer": "The GET /api/public/data endpoint is public."
+  },
+  {
+    "id": "nest-real-2",
+    "question": "What guards are applied to the updateSettings route?",
+    "expectedAnswer": "It uses both AuthGuard and RolesGuard."
+  },
+  {
+    "id": "nest-real-3",
+    "question": "What specific role is required to update settings?",
+    "expectedAnswer": "The 'admin' role is required, as specified by the @Roles('admin') decorator."
+  },
+  {
+    "id": "nest-real-4",
+    "question": "Which external service dependency is injected into the AppService?",
+    "expectedAnswer": "RedisService is injected."
+  },
+  {
+    "id": "nest-real-5",
+    "question": "What key is used to store settings in Redis?",
+    "expectedAnswer": "The key 'app_settings' is used."
+  }
+]

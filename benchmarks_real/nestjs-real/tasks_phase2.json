@@ -1,0 +1,52 @@
+[
+  {
+    "id": "q1",
+    "question": "Which routes are protected by AuthMiddleware?",
+    "expected": "GET /user, PUT /user, GET /articles/feed, POST /articles, PUT /articles/:slug, DELETE /articles/:slug, POST /articles/:slug/comments, DELETE /articles/:slug/comments/:id, POST /articles/:slug/favorite, DELETE /articles/:slug/favorite, POST /profiles/:username/follow, DELETE /profiles/:username/follow"
+  },
+  {
+    "id": "q2",
+    "question": "What service is injected into the ArticleController?",
+    "expected": "ArticleService"
+  },
+  {
+    "id": "q3",
+    "question": "Which HTTP method and path is used to get the current user, and is it public or guarded?",
+    "expected": "GET /user. It is guarded by AuthMiddleware."
+  },
+  {
+    "id": "q4",
+    "question": "What is the relationship between ArticleEntity and UserEntity?",
+    "expected": "ArticleEntity has a relation 'author' which points to a UserEntity. UserEntity has a relation 'articles' pointing to ArticleEntities."
+  },
+  {
+    "id": "q5",
+    "question": "Which external library handles token validation inside AuthMiddleware?",
+    "expected": "jsonwebtoken (jwt.verify)"
+  },
+  {
+    "id": "q6",
+    "question": "If a request hits POST /users/login, is a valid JWT token required in the authorization header?",
+    "expected": "No, it is a public route."
+  },
+  {
+    "id": "q7",
+    "question": "Which pipe is used for input validation on user creation and login, and what library powers it under the hood?",
+    "expected": "ValidationPipe, powered by class-validator (although the library might require looking at source, the architecture map mentions ValidationPipe and class-validator)."
+  },
+  {
+    "id": "q8",
+    "question": "How does the AuthMiddleware get access to the user database record?",
+    "expected": "It injects the UserService, decodes the JWT, and calls userService.findById()."
+  },
+  {
+    "id": "q9",
+    "question": "Which entities are injected into the ArticleService via TypeOrmModule?",
+    "expected": "ArticleEntity, Comment, UserEntity, FollowsEntity"
+  },
+  {
+    "id": "q10",
+    "question": "Does the system allow unauthenticated users to fetch a specific article by its slug?",
+    "expected": "Yes. GET /articles/:slug is public."
+  }
+]

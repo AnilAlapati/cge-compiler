@@ -1,0 +1,1792 @@
+{
+  "kind": "SourceFile",
+  "text": "const express = require('express');\nconst cors = r...",
+  "children": [
+    {
+      "kind": "SyntaxList",
+      "text": "const express = require('express');\nconst cors = r...",
+      "children": [
+        {
+          "kind": "FirstStatement",
+          "text": "const express = require('express');...",
+          "children": [
+            {
+              "kind": "VariableDeclarationList",
+              "text": "const express = require('express')...",
+              "children": [
+                {
+                  "kind": "ConstKeyword",
+                  "text": "const...",
+                  "children": []
+                },
+                {
+                  "kind": "SyntaxList",
+                  "text": "express = require('express')...",
+                  "children": [
+                    {
+                      "kind": "VariableDeclaration",
+                      "text": "express = require('express')...",
+                      "children": [
+                        {
+                          "kind": "Identifier",
+                          "text": "express...",
+                          "children": []
+                        },
+                        {
+                          "kind": "FirstAssignment",
+                          "text": "=...",
+                          "children": []
+                        },
+                        {
+                          "kind": "CallExpression",
+                          "text": "require('express')...",
+                          "children": [
+                            {
+                              "kind": "Identifier",
+                              "text": "require...",
+                              "children": []
+                            },
+                            {
+                              "kind": "OpenParenToken",
+                              "text": "(...",
+                              "children": []
+                            },
+                            {
+                              "kind": "SyntaxList",
+                              "text": "'express'...",
+                              "children": [
+                                {
+                                  "kind": "StringLiteral",
+                                  "text": "'express'...",
+                                  "children": []
+                                }
+                              ]
+                            },
+                            {
+                              "kind": "CloseParenToken",
+                              "text": ")...",
+                              "children": []
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "kind": "SemicolonToken",
+              "text": ";...",
+              "children": []
+            }
+          ]
+        },
+        {
+          "kind": "FirstStatement",
+          "text": "const cors = require('cors');...",
+          "children": [
+            {
+              "kind": "VariableDeclarationList",
+              "text": "const cors = require('cors')...",
+              "children": [
+                {
+                  "kind": "ConstKeyword",
+                  "text": "const...",
+                  "children": []
+                },
+                {
+                  "kind": "SyntaxList",
+                  "text": "cors = require('cors')...",
+                  "children": [
+                    {
+                      "kind": "VariableDeclaration",
+                      "text": "cors = require('cors')...",
+                      "children": [
+                        {
+                          "kind": "Identifier",
+                          "text": "cors...",
+                          "children": []
+                        },
+                        {
+                          "kind": "FirstAssignment",
+                          "text": "=...",
+                          "children": []
+                        },
+                        {
+                          "kind": "CallExpression",
+                          "text": "require('cors')...",
+                          "children": [
+                            {
+                              "kind": "Identifier",
+                              "text": "require...",
+                              "children": []
+                            },
+                            {
+                              "kind": "OpenParenToken",
+                              "text": "(...",
+                              "children": []
+                            },
+                            {
+                              "kind": "SyntaxList",
+                              "text": "'cors'...",
+                              "children": [
+                                {
+                                  "kind": "StringLiteral",
+                                  "text": "'cors'...",
+                                  "children": []
+                                }
+                              ]
+                            },
+                            {
+                              "kind": "CloseParenToken",
+                              "text": ")...",
+                              "children": []
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "kind": "SemicolonToken",
+              "text": ";...",
+              "children": []
+            }
+          ]
+        },
+        {
+          "kind": "FirstStatement",
+          "text": "const { PrismaClient } = require('@prisma/client')...",
+          "children": [
+            {
+              "kind": "VariableDeclarationList",
+              "text": "const { PrismaClient } = require('@prisma/client')...",
+              "children": [
+                {
+                  "kind": "ConstKeyword",
+                  "text": "const...",
+                  "children": []
+                },
+                {
+                  "kind": "SyntaxList",
+                  "text": "{ PrismaClient } = require('@prisma/client')...",
+                  "children": [
+                    {
+                      "kind": "VariableDeclaration",
+                      "text": "{ PrismaClient } = require('@prisma/client')...",
+                      "children": [
+                        {
+                          "kind": "ObjectBindingPattern",
+                          "text": "{ PrismaClient }...",
+                          "children": [
+                            {
+                              "kind": "FirstPunctuation",
+                              "text": "{...",
+                              "children": []
+                            },
+                            {
+                              "kind": "SyntaxList",
+                              "text": "PrismaClient...",
+                              "children": [
+                                {
+                                  "kind": "BindingElement",
+                                  "text": "PrismaClient...",
+                                  "children": [
+                                    {
+                                      "kind": "Identifier",
+                                      "text": "PrismaClient...",
+                                      "children": []
+                                    }
+                                  ]
+                                }
+                              ]
+                            },
+                            {
+                              "kind": "CloseBraceToken",
+                              "text": "}...",
+                              "children": []
+                            }
+                          ]
+                        },
+                        {
+                          "kind": "FirstAssignment",
+                          "text": "=...",
+                          "children": []
+                        },
+                        {
+                          "kind": "CallExpression",
+                          "text": "require('@prisma/client')...",
+                          "children": [
+                            {
+                              "kind": "Identifier",
+                              "text": "require...",
+                              "children": []
+                            },
+                            {
+                              "kind": "OpenParenToken",
+                              "text": "(...",
+                              "children": []
+                            },
+                            {
+                              "kind": "SyntaxList",
+                              "text": "'@prisma/client'...",
+                              "children": [
+                                {
+                                  "kind": "StringLiteral",
+                                  "text": "'@prisma/client'...",
+                                  "children": []
+                                }
+                              ]
+                            },
+                            {
+                              "kind": "CloseParenToken",
+                              "text": ")...",
+                              "children": []
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "kind": "SemicolonToken",
+              "text": ";...",
+              "children": []
+            }
+          ]
+        },
+        {
+          "kind": "FirstStatement",
+          "text": "const { verifyToken, requireRole } = require('./mi...",
+          "children": [
+            {
+              "kind": "VariableDeclarationList",
+              "text": "const { verifyToken, requireRole } = require('./mi...",
+              "children": [
+                {
+                  "kind": "ConstKeyword",
+                  "text": "const...",
+                  "children": []
+                },
+                {
+                  "kind": "SyntaxList",
+                  "text": "{ verifyToken, requireRole } = require('./middlewa...",
+                  "children": [
+                    {
+                      "kind": "VariableDeclaration",
+                      "text": "{ verifyToken, requireRole } = require('./middlewa...",
+                      "children": [
+                        {
+                          "kind": "ObjectBindingPattern",
+                          "text": "{ verifyToken, requireRole }...",
+                          "children": [
+                            {
+                              "kind": "FirstPunctuation",
+                              "text": "{...",
+                              "children": []
+                            },
+                            {
+                              "kind": "SyntaxList",
+                              "text": "verifyToken, requireRole...",
+                              "children": [
+                                {
+                                  "kind": "BindingElement",
+                                  "text": "verifyToken...",
+                                  "children": [
+                                    {
+                                      "kind": "Identifier",
+                                      "text": "verifyToken...",
+                                      "children": []
+                                    }
+                                  ]
+                                },
+                                {
+                                  "kind": "CommaToken",
+                                  "text": ",...",
+                                  "children": []
+                                },
+                                {
+                                  "kind": "BindingElement",
+                                  "text": "requireRole...",
+                                  "children": [
+                                    {
+                                      "kind": "Identifier",
+                                      "text": "requireRole...",
+                                      "children": []
+                                    }
+                                  ]
+                                }
+                              ]
+                            },
+                            {
+                              "kind": "CloseBraceToken",
+                              "text": "}...",
+                              "children": []
+                            }
+                          ]
+                        },
+                        {
+                          "kind": "FirstAssignment",
+                          "text": "=...",
+                          "children": []
+                        },
+                        {
+                          "kind": "CallExpression",
+                          "text": "require('./middleware/auth')...",
+                          "children": [
+                            {
+                              "kind": "Identifier",
+                              "text": "require...",
+                              "children": []
+                            },
+                            {
+                              "kind": "OpenParenToken",
+                              "text": "(...",
+                              "children": []
+                            },
+                            {
+                              "kind": "SyntaxList",
+                              "text": "'./middleware/auth'...",
+                              "children": [
+                                {
+                                  "kind": "StringLiteral",
+                                  "text": "'./middleware/auth'...",
+                                  "children": []
+                                }
+                              ]
+                            },
+                            {
+                              "kind": "CloseParenToken",
+                              "text": ")...",
+                              "children": []
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "kind": "SemicolonToken",
+              "text": ";...",
+              "children": []
+            }
+          ]
+        },
+        {
+          "kind": "FirstStatement",
+          "text": "const userRouter = require('./routes/users');...",
+          "children": [
+            {
+              "kind": "VariableDeclarationList",
+              "text": "const userRouter = require('./routes/users')...",
+              "children": [
+                {
+                  "kind": "ConstKeyword",
+                  "text": "const...",
+                  "children": []
+                },
+                {
+                  "kind": "SyntaxList",
+                  "text": "userRouter = require('./routes/users')...",
+                  "children": [
+                    {
+                      "kind": "VariableDeclaration",
+                      "text": "userRouter = require('./routes/users')...",
+                      "children": [
+                        {
+                          "kind": "Identifier",
+                          "text": "userRouter...",
+                          "children": []
+                        },
+                        {
+                          "kind": "FirstAssignment",
+                          "text": "=...",
+                          "children": []
+                        },
+                        {
+                          "kind": "CallExpression",
+                          "text": "require('./routes/users')...",
+                          "children": [
+                            {
+                              "kind": "Identifier",
+                              "text": "require...",
+                              "children": []
+                            },
+                            {
+                              "kind": "OpenParenToken",
+                              "text": "(...",
+                              "children": []
+                            },
+                            {
+                              "kind": "SyntaxList",
+                              "text": "'./routes/users'...",
+                              "children": [
+                                {
+                                  "kind": "StringLiteral",
+                                  "text": "'./routes/users'...",
+                                  "children": []
+                                }
+                              ]
+                            },
+                            {
+                              "kind": "CloseParenToken",
+                              "text": ")...",
+                              "children": []
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "kind": "SemicolonToken",
+              "text": ";...",
+              "children": []
+            }
+          ]
+        },
+        {
+          "kind": "FirstStatement",
+          "text": "const app = express();...",
+          "children": [
+            {
+              "kind": "VariableDeclarationList",
+              "text": "const app = express()...",
+              "children": [
+                {
+                  "kind": "ConstKeyword",
+                  "text": "const...",
+                  "children": []
+                },
+                {
+                  "kind": "SyntaxList",
+                  "text": "app = express()...",
+                  "children": [
+                    {
+                      "kind": "VariableDeclaration",
+                      "text": "app = express()...",
+                      "children": [
+                        {
+                          "kind": "Identifier",
+                          "text": "app...",
+                          "children": []
+                        },
+                        {
+                          "kind": "FirstAssignment",
+                          "text": "=...",
+                          "children": []
+                        },
+                        {
+                          "kind": "CallExpression",
+                          "text": "express()...",
+                          "children": [
+                            {
+                              "kind": "Identifier",
+                              "text": "express...",
+                              "children": []
+                            },
+                            {
+                              "kind": "OpenParenToken",
+                              "text": "(...",
+                              "children": []
+                            },
+                            {
+                              "kind": "SyntaxList",
+                              "text": "...",
+                              "children": []
+                            },
+                            {
+                              "kind": "CloseParenToken",
+                              "text": ")...",
+                              "children": []
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "kind": "SemicolonToken",
+              "text": ";...",
+              "children": []
+            }
+          ]
+        },
+        {
+          "kind": "FirstStatement",
+          "text": "const prisma = new PrismaClient();...",
+          "children": [
+            {
+              "kind": "VariableDeclarationList",
+              "text": "const prisma = new PrismaClient()...",
+              "children": [
+                {
+                  "kind": "ConstKeyword",
+                  "text": "const...",
+                  "children": []
+                },
+                {
+                  "kind": "SyntaxList",
+                  "text": "prisma = new PrismaClient()...",
+                  "children": [
+                    {
+                      "kind": "VariableDeclaration",
+                      "text": "prisma = new PrismaClient()...",
+                      "children": [
+                        {
+                          "kind": "Identifier",
+                          "text": "prisma...",
+                          "children": []
+                        },
+                        {
+                          "kind": "FirstAssignment",
+                          "text": "=...",
+                          "children": []
+                        },
+                        {
+                          "kind": "NewExpression",
+                          "text": "new PrismaClient()...",
+                          "children": [
+                            {
+                              "kind": "NewKeyword",
+                              "text": "new...",
+                              "children": []
+                            },
+                            {
+                              "kind": "Identifier",
+                              "text": "PrismaClient...",
+                              "children": []
+                            },
+                            {
+                              "kind": "OpenParenToken",
+                              "text": "(...",
+                              "children": []
+                            },
+                            {
+                              "kind": "SyntaxList",
+                              "text": "...",
+                              "children": []
+                            },
+                            {
+                              "kind": "CloseParenToken",
+                              "text": ")...",
+                              "children": []
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "kind": "SemicolonToken",
+              "text": ";...",
+              "children": []
+            }
+          ]
+        },
+        {
+          "kind": "ExpressionStatement",
+          "text": "app.use(cors());...",
+          "children": [
+            {
+              "kind": "CallExpression",
+              "text": "app.use(cors())...",
+              "children": [
+                {
+                  "kind": "PropertyAccessExpression",
+                  "text": "app.use...",
+                  "children": [
+                    {
+                      "kind": "Identifier",
+                      "text": "app...",
+                      "children": []
+                    },
+                    {
+                      "kind": "DotToken",
+                      "text": "....",
+                      "children": []
+                    },
+                    {
+                      "kind": "Identifier",
+                      "text": "use...",
+                      "children": []
+                    }
+                  ]
+                },
+                {
+                  "kind": "OpenParenToken",
+                  "text": "(...",
+                  "children": []
+                },
+                {
+                  "kind": "SyntaxList",
+                  "text": "cors()...",
+                  "children": [
+                    {
+                      "kind": "CallExpression",
+                      "text": "cors()...",
+                      "children": [
+                        {
+                          "kind": "Identifier",
+                          "text": "cors...",
+                          "children": []
+                        },
+                        {
+                          "kind": "OpenParenToken",
+                          "text": "(...",
+                          "children": []
+                        },
+                        {
+                          "kind": "SyntaxList",
+                          "text": "...",
+                          "children": []
+                        },
+                        {
+                          "kind": "CloseParenToken",
+                          "text": ")...",
+                          "children": []
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "kind": "CloseParenToken",
+                  "text": ")...",
+                  "children": []
+                }
+              ]
+            },
+            {
+              "kind": "SemicolonToken",
+              "text": ";...",
+              "children": []
+            }
+          ]
+        },
+        {
+          "kind": "ExpressionStatement",
+          "text": "app.use(express.json());...",
+          "children": [
+            {
+              "kind": "CallExpression",
+              "text": "app.use(express.json())...",
+              "children": [
+                {
+                  "kind": "PropertyAccessExpression",
+                  "text": "app.use...",
+                  "children": [
+                    {
+                      "kind": "Identifier",
+                      "text": "app...",
+                      "children": []
+                    },
+                    {
+                      "kind": "DotToken",
+                      "text": "....",
+                      "children": []
+                    },
+                    {
+                      "kind": "Identifier",
+                      "text": "use...",
+                      "children": []
+                    }
+                  ]
+                },
+                {
+                  "kind": "OpenParenToken",
+                  "text": "(...",
+                  "children": []
+                },
+                {
+                  "kind": "SyntaxList",
+                  "text": "express.json()...",
+                  "children": [
+                    {
+                      "kind": "CallExpression",
+                      "text": "express.json()...",
+                      "children": [
+                        {
+                          "kind": "PropertyAccessExpression",
+                          "text": "express.json...",
+                          "children": [
+                            {
+                              "kind": "Identifier",
+                              "text": "express...",
+                              "children": []
+                            },
+                            {
+                              "kind": "DotToken",
+                              "text": "....",
+                              "children": []
+                            },
+                            {
+                              "kind": "Identifier",
+                              "text": "json...",
+                              "children": []
+                            }
+                          ]
+                        },
+                        {
+                          "kind": "OpenParenToken",
+                          "text": "(...",
+                          "children": []
+                        },
+                        {
+                          "kind": "SyntaxList",
+                          "text": "...",
+                          "children": []
+                        },
+                        {
+                          "kind": "CloseParenToken",
+                          "text": ")...",
+                          "children": []
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "kind": "CloseParenToken",
+                  "text": ")...",
+                  "children": []
+                }
+              ]
+            },
+            {
+              "kind": "SemicolonToken",
+              "text": ";...",
+              "children": []
+            }
+          ]
+        },
+        {
+          "kind": "ExpressionStatement",
+          "text": "app.use((req, res, next) => {\n    req.db = prisma;...",
+          "children": [
+            {
+              "kind": "CallExpression",
+              "text": "app.use((req, res, next) => {\n    req.db = prisma;...",
+              "children": [
+                {
+                  "kind": "PropertyAccessExpression",
+                  "text": "app.use...",
+                  "children": [
+                    {
+                      "kind": "Identifier",
+                      "text": "app...",
+                      "children": []
+                    },
+                    {
+                      "kind": "DotToken",
+                      "text": "....",
+                      "children": []
+                    },
+                    {
+                      "kind": "Identifier",
+                      "text": "use...",
+                      "children": []
+                    }
+                  ]
+                },
+                {
+                  "kind": "OpenParenToken",
+                  "text": "(...",
+                  "children": []
+                },
+                {
+                  "kind": "SyntaxList",
+                  "text": "(req, res, next) => {\n    req.db = prisma;\n    nex...",
+                  "children": [
+                    {
+                      "kind": "ArrowFunction",
+                      "text": "(req, res, next) => {\n    req.db = prisma;\n    nex...",
+                      "children": [
+                        {
+                          "kind": "OpenParenToken",
+                          "text": "(...",
+                          "children": []
+                        },
+                        {
+                          "kind": "SyntaxList",
+                          "text": "req, res, next...",
+                          "children": [
+                            {
+                              "kind": "Parameter",
+                              "text": "req...",
+                              "children": [
+                                {
+                                  "kind": "Identifier",
+                                  "text": "req...",
+                                  "children": []
+                                }
+                              ]
+                            },
+                            {
+                              "kind": "CommaToken",
+                              "text": ",...",
+                              "children": []
+                            },
+                            {
+                              "kind": "Parameter",
+                              "text": "res...",
+                              "children": [
+                                {
+                                  "kind": "Identifier",
+                                  "text": "res...",
+                                  "children": []
+                                }
+                              ]
+                            },
+                            {
+                              "kind": "CommaToken",
+                              "text": ",...",
+                              "children": []
+                            },
+                            {
+                              "kind": "Parameter",
+                              "text": "next...",
+                              "children": [
+                                {
+                                  "kind": "Identifier",
+                                  "text": "next...",
+                                  "children": []
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "kind": "CloseParenToken",
+                          "text": ")...",
+                          "children": []
+                        },
+                        {
+                          "kind": "EqualsGreaterThanToken",
+                          "text": "=>...",
+                          "children": []
+                        },
+                        {
+                          "kind": "Block",
+                          "text": "{\n    req.db = prisma;\n    next();\n}...",
+                          "children": [
+                            {
+                              "kind": "FirstPunctuation",
+                              "text": "{...",
+                              "children": []
+                            },
+                            {
+                              "kind": "SyntaxList",
+                              "text": "req.db = prisma;\n    next();...",
+                              "children": [
+                                {
+                                  "kind": "ExpressionStatement",
+                                  "text": "req.db = prisma;...",
+                                  "children": [
+                                    {
+                                      "kind": "BinaryExpression",
+                                      "text": "req.db = prisma...",
+                                      "children": [
+                                        {
+                                          "kind": "PropertyAccessExpression",
+                                          "text": "req.db...",
+                                          "children": [
+                                            {
+                                              "kind": "Identifier",
+                                              "text": "req...",
+                                              "children": []
+                                            },
+                                            {
+                                              "kind": "DotToken",
+                                              "text": "....",
+                                              "children": []
+                                            },
+                                            {
+                                              "kind": "Identifier",
+                                              "text": "db...",
+                                              "children": []
+                                            }
+                                          ]
+                                        },
+                                        {
+                                          "kind": "FirstAssignment",
+                                          "text": "=...",
+                                          "children": []
+                                        },
+                                        {
+                                          "kind": "Identifier",
+                                          "text": "prisma...",
+                                          "children": []
+                                        }
+                                      ]
+                                    },
+                                    {
+                                      "kind": "SemicolonToken",
+                                      "text": ";...",
+                                      "children": []
+                                    }
+                                  ]
+                                },
+                                {
+                                  "kind": "ExpressionStatement",
+                                  "text": "next();...",
+                                  "children": [
+                                    {
+                                      "kind": "CallExpression",
+                                      "text": "next()...",
+                                      "children": [
+                                        {
+                                          "kind": "Identifier",
+                                          "text": "next...",
+                                          "children": []
+                                        },
+                                        {
+                                          "kind": "OpenParenToken",
+                                          "text": "(...",
+                                          "children": []
+                                        },
+                                        {
+                                          "kind": "SyntaxList",
+                                          "text": "...",
+                                          "children": []
+                                        },
+                                        {
+                                          "kind": "CloseParenToken",
+                                          "text": ")...",
+                                          "children": []
+                                        }
+                                      ]
+                                    },
+                                    {
+                                      "kind": "SemicolonToken",
+                                      "text": ";...",
+                                      "children": []
+                                    }
+                                  ]
+                                }
+                              ]
+                            },
+                            {
+                              "kind": "CloseBraceToken",
+                              "text": "}...",
+                              "children": []
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "kind": "CloseParenToken",
+                  "text": ")...",
+                  "children": []
+                }
+              ]
+            },
+            {
+              "kind": "SemicolonToken",
+              "text": ";...",
+              "children": []
+            }
+          ]
+        },
+        {
+          "kind": "ExpressionStatement",
+          "text": "app.get('/health', (req, res) => res.status(200).j...",
+          "children": [
+            {
+              "kind": "CallExpression",
+              "text": "app.get('/health', (req, res) => res.status(200).j...",
+              "children": [
+                {
+                  "kind": "PropertyAccessExpression",
+                  "text": "app.get...",
+                  "children": [
+                    {
+                      "kind": "Identifier",
+                      "text": "app...",
+                      "children": []
+                    },
+                    {
+                      "kind": "DotToken",
+                      "text": "....",
+                      "children": []
+                    },
+                    {
+                      "kind": "Identifier",
+                      "text": "get...",
+                      "children": []
+                    }
+                  ]
+                },
+                {
+                  "kind": "OpenParenToken",
+                  "text": "(...",
+                  "children": []
+                },
+                {
+                  "kind": "SyntaxList",
+                  "text": "'/health', (req, res) => res.status(200).json({ st...",
+                  "children": [
+                    {
+                      "kind": "StringLiteral",
+                      "text": "'/health'...",
+                      "children": []
+                    },
+                    {
+                      "kind": "CommaToken",
+                      "text": ",...",
+                      "children": []
+                    },
+                    {
+                      "kind": "ArrowFunction",
+                      "text": "(req, res) => res.status(200).json({ status: 'ok' ...",
+                      "children": [
+                        {
+                          "kind": "OpenParenToken",
+                          "text": "(...",
+                          "children": []
+                        },
+                        {
+                          "kind": "SyntaxList",
+                          "text": "req, res...",
+                          "children": [
+                            {
+                              "kind": "Parameter",
+                              "text": "req...",
+                              "children": [
+                                {
+                                  "kind": "Identifier",
+                                  "text": "req...",
+                                  "children": []
+                                }
+                              ]
+                            },
+                            {
+                              "kind": "CommaToken",
+                              "text": ",...",
+                              "children": []
+                            },
+                            {
+                              "kind": "Parameter",
+                              "text": "res...",
+                              "children": [
+                                {
+                                  "kind": "Identifier",
+                                  "text": "res...",
+                                  "children": []
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "kind": "CloseParenToken",
+                          "text": ")...",
+                          "children": []
+                        },
+                        {
+                          "kind": "EqualsGreaterThanToken",
+                          "text": "=>...",
+                          "children": []
+                        },
+                        {
+                          "kind": "CallExpression",
+                          "text": "res.status(200).json({ status: 'ok' })...",
+                          "children": [
+                            {
+                              "kind": "PropertyAccessExpression",
+                              "text": "res.status(200).json...",
+                              "children": [
+                                {
+                                  "kind": "CallExpression",
+                                  "text": "res.status(200)...",
+                                  "children": [
+                                    {
+                                      "kind": "PropertyAccessExpression",
+                                      "text": "res.status...",
+                                      "children": [
+                                        {
+                                          "kind": "Identifier",
+                                          "text": "res...",
+                                          "children": []
+                                        },
+                                        {
+                                          "kind": "DotToken",
+                                          "text": "....",
+                                          "children": []
+                                        },
+                                        {
+                                          "kind": "Identifier",
+                                          "text": "status...",
+                                          "children": []
+                                        }
+                                      ]
+                                    },
+                                    {
+                                      "kind": "OpenParenToken",
+                                      "text": "(...",
+                                      "children": []
+                                    },
+                                    {
+                                      "kind": "SyntaxList",
+                                      "text": "200...",
+                                      "children": [
+                                        {
+                                          "kind": "FirstLiteralToken",
+                                          "text": "200...",
+                                          "children": []
+                                        }
+                                      ]
+                                    },
+                                    {
+                                      "kind": "CloseParenToken",
+                                      "text": ")...",
+                                      "children": []
+                                    }
+                                  ]
+                                },
+                                {
+                                  "kind": "DotToken",
+                                  "text": "....",
+                                  "children": []
+                                },
+                                {
+                                  "kind": "Identifier",
+                                  "text": "json...",
+                                  "children": []
+                                }
+                              ]
+                            },
+                            {
+                              "kind": "OpenParenToken",
+                              "text": "(...",
+                              "children": []
+                            },
+                            {
+                              "kind": "SyntaxList",
+                              "text": "{ status: 'ok' }...",
+                              "children": [
+                                {
+                                  "kind": "ObjectLiteralExpression",
+                                  "text": "{ status: 'ok' }...",
+                                  "children": [
+                                    {
+                                      "kind": "FirstPunctuation",
+                                      "text": "{...",
+                                      "children": []
+                                    },
+                                    {
+                                      "kind": "SyntaxList",
+                                      "text": "status: 'ok'...",
+                                      "children": [
+                                        {
+                                          "kind": "PropertyAssignment",
+                                          "text": "status: 'ok'...",
+                                          "children": [
+                                            {
+                                              "kind": "Identifier",
+                                              "text": "status...",
+                                              "children": []
+                                            },
+                                            {
+                                              "kind": "ColonToken",
+                                              "text": ":...",
+                                              "children": []
+                                            },
+                                            {
+                                              "kind": "StringLiteral",
+                                              "text": "'ok'...",
+                                              "children": []
+                                            }
+                                          ]
+                                        }
+                                      ]
+                                    },
+                                    {
+                                      "kind": "CloseBraceToken",
+                                      "text": "}...",
+                                      "children": []
+                                    }
+                                  ]
+                                }
+                              ]
+                            },
+                            {
+                              "kind": "CloseParenToken",
+                              "text": ")...",
+                              "children": []
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "kind": "CloseParenToken",
+                  "text": ")...",
+                  "children": []
+                }
+              ]
+            },
+            {
+              "kind": "SemicolonToken",
+              "text": ";...",
+              "children": []
+            }
+          ]
+        },
+        {
+          "kind": "ExpressionStatement",
+          "text": "app.use('/api/users', verifyToken, userRouter);...",
+          "children": [
+            {
+              "kind": "CallExpression",
+              "text": "app.use('/api/users', verifyToken, userRouter)...",
+              "children": [
+                {
+                  "kind": "PropertyAccessExpression",
+                  "text": "app.use...",
+                  "children": [
+                    {
+                      "kind": "Identifier",
+                      "text": "app...",
+                      "children": []
+                    },
+                    {
+                      "kind": "DotToken",
+                      "text": "....",
+                      "children": []
+                    },
+                    {
+                      "kind": "Identifier",
+                      "text": "use...",
+                      "children": []
+                    }
+                  ]
+                },
+                {
+                  "kind": "OpenParenToken",
+                  "text": "(...",
+                  "children": []
+                },
+                {
+                  "kind": "SyntaxList",
+                  "text": "'/api/users', verifyToken, userRouter...",
+                  "children": [
+                    {
+                      "kind": "StringLiteral",
+                      "text": "'/api/users'...",
+                      "children": []
+                    },
+                    {
+                      "kind": "CommaToken",
+                      "text": ",...",
+                      "children": []
+                    },
+                    {
+                      "kind": "Identifier",
+                      "text": "verifyToken...",
+                      "children": []
+                    },
+                    {
+                      "kind": "CommaToken",
+                      "text": ",...",
+                      "children": []
+                    },
+                    {
+                      "kind": "Identifier",
+                      "text": "userRouter...",
+                      "children": []
+                    }
+                  ]
+                },
+                {
+                  "kind": "CloseParenToken",
+                  "text": ")...",
+                  "children": []
+                }
+              ]
+            },
+            {
+              "kind": "SemicolonToken",
+              "text": ";...",
+              "children": []
+            }
+          ]
+        },
+        {
+          "kind": "ExpressionStatement",
+          "text": "app.post('/api/admin/reset', verifyToken, requireR...",
+          "children": [
+            {
+              "kind": "CallExpression",
+              "text": "app.post('/api/admin/reset', verifyToken, requireR...",
+              "children": [
+                {
+                  "kind": "PropertyAccessExpression",
+                  "text": "app.post...",
+                  "children": [
+                    {
+                      "kind": "Identifier",
+                      "text": "app...",
+                      "children": []
+                    },
+                    {
+                      "kind": "DotToken",
+                      "text": "....",
+                      "children": []
+                    },
+                    {
+                      "kind": "Identifier",
+                      "text": "post...",
+                      "children": []
+                    }
+                  ]
+                },
+                {
+                  "kind": "OpenParenToken",
+                  "text": "(...",
+                  "children": []
+                },
+                {
+                  "kind": "SyntaxList",
+                  "text": "'/api/admin/reset', verifyToken, requireRole('supe...",
+                  "children": [
+                    {
+                      "kind": "StringLiteral",
+                      "text": "'/api/admin/reset'...",
+                      "children": []
+                    },
+                    {
+                      "kind": "CommaToken",
+                      "text": ",...",
+                      "children": []
+                    },
+                    {
+                      "kind": "Identifier",
+                      "text": "verifyToken...",
+                      "children": []
+                    },
+                    {
+                      "kind": "CommaToken",
+                      "text": ",...",
+                      "children": []
+                    },
+                    {
+                      "kind": "CallExpression",
+                      "text": "requireRole('super_admin')...",
+                      "children": [
+                        {
+                          "kind": "Identifier",
+                          "text": "requireRole...",
+                          "children": []
+                        },
+                        {
+                          "kind": "OpenParenToken",
+                          "text": "(...",
+                          "children": []
+                        },
+                        {
+                          "kind": "SyntaxList",
+                          "text": "'super_admin'...",
+                          "children": [
+                            {
+                              "kind": "StringLiteral",
+                              "text": "'super_admin'...",
+                              "children": []
+                            }
+                          ]
+                        },
+                        {
+                          "kind": "CloseParenToken",
+                          "text": ")...",
+                          "children": []
+                        }
+                      ]
+                    },
+                    {
+                      "kind": "CommaToken",
+                      "text": ",...",
+                      "children": []
+                    },
+                    {
+                      "kind": "ArrowFunction",
+                      "text": "async (req, res) => {\n    await prisma.user.delete...",
+                      "children": [
+                        {
+                          "kind": "SyntaxList",
+                          "text": "async...",
+                          "children": [
+                            {
+                              "kind": "AsyncKeyword",
+                              "text": "async...",
+                              "children": []
+                            }
+                          ]
+                        },
+                        {
+                          "kind": "OpenParenToken",
+                          "text": "(...",
+                          "children": []
+                        },
+                        {
+                          "kind": "SyntaxList",
+                          "text": "req, res...",
+                          "children": [
+                            {
+                              "kind": "Parameter",
+                              "text": "req...",
+                              "children": [
+                                {
+                                  "kind": "Identifier",
+                                  "text": "req...",
+                                  "children": []
+                                }
+                              ]
+                            },
+                            {
+                              "kind": "CommaToken",
+                              "text": ",...",
+                              "children": []
+                            },
+                            {
+                              "kind": "Parameter",
+                              "text": "res...",
+                              "children": [
+                                {
+                                  "kind": "Identifier",
+                                  "text": "res...",
+                                  "children": []
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "kind": "CloseParenToken",
+                          "text": ")...",
+                          "children": []
+                        },
+                        {
+                          "kind": "EqualsGreaterThanToken",
+                          "text": "=>...",
+                          "children": []
+                        },
+                        {
+                          "kind": "Block",
+                          "text": "{\n    await prisma.user.deleteMany({});\n    res.js...",
+                          "children": [
+                            {
+                              "kind": "FirstPunctuation",
+                              "text": "{...",
+                              "children": []
+                            },
+                            {
+                              "kind": "SyntaxList",
+                              "text": "await prisma.user.deleteMany({});\n    res.json({ m...",
+                              "children": [
+                                {
+                                  "kind": "ExpressionStatement",
+                                  "text": "await prisma.user.deleteMany({});...",
+                                  "children": [
+                                    {
+                                      "kind": "AwaitExpression",
+                                      "text": "await prisma.user.deleteMany({})...",
+                                      "children": [
+                                        {
+                                          "kind": "AwaitKeyword",
+                                          "text": "await...",
+                                          "children": []
+                                        },
+                                        {
+                                          "kind": "CallExpression",
+                                          "text": "prisma.user.deleteMany({})...",
+                                          "children": [
+                                            {
+                                              "kind": "PropertyAccessExpression",
+                                              "text": "prisma.user.deleteMany...",
+                                              "children": [
+                                                {
+                                                  "kind": "PropertyAccessExpression",
+                                                  "text": "prisma.user...",
+                                                  "children": [
+                                                    {
+                                                      "kind": "Identifier",
+                                                      "text": "prisma...",
+                                                      "children": []
+                                                    },
+                                                    {
+                                                      "kind": "DotToken",
+                                                      "text": "....",
+                                                      "children": []
+                                                    },
+                                                    {
+                                                      "kind": "Identifier",
+                                                      "text": "user...",
+                                                      "children": []
+                                                    }
+                                                  ]
+                                                },
+                                                {
+                                                  "kind": "DotToken",
+                                                  "text": "....",
+                                                  "children": []
+                                                },
+                                                {
+                                                  "kind": "Identifier",
+                                                  "text": "deleteMany...",
+                                                  "children": []
+                                                }
+                                              ]
+                                            },
+                                            {
+                                              "kind": "OpenParenToken",
+                                              "text": "(...",
+                                              "children": []
+                                            },
+                                            {
+                                              "kind": "SyntaxList",
+                                              "text": "{}...",
+                                              "children": [
+                                                {
+                                                  "kind": "ObjectLiteralExpression",
+                                                  "text": "{}...",
+                                                  "children": [
+                                                    {
+                                                      "kind": "FirstPunctuation",
+                                                      "text": "{...",
+                                                      "children": []
+                                                    },
+                                                    {
+                                                      "kind": "SyntaxList",
+                                                      "text": "...",
+                                                      "children": []
+                                                    },
+                                                    {
+                                                      "kind": "CloseBraceToken",
+                                                      "text": "}...",
+                                                      "children": []
+                                                    }
+                                                  ]
+                                                }
+                                              ]
+                                            },
+                                            {
+                                              "kind": "CloseParenToken",
+                                              "text": ")...",
+                                              "children": []
+                                            }
+                                          ]
+                                        }
+                                      ]
+                                    },
+                                    {
+                                      "kind": "SemicolonToken",
+                                      "text": ";...",
+                                      "children": []
+                                    }
+                                  ]
+                                },
+                                {
+                                  "kind": "ExpressionStatement",
+                                  "text": "res.json({ message: 'System reset complete' });...",
+                                  "children": [
+                                    {
+                                      "kind": "CallExpression",
+                                      "text": "res.json({ message: 'System reset complete' })...",
+                                      "children": [
+                                        {
+                                          "kind": "PropertyAccessExpression",
+                                          "text": "res.json...",
+                                          "children": [
+                                            {
+                                              "kind": "Identifier",
+                                              "text": "res...",
+                                              "children": []
+                                            },
+                                            {
+                                              "kind": "DotToken",
+                                              "text": "....",
+                                              "children": []
+                                            },
+                                            {
+                                              "kind": "Identifier",
+                                              "text": "json...",
+                                              "children": []
+                                            }
+                                          ]
+                                        },
+                                        {
+                                          "kind": "OpenParenToken",
+                                          "text": "(...",
+                                          "children": []
+                                        },
+                                        {
+                                          "kind": "SyntaxList",
+                                          "text": "{ message: 'System reset complete' }...",
+                                          "children": [
+                                            {
+                                              "kind": "ObjectLiteralExpression",
+                                              "text": "{ message: 'System reset complete' }...",
+                                              "children": [
+                                                {
+                                                  "kind": "FirstPunctuation",
+                                                  "text": "{...",
+                                                  "children": []
+                                                },
+                                                {
+                                                  "kind": "SyntaxList",
+                                                  "text": "message: 'System reset complete'...",
+                                                  "children": [
+                                                    {
+                                                      "kind": "PropertyAssignment",
+                                                      "text": "message: 'System reset complete'...",
+                                                      "children": [
+                                                        {
+                                                          "kind": "Identifier",
+                                                          "text": "message...",
+                                                          "children": []
+                                                        },
+                                                        {
+                                                          "kind": "ColonToken",
+                                                          "text": ":...",
+                                                          "children": []
+                                                        },
+                                                        {
+                                                          "kind": "StringLiteral",
+                                                          "text": "'System reset complete'...",
+                                                          "children": []
+                                                        }
+                                                      ]
+                                                    }
+                                                  ]
+                                                },
+                                                {
+                                                  "kind": "CloseBraceToken",
+                                                  "text": "}...",
+                                                  "children": []
+                                                }
+                                              ]
+                                            }
+                                          ]
+                                        },
+                                        {
+                                          "kind": "CloseParenToken",
+                                          "text": ")...",
+                                          "children": []
+                                        }
+                                      ]
+                                    },
+                                    {
+                                      "kind": "SemicolonToken",
+                                      "text": ";...",
+                                      "children": []
+                                    }
+                                  ]
+                                }
+                              ]
+                            },
+                            {
+                              "kind": "CloseBraceToken",
+                              "text": "}...",
+                              "children": []
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "kind": "CloseParenToken",
+                  "text": ")...",
+                  "children": []
+                }
+              ]
+            },
+            {
+              "kind": "SemicolonToken",
+              "text": ";...",
+              "children": []
+            }
+          ]
+        },
+        {
+          "kind": "ExpressionStatement",
+          "text": "module.exports = app;...",
+          "children": [
+            {
+              "kind": "BinaryExpression",
+              "text": "module.exports = app...",
+              "children": [
+                {
+                  "kind": "PropertyAccessExpression",
+                  "text": "module.exports...",
+                  "children": [
+                    {
+                      "kind": "Identifier",
+                      "text": "module...",
+                      "children": []
+                    },
+                    {
+                      "kind": "DotToken",
+                      "text": "....",
+                      "children": []
+                    },
+                    {
+                      "kind": "Identifier",
+                      "text": "exports...",
+                      "children": []
+                    }
+                  ]
+                },
+                {
+                  "kind": "FirstAssignment",
+                  "text": "=...",
+                  "children": []
+                },
+                {
+                  "kind": "Identifier",
+                  "text": "app...",
+                  "children": []
+                }
+              ]
+            },
+            {
+              "kind": "SemicolonToken",
+              "text": ";...",
+              "children": []
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "kind": "EndOfFileToken",
+      "text": "...",
+      "children": []
+    }
+  ]
+}

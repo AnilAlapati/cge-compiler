@@ -1,0 +1,1306 @@
+{
+  "kind": "SourceFile",
+  "text": "import { Controller, Get, Post, UseGuards, Body } ...",
+  "children": [
+    {
+      "kind": "SyntaxList",
+      "text": "import { Controller, Get, Post, UseGuards, Body } ...",
+      "children": [
+        {
+          "kind": "ImportDeclaration",
+          "text": "import { Controller, Get, Post, UseGuards, Body } ...",
+          "children": [
+            {
+              "kind": "ImportKeyword",
+              "text": "import...",
+              "children": []
+            },
+            {
+              "kind": "ImportClause",
+              "text": "{ Controller, Get, Post, UseGuards, Body }...",
+              "children": [
+                {
+                  "kind": "NamedImports",
+                  "text": "{ Controller, Get, Post, UseGuards, Body }...",
+                  "children": [
+                    {
+                      "kind": "FirstPunctuation",
+                      "text": "{...",
+                      "children": []
+                    },
+                    {
+                      "kind": "SyntaxList",
+                      "text": "Controller, Get, Post, UseGuards, Body...",
+                      "children": [
+                        {
+                          "kind": "ImportSpecifier",
+                          "text": "Controller...",
+                          "children": [
+                            {
+                              "kind": "Identifier",
+                              "text": "Controller...",
+                              "children": []
+                            }
+                          ]
+                        },
+                        {
+                          "kind": "CommaToken",
+                          "text": ",...",
+                          "children": []
+                        },
+                        {
+                          "kind": "ImportSpecifier",
+                          "text": "Get...",
+                          "children": [
+                            {
+                              "kind": "Identifier",
+                              "text": "Get...",
+                              "children": []
+                            }
+                          ]
+                        },
+                        {
+                          "kind": "CommaToken",
+                          "text": ",...",
+                          "children": []
+                        },
+                        {
+                          "kind": "ImportSpecifier",
+                          "text": "Post...",
+                          "children": [
+                            {
+                              "kind": "Identifier",
+                              "text": "Post...",
+                              "children": []
+                            }
+                          ]
+                        },
+                        {
+                          "kind": "CommaToken",
+                          "text": ",...",
+                          "children": []
+                        },
+                        {
+                          "kind": "ImportSpecifier",
+                          "text": "UseGuards...",
+                          "children": [
+                            {
+                              "kind": "Identifier",
+                              "text": "UseGuards...",
+                              "children": []
+                            }
+                          ]
+                        },
+                        {
+                          "kind": "CommaToken",
+                          "text": ",...",
+                          "children": []
+                        },
+                        {
+                          "kind": "ImportSpecifier",
+                          "text": "Body...",
+                          "children": [
+                            {
+                              "kind": "Identifier",
+                              "text": "Body...",
+                              "children": []
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "kind": "CloseBraceToken",
+                      "text": "}...",
+                      "children": []
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "kind": "FromKeyword",
+              "text": "from...",
+              "children": []
+            },
+            {
+              "kind": "StringLiteral",
+              "text": "'@nestjs/common'...",
+              "children": []
+            },
+            {
+              "kind": "SemicolonToken",
+              "text": ";...",
+              "children": []
+            }
+          ]
+        },
+        {
+          "kind": "ImportDeclaration",
+          "text": "import { AppService } from './app.service';...",
+          "children": [
+            {
+              "kind": "ImportKeyword",
+              "text": "import...",
+              "children": []
+            },
+            {
+              "kind": "ImportClause",
+              "text": "{ AppService }...",
+              "children": [
+                {
+                  "kind": "NamedImports",
+                  "text": "{ AppService }...",
+                  "children": [
+                    {
+                      "kind": "FirstPunctuation",
+                      "text": "{...",
+                      "children": []
+                    },
+                    {
+                      "kind": "SyntaxList",
+                      "text": "AppService...",
+                      "children": [
+                        {
+                          "kind": "ImportSpecifier",
+                          "text": "AppService...",
+                          "children": [
+                            {
+                              "kind": "Identifier",
+                              "text": "AppService...",
+                              "children": []
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "kind": "CloseBraceToken",
+                      "text": "}...",
+                      "children": []
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "kind": "FromKeyword",
+              "text": "from...",
+              "children": []
+            },
+            {
+              "kind": "StringLiteral",
+              "text": "'./app.service'...",
+              "children": []
+            },
+            {
+              "kind": "SemicolonToken",
+              "text": ";...",
+              "children": []
+            }
+          ]
+        },
+        {
+          "kind": "ImportDeclaration",
+          "text": "import { AuthGuard } from './auth.guard';...",
+          "children": [
+            {
+              "kind": "ImportKeyword",
+              "text": "import...",
+              "children": []
+            },
+            {
+              "kind": "ImportClause",
+              "text": "{ AuthGuard }...",
+              "children": [
+                {
+                  "kind": "NamedImports",
+                  "text": "{ AuthGuard }...",
+                  "children": [
+                    {
+                      "kind": "FirstPunctuation",
+                      "text": "{...",
+                      "children": []
+                    },
+                    {
+                      "kind": "SyntaxList",
+                      "text": "AuthGuard...",
+                      "children": [
+                        {
+                          "kind": "ImportSpecifier",
+                          "text": "AuthGuard...",
+                          "children": [
+                            {
+                              "kind": "Identifier",
+                              "text": "AuthGuard...",
+                              "children": []
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "kind": "CloseBraceToken",
+                      "text": "}...",
+                      "children": []
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "kind": "FromKeyword",
+              "text": "from...",
+              "children": []
+            },
+            {
+              "kind": "StringLiteral",
+              "text": "'./auth.guard'...",
+              "children": []
+            },
+            {
+              "kind": "SemicolonToken",
+              "text": ";...",
+              "children": []
+            }
+          ]
+        },
+        {
+          "kind": "ImportDeclaration",
+          "text": "import { Roles } from './roles.decorator';...",
+          "children": [
+            {
+              "kind": "ImportKeyword",
+              "text": "import...",
+              "children": []
+            },
+            {
+              "kind": "ImportClause",
+              "text": "{ Roles }...",
+              "children": [
+                {
+                  "kind": "NamedImports",
+                  "text": "{ Roles }...",
+                  "children": [
+                    {
+                      "kind": "FirstPunctuation",
+                      "text": "{...",
+                      "children": []
+                    },
+                    {
+                      "kind": "SyntaxList",
+                      "text": "Roles...",
+                      "children": [
+                        {
+                          "kind": "ImportSpecifier",
+                          "text": "Roles...",
+                          "children": [
+                            {
+                              "kind": "Identifier",
+                              "text": "Roles...",
+                              "children": []
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "kind": "CloseBraceToken",
+                      "text": "}...",
+                      "children": []
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "kind": "FromKeyword",
+              "text": "from...",
+              "children": []
+            },
+            {
+              "kind": "StringLiteral",
+              "text": "'./roles.decorator'...",
+              "children": []
+            },
+            {
+              "kind": "SemicolonToken",
+              "text": ";...",
+              "children": []
+            }
+          ]
+        },
+        {
+          "kind": "ImportDeclaration",
+          "text": "import { RolesGuard } from './roles.guard';...",
+          "children": [
+            {
+              "kind": "ImportKeyword",
+              "text": "import...",
+              "children": []
+            },
+            {
+              "kind": "ImportClause",
+              "text": "{ RolesGuard }...",
+              "children": [
+                {
+                  "kind": "NamedImports",
+                  "text": "{ RolesGuard }...",
+                  "children": [
+                    {
+                      "kind": "FirstPunctuation",
+                      "text": "{...",
+                      "children": []
+                    },
+                    {
+                      "kind": "SyntaxList",
+                      "text": "RolesGuard...",
+                      "children": [
+                        {
+                          "kind": "ImportSpecifier",
+                          "text": "RolesGuard...",
+                          "children": [
+                            {
+                              "kind": "Identifier",
+                              "text": "RolesGuard...",
+                              "children": []
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "kind": "CloseBraceToken",
+                      "text": "}...",
+                      "children": []
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "kind": "FromKeyword",
+              "text": "from...",
+              "children": []
+            },
+            {
+              "kind": "StringLiteral",
+              "text": "'./roles.guard'...",
+              "children": []
+            },
+            {
+              "kind": "SemicolonToken",
+              "text": ";...",
+              "children": []
+            }
+          ]
+        },
+        {
+          "kind": "ClassDeclaration",
+          "text": "@Controller('api')\nexport class AppController {\n  ...",
+          "children": [
+            {
+              "kind": "SyntaxList",
+              "text": "@Controller('api')\nexport...",
+              "children": [
+                {
+                  "kind": "Decorator",
+                  "text": "@Controller('api')...",
+                  "children": [
+                    {
+                      "kind": "AtToken",
+                      "text": "@...",
+                      "children": []
+                    },
+                    {
+                      "kind": "CallExpression",
+                      "text": "Controller('api')...",
+                      "children": [
+                        {
+                          "kind": "Identifier",
+                          "text": "Controller...",
+                          "children": []
+                        },
+                        {
+                          "kind": "OpenParenToken",
+                          "text": "(...",
+                          "children": []
+                        },
+                        {
+                          "kind": "SyntaxList",
+                          "text": "'api'...",
+                          "children": [
+                            {
+                              "kind": "StringLiteral",
+                              "text": "'api'...",
+                              "children": []
+                            }
+                          ]
+                        },
+                        {
+                          "kind": "CloseParenToken",
+                          "text": ")...",
+                          "children": []
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "kind": "ExportKeyword",
+                  "text": "export...",
+                  "children": []
+                }
+              ]
+            },
+            {
+              "kind": "ClassKeyword",
+              "text": "class...",
+              "children": []
+            },
+            {
+              "kind": "Identifier",
+              "text": "AppController...",
+              "children": []
+            },
+            {
+              "kind": "FirstPunctuation",
+              "text": "{...",
+              "children": []
+            },
+            {
+              "kind": "SyntaxList",
+              "text": "constructor(private readonly appService: AppServic...",
+              "children": [
+                {
+                  "kind": "Constructor",
+                  "text": "constructor(private readonly appService: AppServic...",
+                  "children": [
+                    {
+                      "kind": "ConstructorKeyword",
+                      "text": "constructor...",
+                      "children": []
+                    },
+                    {
+                      "kind": "OpenParenToken",
+                      "text": "(...",
+                      "children": []
+                    },
+                    {
+                      "kind": "SyntaxList",
+                      "text": "private readonly appService: AppService...",
+                      "children": [
+                        {
+                          "kind": "Parameter",
+                          "text": "private readonly appService: AppService...",
+                          "children": [
+                            {
+                              "kind": "SyntaxList",
+                              "text": "private readonly...",
+                              "children": [
+                                {
+                                  "kind": "PrivateKeyword",
+                                  "text": "private...",
+                                  "children": []
+                                },
+                                {
+                                  "kind": "ReadonlyKeyword",
+                                  "text": "readonly...",
+                                  "children": []
+                                }
+                              ]
+                            },
+                            {
+                              "kind": "Identifier",
+                              "text": "appService...",
+                              "children": []
+                            },
+                            {
+                              "kind": "ColonToken",
+                              "text": ":...",
+                              "children": []
+                            },
+                            {
+                              "kind": "TypeReference",
+                              "text": "AppService...",
+                              "children": [
+                                {
+                                  "kind": "Identifier",
+                                  "text": "AppService...",
+                                  "children": []
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "kind": "CloseParenToken",
+                      "text": ")...",
+                      "children": []
+                    },
+                    {
+                      "kind": "Block",
+                      "text": "{}...",
+                      "children": [
+                        {
+                          "kind": "FirstPunctuation",
+                          "text": "{...",
+                          "children": []
+                        },
+                        {
+                          "kind": "SyntaxList",
+                          "text": "...",
+                          "children": []
+                        },
+                        {
+                          "kind": "CloseBraceToken",
+                          "text": "}...",
+                          "children": []
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "kind": "MethodDeclaration",
+                  "text": "@Get('public/data')\n  getPublicData() {\n    return...",
+                  "children": [
+                    {
+                      "kind": "SyntaxList",
+                      "text": "@Get('public/data')...",
+                      "children": [
+                        {
+                          "kind": "Decorator",
+                          "text": "@Get('public/data')...",
+                          "children": [
+                            {
+                              "kind": "AtToken",
+                              "text": "@...",
+                              "children": []
+                            },
+                            {
+                              "kind": "CallExpression",
+                              "text": "Get('public/data')...",
+                              "children": [
+                                {
+                                  "kind": "Identifier",
+                                  "text": "Get...",
+                                  "children": []
+                                },
+                                {
+                                  "kind": "OpenParenToken",
+                                  "text": "(...",
+                                  "children": []
+                                },
+                                {
+                                  "kind": "SyntaxList",
+                                  "text": "'public/data'...",
+                                  "children": [
+                                    {
+                                      "kind": "StringLiteral",
+                                      "text": "'public/data'...",
+                                      "children": []
+                                    }
+                                  ]
+                                },
+                                {
+                                  "kind": "CloseParenToken",
+                                  "text": ")...",
+                                  "children": []
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "kind": "Identifier",
+                      "text": "getPublicData...",
+                      "children": []
+                    },
+                    {
+                      "kind": "OpenParenToken",
+                      "text": "(...",
+                      "children": []
+                    },
+                    {
+                      "kind": "SyntaxList",
+                      "text": "...",
+                      "children": []
+                    },
+                    {
+                      "kind": "CloseParenToken",
+                      "text": ")...",
+                      "children": []
+                    },
+                    {
+                      "kind": "Block",
+                      "text": "{\n    return this.appService.getPublicData();\n  }...",
+                      "children": [
+                        {
+                          "kind": "FirstPunctuation",
+                          "text": "{...",
+                          "children": []
+                        },
+                        {
+                          "kind": "SyntaxList",
+                          "text": "return this.appService.getPublicData();...",
+                          "children": [
+                            {
+                              "kind": "ReturnStatement",
+                              "text": "return this.appService.getPublicData();...",
+                              "children": [
+                                {
+                                  "kind": "ReturnKeyword",
+                                  "text": "return...",
+                                  "children": []
+                                },
+                                {
+                                  "kind": "CallExpression",
+                                  "text": "this.appService.getPublicData()...",
+                                  "children": [
+                                    {
+                                      "kind": "PropertyAccessExpression",
+                                      "text": "this.appService.getPublicData...",
+                                      "children": [
+                                        {
+                                          "kind": "PropertyAccessExpression",
+                                          "text": "this.appService...",
+                                          "children": [
+                                            {
+                                              "kind": "ThisKeyword",
+                                              "text": "this...",
+                                              "children": []
+                                            },
+                                            {
+                                              "kind": "DotToken",
+                                              "text": "....",
+                                              "children": []
+                                            },
+                                            {
+                                              "kind": "Identifier",
+                                              "text": "appService...",
+                                              "children": []
+                                            }
+                                          ]
+                                        },
+                                        {
+                                          "kind": "DotToken",
+                                          "text": "....",
+                                          "children": []
+                                        },
+                                        {
+                                          "kind": "Identifier",
+                                          "text": "getPublicData...",
+                                          "children": []
+                                        }
+                                      ]
+                                    },
+                                    {
+                                      "kind": "OpenParenToken",
+                                      "text": "(...",
+                                      "children": []
+                                    },
+                                    {
+                                      "kind": "SyntaxList",
+                                      "text": "...",
+                                      "children": []
+                                    },
+                                    {
+                                      "kind": "CloseParenToken",
+                                      "text": ")...",
+                                      "children": []
+                                    }
+                                  ]
+                                },
+                                {
+                                  "kind": "SemicolonToken",
+                                  "text": ";...",
+                                  "children": []
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "kind": "CloseBraceToken",
+                          "text": "}...",
+                          "children": []
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "kind": "MethodDeclaration",
+                  "text": "@UseGuards(AuthGuard)\n  @Get('user/profile')\n  get...",
+                  "children": [
+                    {
+                      "kind": "SyntaxList",
+                      "text": "@UseGuards(AuthGuard)\n  @Get('user/profile')...",
+                      "children": [
+                        {
+                          "kind": "Decorator",
+                          "text": "@UseGuards(AuthGuard)...",
+                          "children": [
+                            {
+                              "kind": "AtToken",
+                              "text": "@...",
+                              "children": []
+                            },
+                            {
+                              "kind": "CallExpression",
+                              "text": "UseGuards(AuthGuard)...",
+                              "children": [
+                                {
+                                  "kind": "Identifier",
+                                  "text": "UseGuards...",
+                                  "children": []
+                                },
+                                {
+                                  "kind": "OpenParenToken",
+                                  "text": "(...",
+                                  "children": []
+                                },
+                                {
+                                  "kind": "SyntaxList",
+                                  "text": "AuthGuard...",
+                                  "children": [
+                                    {
+                                      "kind": "Identifier",
+                                      "text": "AuthGuard...",
+                                      "children": []
+                                    }
+                                  ]
+                                },
+                                {
+                                  "kind": "CloseParenToken",
+                                  "text": ")...",
+                                  "children": []
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "kind": "Decorator",
+                          "text": "@Get('user/profile')...",
+                          "children": [
+                            {
+                              "kind": "AtToken",
+                              "text": "@...",
+                              "children": []
+                            },
+                            {
+                              "kind": "CallExpression",
+                              "text": "Get('user/profile')...",
+                              "children": [
+                                {
+                                  "kind": "Identifier",
+                                  "text": "Get...",
+                                  "children": []
+                                },
+                                {
+                                  "kind": "OpenParenToken",
+                                  "text": "(...",
+                                  "children": []
+                                },
+                                {
+                                  "kind": "SyntaxList",
+                                  "text": "'user/profile'...",
+                                  "children": [
+                                    {
+                                      "kind": "StringLiteral",
+                                      "text": "'user/profile'...",
+                                      "children": []
+                                    }
+                                  ]
+                                },
+                                {
+                                  "kind": "CloseParenToken",
+                                  "text": ")...",
+                                  "children": []
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "kind": "Identifier",
+                      "text": "getProfile...",
+                      "children": []
+                    },
+                    {
+                      "kind": "OpenParenToken",
+                      "text": "(...",
+                      "children": []
+                    },
+                    {
+                      "kind": "SyntaxList",
+                      "text": "...",
+                      "children": []
+                    },
+                    {
+                      "kind": "CloseParenToken",
+                      "text": ")...",
+                      "children": []
+                    },
+                    {
+                      "kind": "Block",
+                      "text": "{\n    return this.appService.getUserProfile();\n  }...",
+                      "children": [
+                        {
+                          "kind": "FirstPunctuation",
+                          "text": "{...",
+                          "children": []
+                        },
+                        {
+                          "kind": "SyntaxList",
+                          "text": "return this.appService.getUserProfile();...",
+                          "children": [
+                            {
+                              "kind": "ReturnStatement",
+                              "text": "return this.appService.getUserProfile();...",
+                              "children": [
+                                {
+                                  "kind": "ReturnKeyword",
+                                  "text": "return...",
+                                  "children": []
+                                },
+                                {
+                                  "kind": "CallExpression",
+                                  "text": "this.appService.getUserProfile()...",
+                                  "children": [
+                                    {
+                                      "kind": "PropertyAccessExpression",
+                                      "text": "this.appService.getUserProfile...",
+                                      "children": [
+                                        {
+                                          "kind": "PropertyAccessExpression",
+                                          "text": "this.appService...",
+                                          "children": [
+                                            {
+                                              "kind": "ThisKeyword",
+                                              "text": "this...",
+                                              "children": []
+                                            },
+                                            {
+                                              "kind": "DotToken",
+                                              "text": "....",
+                                              "children": []
+                                            },
+                                            {
+                                              "kind": "Identifier",
+                                              "text": "appService...",
+                                              "children": []
+                                            }
+                                          ]
+                                        },
+                                        {
+                                          "kind": "DotToken",
+                                          "text": "....",
+                                          "children": []
+                                        },
+                                        {
+                                          "kind": "Identifier",
+                                          "text": "getUserProfile...",
+                                          "children": []
+                                        }
+                                      ]
+                                    },
+                                    {
+                                      "kind": "OpenParenToken",
+                                      "text": "(...",
+                                      "children": []
+                                    },
+                                    {
+                                      "kind": "SyntaxList",
+                                      "text": "...",
+                                      "children": []
+                                    },
+                                    {
+                                      "kind": "CloseParenToken",
+                                      "text": ")...",
+                                      "children": []
+                                    }
+                                  ]
+                                },
+                                {
+                                  "kind": "SemicolonToken",
+                                  "text": ";...",
+                                  "children": []
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "kind": "CloseBraceToken",
+                          "text": "}...",
+                          "children": []
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "kind": "MethodDeclaration",
+                  "text": "@UseGuards(AuthGuard, RolesGuard)\n  @Roles('admin'...",
+                  "children": [
+                    {
+                      "kind": "SyntaxList",
+                      "text": "@UseGuards(AuthGuard, RolesGuard)\n  @Roles('admin'...",
+                      "children": [
+                        {
+                          "kind": "Decorator",
+                          "text": "@UseGuards(AuthGuard, RolesGuard)...",
+                          "children": [
+                            {
+                              "kind": "AtToken",
+                              "text": "@...",
+                              "children": []
+                            },
+                            {
+                              "kind": "CallExpression",
+                              "text": "UseGuards(AuthGuard, RolesGuard)...",
+                              "children": [
+                                {
+                                  "kind": "Identifier",
+                                  "text": "UseGuards...",
+                                  "children": []
+                                },
+                                {
+                                  "kind": "OpenParenToken",
+                                  "text": "(...",
+                                  "children": []
+                                },
+                                {
+                                  "kind": "SyntaxList",
+                                  "text": "AuthGuard, RolesGuard...",
+                                  "children": [
+                                    {
+                                      "kind": "Identifier",
+                                      "text": "AuthGuard...",
+                                      "children": []
+                                    },
+                                    {
+                                      "kind": "CommaToken",
+                                      "text": ",...",
+                                      "children": []
+                                    },
+                                    {
+                                      "kind": "Identifier",
+                                      "text": "RolesGuard...",
+                                      "children": []
+                                    }
+                                  ]
+                                },
+                                {
+                                  "kind": "CloseParenToken",
+                                  "text": ")...",
+                                  "children": []
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "kind": "Decorator",
+                          "text": "@Roles('admin')...",
+                          "children": [
+                            {
+                              "kind": "AtToken",
+                              "text": "@...",
+                              "children": []
+                            },
+                            {
+                              "kind": "CallExpression",
+                              "text": "Roles('admin')...",
+                              "children": [
+                                {
+                                  "kind": "Identifier",
+                                  "text": "Roles...",
+                                  "children": []
+                                },
+                                {
+                                  "kind": "OpenParenToken",
+                                  "text": "(...",
+                                  "children": []
+                                },
+                                {
+                                  "kind": "SyntaxList",
+                                  "text": "'admin'...",
+                                  "children": [
+                                    {
+                                      "kind": "StringLiteral",
+                                      "text": "'admin'...",
+                                      "children": []
+                                    }
+                                  ]
+                                },
+                                {
+                                  "kind": "CloseParenToken",
+                                  "text": ")...",
+                                  "children": []
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "kind": "Decorator",
+                          "text": "@Post('admin/settings')...",
+                          "children": [
+                            {
+                              "kind": "AtToken",
+                              "text": "@...",
+                              "children": []
+                            },
+                            {
+                              "kind": "CallExpression",
+                              "text": "Post('admin/settings')...",
+                              "children": [
+                                {
+                                  "kind": "Identifier",
+                                  "text": "Post...",
+                                  "children": []
+                                },
+                                {
+                                  "kind": "OpenParenToken",
+                                  "text": "(...",
+                                  "children": []
+                                },
+                                {
+                                  "kind": "SyntaxList",
+                                  "text": "'admin/settings'...",
+                                  "children": [
+                                    {
+                                      "kind": "StringLiteral",
+                                      "text": "'admin/settings'...",
+                                      "children": []
+                                    }
+                                  ]
+                                },
+                                {
+                                  "kind": "CloseParenToken",
+                                  "text": ")...",
+                                  "children": []
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "kind": "Identifier",
+                      "text": "updateSettings...",
+                      "children": []
+                    },
+                    {
+                      "kind": "OpenParenToken",
+                      "text": "(...",
+                      "children": []
+                    },
+                    {
+                      "kind": "SyntaxList",
+                      "text": "@Body() settings: any...",
+                      "children": [
+                        {
+                          "kind": "Parameter",
+                          "text": "@Body() settings: any...",
+                          "children": [
+                            {
+                              "kind": "SyntaxList",
+                              "text": "@Body()...",
+                              "children": [
+                                {
+                                  "kind": "Decorator",
+                                  "text": "@Body()...",
+                                  "children": [
+                                    {
+                                      "kind": "AtToken",
+                                      "text": "@...",
+                                      "children": []
+                                    },
+                                    {
+                                      "kind": "CallExpression",
+                                      "text": "Body()...",
+                                      "children": [
+                                        {
+                                          "kind": "Identifier",
+                                          "text": "Body...",
+                                          "children": []
+                                        },
+                                        {
+                                          "kind": "OpenParenToken",
+                                          "text": "(...",
+                                          "children": []
+                                        },
+                                        {
+                                          "kind": "SyntaxList",
+                                          "text": "...",
+                                          "children": []
+                                        },
+                                        {
+                                          "kind": "CloseParenToken",
+                                          "text": ")...",
+                                          "children": []
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                }
+                              ]
+                            },
+                            {
+                              "kind": "Identifier",
+                              "text": "settings...",
+                              "children": []
+                            },
+                            {
+                              "kind": "ColonToken",
+                              "text": ":...",
+                              "children": []
+                            },
+                            {
+                              "kind": "AnyKeyword",
+                              "text": "any...",
+                              "children": []
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "kind": "CloseParenToken",
+                      "text": ")...",
+                      "children": []
+                    },
+                    {
+                      "kind": "Block",
+                      "text": "{\n    return this.appService.updateSettings(settin...",
+                      "children": [
+                        {
+                          "kind": "FirstPunctuation",
+                          "text": "{...",
+                          "children": []
+                        },
+                        {
+                          "kind": "SyntaxList",
+                          "text": "return this.appService.updateSettings(settings);...",
+                          "children": [
+                            {
+                              "kind": "ReturnStatement",
+                              "text": "return this.appService.updateSettings(settings);...",
+                              "children": [
+                                {
+                                  "kind": "ReturnKeyword",
+                                  "text": "return...",
+                                  "children": []
+                                },
+                                {
+                                  "kind": "CallExpression",
+                                  "text": "this.appService.updateSettings(settings)...",
+                                  "children": [
+                                    {
+                                      "kind": "PropertyAccessExpression",
+                                      "text": "this.appService.updateSettings...",
+                                      "children": [
+                                        {
+                                          "kind": "PropertyAccessExpression",
+                                          "text": "this.appService...",
+                                          "children": [
+                                            {
+                                              "kind": "ThisKeyword",
+                                              "text": "this...",
+                                              "children": []
+                                            },
+                                            {
+                                              "kind": "DotToken",
+                                              "text": "....",
+                                              "children": []
+                                            },
+                                            {
+                                              "kind": "Identifier",
+                                              "text": "appService...",
+                                              "children": []
+                                            }
+                                          ]
+                                        },
+                                        {
+                                          "kind": "DotToken",
+                                          "text": "....",
+                                          "children": []
+                                        },
+                                        {
+                                          "kind": "Identifier",
+                                          "text": "updateSettings...",
+                                          "children": []
+                                        }
+                                      ]
+                                    },
+                                    {
+                                      "kind": "OpenParenToken",
+                                      "text": "(...",
+                                      "children": []
+                                    },
+                                    {
+                                      "kind": "SyntaxList",
+                                      "text": "settings...",
+                                      "children": [
+                                        {
+                                          "kind": "Identifier",
+                                          "text": "settings...",
+                                          "children": []
+                                        }
+                                      ]
+                                    },
+                                    {
+                                      "kind": "CloseParenToken",
+                                      "text": ")...",
+                                      "children": []
+                                    }
+                                  ]
+                                },
+                                {
+                                  "kind": "SemicolonToken",
+                                  "text": ";...",
+                                  "children": []
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "kind": "CloseBraceToken",
+                          "text": "}...",
+                          "children": []
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "kind": "CloseBraceToken",
+              "text": "}...",
+              "children": []
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "kind": "EndOfFileToken",
+      "text": "...",
+      "children": []
+    }
+  ]
+}

@@ -1,0 +1,20 @@
+CGE/1.0 app.controller (Ts)
+
+IMPORTS:
+  Controller,Get,Post,UseGuards,Body from @nestjs/common
+  AppService from ./app.service
+  AuthGuard from ./auth.guard
+  Roles from ./roles.decorator
+  RolesGuard from ./roles.guard
+
+OPS:
+  EXPORT AppController.getPublicData()->void:
+    RETURN this.appService.getPublicData()
+
+  EXPORT AppController.getProfile()->void:
+    RETURN this.appService.getUserProfile()
+
+  EXPORT AppController.updateSettings(settings:any)->void:
+    RETURN this.appService.updateSettings(settings)
+
+EXPORTS: AppController

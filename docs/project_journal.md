@@ -4,6 +4,20 @@ This document chronicles our daily research sprints, architectural decisions, UI
 
 ---
 
+## 🎯 Core Hypothesis & Predictions
+
+The CGE compiler is built upon a fundamental architectural hypothesis:
+
+> **Core Hypothesis:** LLMs reason more effectively over structurally compressed representations (like CGE) than over raw source code, even when sufficient context window capacity exists. The primary benefit of CGE is not token reduction; the primary benefit is **signal amplification** (Attention Density).
+
+### Predictions:
+1. **Higher Agent Task Success**: Downstream developer agent task success rates (bug tracing, feature additions) will increase when using CGE-mapped index folders over raw files.
+2. **Context-Size Independence**: Logic preservation improvements will persist even on models with very large context windows (1M+ tokens), as signal density counteracts attention dilution.
+3. **Scale Leverage**: Benefits will scale non-linearly, showing the largest advantages on repository-wide, multi-file reasoning tasks.
+4. **Methodological Superiority**: CGE's structured cognitive graphs (acting as a Repository Cognition Layer) will outperform naive code summarization (which is lossy and probabilistic) or raw JSON AST dumps (which are syntactically noisy) on downstream agent benchmarks.
+
+---
+
 ## 📅 Day 1: The Spark & First Experiments
 ### 💡 Core Focus
 We wanted to solve the "LLM context bottleneck." Verbose codebases fill up context windows and cause high prompt latency. We hypothesized that code could be serialized into a dense, AST-like topological shorthand that humans might find hard to read, but LLMs could parse with 100% fidelity.
@@ -91,4 +105,64 @@ We wanted to scale the CGE compiler from compiling a single code file to auditin
 
 ---
 
-*This journal is a living document. We will continue updating it as we move into Phase 3 (Automated Benchmark Running and academic validation).*
+## 📅 Day 6: Strategic Shift - Shifting the Center of Gravity
+### 💡 Core Focus
+We initiated a major conceptual overhaul. We recognized that the project's value proposition is transitioning from simple token savings to creating a **Repository Cognition Layer** optimized for machine reasoning rather than human readability. 
+
+### 🧪 Milestones & Discoveries
+- **Spec Upgrades**: Shifted all documentation wording to "near-lossless structural compression" and "business-logic preserving compression". This resolves credibility vulnerabilities regarding bijective round-tripping.
+- **Specification v1.0**: Formally defined CGE using Extended Backus-Naur Form (EBNF) grammar rules and established reserved keywords.
+- **C++ Parser Evidence**: Added the `cpp_examples/` verification folder containing realistic struct/class mappings and documented constraints.
+- **Dynamic Overhead Banners**: Built UI warnings that toggle automatically for small files (like React hooks) to explain fixed header overhead and nested scope boundaries.
+
+### 🚀 Shifted Priority Roadmap for Phase 3 (Next Sprints)
+To address downstream agent performance directly, we re-prioritized the roadmap around five pillars:
+
+1. **Automated Agent Benchmark Suite**: Build a reproducible framework tracking tasks (finding flows, checking permissions, trace routes, seeding bugs) on raw vs. CGE repositories.
+2. **Public Benchmark Repositories (`benchmarks/`)**: Release a pack containing Express, Flask, React, and C++ modules with their CGE equivalents and `expected_answers.json` for validation.
+3. **Public Failure Corpus (`known_failures/`)**: Openly document structural boundaries where CGE simplifies syntax (decorators, reflection, macros) to invite developer trust.
+4. **Long-Context Density Benchmarks**: Run head-to-head experiments on 50k, 200k, and 1M token prompt boundaries (testing the hypothesis that agents perform better on CGE because of attention concentration, even when context windows are infinite).
+5. **Academic Repositioning**: Frame CGE as a structured cognitive graph that acts as a Repository Cognition Layer, transforming raw source files into an optimized agent-native representation.
+
+---
+
+## 📅 Day 7: Architectural Semantics Extraction & Information Preservation
+### 💡 Core Focus
+We made a strategic pivot: the primary benefit of CGE isn't just token compression, it's the extraction of high-value architectural semantics. We introduced the Information Preservation Score (IPS) to measure this explicitly.
+
+### 🧪 Milestones & Discoveries
+- **IPS Metric Introduced**: Created a framework (`docs/metrics/IPS_tracking.md`) to formally track which architectural elements survive parsing and which are lost, ensuring we evaluate parser quality independently of LLM probabilistic outputs.
+- **New Semantic Blocks**: Expanded the CGE grammar and parsers to capture three highly influential concepts natively:
+  - `MIDDLEWARE:` Global request interceptors and middleware chains.
+  - `PERMISSIONS:` Authorization guards, role checks, and identity verification logic.
+  - `DEPENDENCIES:` External service instantiation, database connections, and third-party SDK clients.
+- **Heuristic Enhancements**: Modified both the TypeScript AST parser and the Client Regex parser to successfully extract `app.use()`, `Stripe` instantiations, and `authMiddleware` directly into their respective architectural blocks.
+
+---
+
+## 📅 Day 8: Real-World Validation & Multi-Modal Benchmarking
+### 💡 Core Focus
+We have officially moved past CGE v1 (AST Compression) into CGE v2 (Architectural Semantics Extraction). To validate this pivot, we must prove our core hypothesis: Does an agent succeed because the representation is smaller, or because the architectural structure is explicitly preserved?
+
+### 🧪 Milestones & Discoveries
+- **Formalized Hall of Failures**: Transitioned our known limitations document into an empirical test-suite framework (`hall_of_failures/`), cementing a feedback loop for parser development based strictly on information preservation failures.
+- **The Multi-Modal Benchmark Runner**: Built a new benchmark evaluator to compare four representations against the exact same questions: `Raw Source`, `AST Dump`, `Semantic Summary` (AI-generated), and `CGE`. 
+- **The Reasoning Lift Metric**: Formalized `Reasoning Lift` (CGE Accuracy minus Raw Accuracy) as the ultimate north-star metric for the project going forward.
+- **Real-World Test Track**: Scaffolded a complex `benchmarks_real/` track containing production-like `express`, `nestjs`, and `flask` apps (involving dependency injection, decorators, and global interceptors) to stress test the parser heuristics.
+
+---
+
+## 📅 Phase 2 Preliminary Conclusion
+
+Unlike structural compression (Phase 1), architectural augmentation demonstrated positive reasoning lift.
+
+A manually-authored Architecture Map achieved 90% task accuracy independently and, when combined with raw source code, improved task accuracy from 90% to 100%.
+
+This suggests that architectural context provides information that is difficult for LLMs to reconstruct reliably from source code alone.
+
+The next research question is no longer whether architecture maps are useful. 
+The next research question is whether architecture maps can be generated automatically while preserving the observed reasoning lift.
+
+---
+
+*This journal is a living document. We will continue updating it as we move into Phase 3 execution.*

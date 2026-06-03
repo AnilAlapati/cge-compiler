@@ -1,0 +1,10 @@
+CGE/1.0 auth (Js)
+
+STATE:
+  CONST jwt:any = require("jsonwebtoken")
+  CONST verifyToken:any = (req,res,next)=>authHeader = req.headers['authorization']
+GUARD !authHeader RETURN res.status(401).json({error:"No token provided"})
+token = authHeader.split('')[1]
+TRY: decoded = jwt.verify(token,process.env.JWT_SECRET), req.user=decoded, next() CATCH: RETURN res.status(403).json({error:"Invalid token"})
+  CONST requireRole:any = (role)=>RETURN (req,res,next)=>GUARD !req.user||req.user.role!==role RETURN res.status(403).json({error:"Forbidden: Insufficient role"})
+next()

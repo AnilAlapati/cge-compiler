@@ -48,6 +48,22 @@ export class CGECompiler {
       output += `STATE:\n  ${parsed.state.join("\n  ")}\n\n`;
     }
 
+    if (parsed.routes && parsed.routes.length > 0) {
+      output += `ROUTES:\n  ${parsed.routes.join("\n  ")}\n\n`;
+    }
+
+    if (parsed.middleware && parsed.middleware.length > 0) {
+      output += `MIDDLEWARE:\n  ${parsed.middleware.join("\n  ")}\n\n`;
+    }
+
+    if (parsed.permissions && parsed.permissions.length > 0) {
+      output += `PERMISSIONS:\n  ${parsed.permissions.join("\n  ")}\n\n`;
+    }
+
+    if (parsed.dependencies && parsed.dependencies.length > 0) {
+      output += `DEPENDENCIES:\n  ${parsed.dependencies.join("\n  ")}\n\n`;
+    }
+
     if (parsed.ops.length > 0) {
       output += `OPS:\n  ${parsed.ops.join("\n\n  ")}\n\n`;
     }
@@ -108,6 +124,9 @@ export class CGECompiler {
     switch (language.toLowerCase()) {
       case "typescript":
       case "ts":
+      case "js":
+      case "jsx":
+      case "tsx":
         return new TypeScriptParser();
       case "python":
       case "py":

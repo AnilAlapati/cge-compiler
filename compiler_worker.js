@@ -131,6 +131,10 @@ class TypeScriptClientParser {
     const ops = [];
     const privateOps = [];
     const exports = [];
+    const routes = [];
+    const middleware = [];
+    const permissions = [];
+    const dependencies = [];
 
     // Structural node meta for interactive inspector
     const nodesMeta = [];
@@ -238,8 +242,13 @@ class TypeScriptClientParser {
       const retType = mapTypeToCGE(currentBlock.ret);
       const signature = `${currentBlock.name}(${currentBlock.params})->${retType}:${bodyTranslated.length > 0 ? "\n" + bodyTranslated.join("\n") : " void"}`;
       
-      if (currentBlock.isPrivate) privateOps.push(signature);
-      else ops.push(signature);
+      if (/(auth|role|permission|guard|login|verify|token)/i.test(currentBlock.name)) {
+        permissions.push(signature);
+      } else if (currentBlock.isPrivate) {
+        privateOps.push(signature);
+      } else {
+        ops.push(signature);
+      }
 
       // Register function node
       nodesMeta.push({
@@ -348,7 +357,62 @@ class TypeScriptClientParser {
         }).filter(p => p).join(", ");
 
         currentBlock = { name, isPrivate, params, ret, bodyLines: [], rawText: line };
+        if (/(auth|role|permission|guard|login|verify|token)/i.test(name)) {
+            // Wait to push until block closes, but register intent if needed. 
+            // Wait, compiler_worker.js pushes ops at the end of block parsing.
+        }
         if (!isPrivate) exports.push(name);
+        continue;
+      }
+
+      // 3.5 Routes
+      const routeMatch = clean.match(/^(?:app|router)\.(get|post|put|delete|patch|use|all)\s*\(\s*(['"`])(.*?)\2\s*,\s*(.*)\)/) ||
+                         (clean.match(/^(?:app|router)\.use\s*\(\s*([^'"`].*?)\s*\)/) ? [clean, "use", '"*"', clean.match(/^(?:app|router)\.use\s*\(\s*(.*?)\s*\)/)[1]] : null);
+      if (routeMatch && !currentBlock) {
+        const method = routeMatch[1].toUpperCase();
+        let path = routeMatch[3];
+        if (routeMatch[2]) {
+           path = `"${path}"`;
+        } else if (method === "USE") {
+           path = '"*"';
+        }
+        
+        let handlerRaw = routeMatch[4];
+        if (!handlerRaw) {
+           handlerRaw = routeMatch[3]; // for app.use(handler)
+        }
+        
+        let handlerName = "anonymous_handler";
+        if (handlerRaw) {
+            if (handlerRaw.includes("=>") || handlerRaw.includes("function") || handlerRaw === "{") {
+                handlerName = "anonymous_handler";
+            } else {
+                handlerName = handlerRaw.replace(/\)$/, "").split(",").map(s => s.trim() + (s.trim() !== "anonymous_handler" && !s.includes("(") ? "()" : "")).join(" -> ");
+            }
+        }
+        
+        const statementText = `${method} ${path} -> ${handlerName}`;
+        if (method === "USE" && path === '"*"') {
+            middleware.push(`USE -> ${handlerName}`);
+            nodesMeta.push({
+              name: `Middleware Chain`,
+              type: "Middleware",
+              rule: "Heuristic Architecture",
+              desc: "Extracts global request interceptors.",
+              before: line,
+              after: `USE -> ${handlerName}`
+            });
+        } else {
+            routes.push(statementText);
+            nodesMeta.push({
+              name: `${method} ${path}`,
+              type: "Route Callback",
+              rule: "Heuristic Architecture",
+              desc: "Extracts middleware chains and endpoint mappings into architectural blocks.",
+              before: line,
+              after: statementText
+            });
+        }
         continue;
       }
 
@@ -384,20 +448,30 @@ class TypeScriptClientParser {
           }
 
           const signature = `${name}(${params})->${compiledBody}`;
-          ops.push(signature);
+          if (/(auth|role|permission|guard|login|verify|token)/i.test(name)) {
+              permissions.push(signature);
+          } else {
+              ops.push(signature);
+          }
           exports.push(name);
 
           nodesMeta.push({
             name: `${name}()`,
             type: "Single-line Operator",
             rule: "Block Collapsing",
-            desc: "Compacts single-line arrow functions losslessly, keeping implementation details intact.",
+            desc: "Compacts single-line arrow functions cleanly, keeping implementation details intact.",
             before: line,
             after: signature
           });
         } else {
           const stateDef = `${isConst ? "CONST " : ""}${name}:${type}${val ? " = " + val : ""}`;
-          state.push(stateDef);
+          if (val.startsWith("new ")) {
+              dependencies.push(`${name} -> ${val}`);
+          } else if (val.includes(".connect(") || val.includes(".createClient(") || val.includes(".initialize(")) {
+              dependencies.push(`${name} -> ${val}`);
+          } else {
+              state.push(stateDef);
+          }
           exports.push(name);
 
           nodesMeta.push({
@@ -418,7 +492,7 @@ class TypeScriptClientParser {
       types.push(typeDef);
     }
 
-    return { imports, types, state, ops, privateOps, exports, nodes: nodesMeta };
+    return { imports, types, state, routes, middleware, permissions, dependencies, ops, privateOps, exports, nodes: nodesMeta };
   }
 }
 
@@ -1718,6 +1792,7 @@ class CGEClientCompiler {
     if (parsed.imports.length > 0) output += `IMPORTS:\n  ${parsed.imports.join("\n  ")}\n\n`;
     if (parsed.types.length > 0) output += `TYPES:\n  ${parsed.types.join("\n  ")}\n\n`;
     if (parsed.state.length > 0) output += `STATE:\n  ${parsed.state.join("\n  ")}\n\n`;
+    if (parsed.routes && parsed.routes.length > 0) output += `ROUTES:\n  ${parsed.routes.join("\n  ")}\n\n`;
     if (parsed.ops.length > 0) output += `OPS:\n  ${parsed.ops.join("\n\n  ")}\n\n`;
     if (parsed.privateOps.length > 0) output += `PRIVATE:\n  ${parsed.privateOps.join("\n  ")}\n\n`;
     if (parsed.exports.length > 0) output += `EXPORTS: ${parsed.exports.join(", ")}\n`;

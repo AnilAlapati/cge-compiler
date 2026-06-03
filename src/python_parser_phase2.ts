@@ -1,10 +1,10 @@
-import { CGEParser } from "./cge_parser";
+import { CGEParserPhase2 } from "./cge_parser_phase2";
 
 /**
- * Python CGE Parser
- * Parses Python source code into unified CGE/1.0 blocks using an indentation-aware semantic parser.
+ * Python CGE Parser (Phase 2)
+ * Parses Python source code into unified CGE blocks and extracts architecture decorators.
  */
-export class PythonParser implements CGEParser {
+export class PythonParserPhase2 implements CGEParserPhase2 {
   public parse(code: string, fileName?: string): {
     imports: string[];
     types: string[];
@@ -26,9 +26,13 @@ export class PythonParser implements CGEParser {
     const ops: string[] = [];
     const privateOps: string[] = [];
     const exportsList: string[] = [];
+    const routes: string[] = [];
+    const permissions: string[] = [];
+    const dependencies: string[] = [];
 
     let currentClass: { name: string; fields: string[] } | null = null;
-    let currentBlock: { name: string; isPrivate: boolean; type: "func" | "method"; params: string; ret: string; indent: number; bodyLines: string[] } | null = null;
+    let activeDecorators: string[] = [];
+    let currentBlock: { name: string; isPrivate: boolean; type: "func" | "method"; params: string; ret: string; indent: number; bodyLines: string[]; decorators: string[] } | null = null;
 
     // Helper to map Python types to CGE shorthand
     const mapPythonType = (pyType: string | undefined): string => {
@@ -245,7 +249,10 @@ export class PythonParser implements CGEParser {
 
       const bodyStr = bodyTranslated.join("\n");
       const retType = mapPythonType(currentBlock.ret);
-      const signature = `${currentBlock.name}(${currentBlock.params})->${retType}:${bodyStr ? "\n" + bodyStr : " void"}`;
+      const decoratorPrefix = currentBlock.decorators && currentBlock.decorators.length > 0 
+          ? `[${currentBlock.decorators.join(" ")}] ` 
+          : "";
+      const signature = `${decoratorPrefix}${currentBlock.name}(${currentBlock.params})->${retType}:${bodyStr ? "\n" + bodyStr : " void"}`;
 
       if (currentBlock.isPrivate) {
         privateOps.push(signature);
@@ -315,6 +322,12 @@ export class PythonParser implements CGEParser {
         continue;
       }
 
+      // Decorator collection
+      if (clean.startsWith("@")) {
+        activeDecorators.push(clean);
+        continue;
+      }
+
       // 3. Methods & Functions
       const defMatch = clean.match(/^(?:async\s+)?def\s+(\w+)\((.*?)\)(?:\s*->\s*(.+?))?:$/);
       if (defMatch) {
@@ -336,6 +349,18 @@ export class PythonParser implements CGEParser {
           })
           .join(", ");
 
+        const methodDecorators = [...activeDecorators];
+        activeDecorators = [];
+        
+        methodDecorators.forEach(d => {
+            if (d.includes('route(') || d.includes('get(') || d.includes('post(')) {
+                routes.push(`${d} -> ${name}`);
+            }
+            if (d.includes('require_auth') || d.includes('login_required') || d.includes('permission')) {
+                permissions.push(`${name} REQUIRES ${d}`);
+            }
+        });
+
         currentBlock = {
           name,
           isPrivate,
@@ -344,12 +369,18 @@ export class PythonParser implements CGEParser {
           ret,
           indent,
           bodyLines: [],
+          decorators: methodDecorators,
         };
 
         if (!currentClass && !isPrivate) {
           exportsList.push(name);
         }
         continue;
+      }
+      
+      // If it's not a decorator, reset decorators
+      if (!clean.startsWith("@") && !clean.startsWith("#")) {
+          activeDecorators = [];
       }
 
       // 4. Class properties (State or Type fields) or Global properties
@@ -372,6 +403,9 @@ export class PythonParser implements CGEParser {
           if (!name.startsWith("_")) {
             exportsList.push(name);
           }
+          if (init && (init.includes("SQLAlchemy") || init.includes("Client"))) {
+            dependencies.push(`${name} -> ${init}`);
+          }
         }
       }
     }
@@ -387,10 +421,10 @@ export class PythonParser implements CGEParser {
       ops,
       privateOps,
       exports: exportsList,
-      routes: [],
+      routes,
       middleware: [],
-      permissions: [],
-      dependencies: [],
+      permissions,
+      dependencies,
     };
   }
 }

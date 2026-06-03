@@ -2,7 +2,7 @@
  * Unified interface that all language-specific parsers must implement.
  * This guarantees the compiler orchestrator receives standardized CGE component lists.
  */
-export interface CGEParser {
+export interface CGEParserPhase2 {
   /**
    * Parses raw source code and groups elements into standardized CGE sections.
    * @param code The raw source code of the file.
@@ -19,5 +19,6 @@ export interface CGEParser {
     middleware?: string[];
     permissions?: string[];
     dependencies?: string[];
+    entityRelations?: string[];
   };
 }

@@ -1,0 +1,22 @@
+CGE/1.0 app (Js)
+
+STATE:
+  CONST express:any = require("express")
+  CONST cors:any = require("cors")
+  CONST { PrismaClient }:any = require("@prisma/client")
+  CONST { verifyToken, requireRole }:any = require("./middleware/auth")
+  CONST userRouter:any = require("./routes/users")
+  CONST app:any = express()
+
+ROUTES:
+  GET "/health" -> anonymous_handler
+  USE "/api/users" -> verifyToken -> userRouter
+  POST "/api/admin/reset" -> verifyToken -> requireRole() -> anonymous_handler
+
+MIDDLEWARE:
+  USE -> cors()
+  USE -> call
+  USE -> anonymous_handler
+
+DEPENDENCIES:
+  prisma -> new PrismaClient()

@@ -1,12 +1,12 @@
 import * as ts from "typescript";
-import { CGEParser } from "./cge_parser";
+import { CGEParserPhase2 } from "./cge_parser_phase2";
 import * as path from "path";
 
 /**
- * TypeScript CGE Parser
- * Translates TypeScript AST elements into structured CGE blocks.
+ * TypeScript CGE Parser (Phase 2)
+ * Translates TypeScript AST elements into structured CGE blocks with Architecture Metadata.
  */
-export class TypeScriptParser implements CGEParser {
+export class TypeScriptParserPhase2 implements CGEParserPhase2 {
   public parse(code: string, fileName?: string): {
     imports: string[];
     types: string[];
@@ -18,6 +18,7 @@ export class TypeScriptParser implements CGEParser {
     middleware?: string[];
     permissions?: string[];
     dependencies?: string[];
+    entityRelations?: string[];
   } {
     const sourceFileName = fileName || "temp.ts";
     const sourceFile = ts.createSourceFile(
@@ -39,6 +40,7 @@ export class TypeScriptParser implements CGEParser {
     const middleware: string[] = [];
     const permissions: string[] = [];
     const dependencies: string[] = [];
+    const entityRelations: string[] = [];
 
     ts.forEachChild(sourceFile, (node) => {
       // 1. Imports
@@ -63,21 +65,83 @@ export class TypeScriptParser implements CGEParser {
           exportsList.push(className);
         }
         
+        const classDecorators = this.formatDecorators(node);
+        if (classDecorators.length > 0) {
+          classDecorators.forEach(d => {
+             if (d.includes('Controller')) {
+                routes.push(`${className} [${d}]`);
+             }
+             if (d.includes('Injectable')) {
+                dependencies.push(`${className} [${d}]`);
+             }
+          });
+        }
+        
         node.members.forEach((member) => {
           if (ts.isPropertyDeclaration(member)) {
             const prefix = isClassExport ? "EXPORT " : "";
             state.push(`${prefix}${className}.${this.formatProperty(member)}`);
+
+            const propDecorators = this.formatDecorators(member);
+            propDecorators.forEach(d => {
+              const relMatch = d.match(/@(ManyToOne|OneToMany|OneToOne|ManyToMany)\((?:\s*(?:\(\s*\)|[\w]+)\s*=>\s*)?([\w]+)/);
+              if (relMatch) {
+                const relType = relMatch[1];
+                const targetEntity = relMatch[2];
+                const propertyName = member.name.getText();
+                entityRelations.push(`${className} -[${relType}]-> ${targetEntity} (${propertyName})`);
+              }
+            });
+          } else if (ts.isConstructorDeclaration(member)) {
+            member.parameters.forEach(param => {
+               if (this.hasModifier(param, ts.SyntaxKind.ReadonlyKeyword) || this.hasModifier(param, ts.SyntaxKind.PrivateKeyword) || this.hasModifier(param, ts.SyntaxKind.PublicKeyword)) {
+                   const paramName = param.name.getText();
+                   const paramType = param.type ? param.type.getText() : "any";
+                   dependencies.push(`${className} -> INJECTS ${paramName}:${paramType}`);
+               }
+            });
           } else if (ts.isMethodDeclaration(member)) {
             const isPrivate = this.hasModifier(member, ts.SyntaxKind.PrivateKeyword);
             const methodStr = this.formatMethod(member);
             const prefix = (isClassExport && !isPrivate) ? "EXPORT " : "";
             
+            const methodDecorators = this.formatDecorators(member);
+            const decoratorPrefix = methodDecorators.length > 0 ? `[${methodDecorators.join(" ")}] ` : "";
+            
+            methodDecorators.forEach(d => {
+               if (d.includes('Get') || d.includes('Post') || d.includes('Put') || d.includes('Delete') || d.includes('Patch')) {
+                   routes.push(`${d} -> ${className}.${member.name.getText()}`);
+               }
+               if (d.includes('UseGuards') || d.includes('Roles')) {
+                   permissions.push(`${className}.${member.name.getText()} REQUIRES ${d}`);
+               }
+            });
+
+            if (member.body) {
+              member.body.statements.forEach(stmt => {
+                const stmtStr = stmt.getText();
+                if (stmtStr.includes('.apply(') && stmtStr.includes('.forRoutes(')) {
+                  const applyMatch = stmtStr.match(/\.apply\(([^)]+)\)/);
+                  const forRoutesMatch = stmtStr.match(/\.forRoutes\(([\s\S]+)\)/);
+                  if (applyMatch) {
+                    const middlewareName = (applyMatch[1] || '').trim();
+                    if (forRoutesMatch) {
+                      const routesRaw = (forRoutesMatch[1] || '').trim().replace(/\s+/g, ' ');
+                      middleware.push(`- [${path.basename(sourceFileName) || className}] ${middlewareName} applied forRoutes(${routesRaw})`);
+                    } else {
+                      middleware.push(`- [${path.basename(sourceFileName) || className}] ${middlewareName} applied`);
+                    }
+                  }
+                }
+              });
+            }
+            
             if (/(auth|role|permission|guard|login|verify|token)/i.test(member.name.getText())) {
-              permissions.push(`${className}.${methodStr}`);
+              permissions.push(`${decoratorPrefix}${className}.${methodStr}`);
             } else if (isPrivate) {
-              privateOps.push(`${className}.${methodStr}`);
+              privateOps.push(`${decoratorPrefix}${className}.${methodStr}`);
             } else {
-              ops.push(`${prefix}${className}.${methodStr}`);
+              ops.push(`${prefix}${decoratorPrefix}${className}.${methodStr}`);
             }
           }
         });
@@ -193,7 +257,23 @@ export class TypeScriptParser implements CGEParser {
       middleware,
       permissions,
       dependencies,
+      entityRelations,
     };
+  }
+
+  // --- PHASE 2 HELPERS ---
+  private formatDecorators(node: ts.Node): string[] {
+    const decorators = ts.canHaveDecorators(node) ? ts.getDecorators(node) : undefined;
+    if (!decorators) return [];
+    return decorators.map(d => {
+      if (ts.isCallExpression(d.expression)) {
+        const name = d.expression.expression.getText();
+        const args = d.expression.arguments.map(a => a.getText()).join(", ");
+        return `@${name}(${args})`;
+      } else {
+        return `@${d.expression.getText()}`;
+      }
+    });
   }
 
   // --- NODE FORMATTERS ---
