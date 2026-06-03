@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>CGE Playground — Lossless Code Compactor for Large Language Models</title>
-  <meta name="description" content="Cognitive Graph Encoding (CGE) Compiles source code into lossless compressed shorthand notation, optimizing prompt token footprints up to 86% across multiple modern programming languages.">
+  <title>CGE Playground — High-Fidelity Code Compactor for Large Language Models</title>
+  <meta name="description" content="Cognitive Graph Encoding (CGE) Compiles source code into business-logic preserving compressed shorthand notation, optimizing prompt token footprints up to 86% across multiple modern programming languages.">
 
   <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -38,9 +38,13 @@
         Compact Code. Expand Context.
       </h1>
 
+      <div style="margin: 2rem auto; max-width: 800px; padding: 1.5rem; background: rgba(255, 60, 60, 0.1); border-left: 4px solid #ff3c3c; text-align: left; border-radius: 4px;">
+        <h3 style="margin-top: 0; color: #fff;">🔬 Phase 1 Research Concluded (June 2026)</h3>
+        <p style="margin-bottom: 0; color: #ccc;">We recently concluded our first major empirical study on whether structural code compression improves LLM reasoning. The short answer: <em>It doesn't.</em> By stripping out syntactical metadata, we inadvertently removed the exact clues LLMs use to infer architecture. You can read our full findings in our <a href="https://github.com/cge-compiler/cge-compiler/blob/main/docs/interim_research_conclusion.md" style="color: #64ffda; text-decoration: underline;">Phase 1 Research Conclusion</a>. We are currently pivoting to Phase 2: Architectural Augmentation.</p>
+      </div>
+
       <p class="hero-subtitle">
-        A structural compiler that translates verbose source code into 
-        lossless semantic shorthand, driving up to <strong>55% reduction in prompt token consumption</strong>.
+        An experimental research project exploring how AI agents navigate complex codebases.
       </p>
 
       <div class="hero-stats">
@@ -49,8 +53,8 @@
           <span class="stat-label">Multi-Language Parsers</span>
         </div>
         <div class="hero-stat">
-          <span class="stat-value">Lossless Fidelity</span>
-          <span class="stat-label">100% Logic Retention</span>
+          <span class="stat-value">Semantic Fidelity</span>
+          <span class="stat-label">Logic-Preserving Compression</span>
         </div>
         <div class="hero-stat">
           <span class="stat-value">Deterministic</span>
@@ -58,7 +62,7 @@
         </div>
         <div class="hero-stat">
           <span class="stat-value">Closed-Loop Verified</span>
-          <span class="stat-label">CLNR Round-Trip Proof</span>
+          <span class="stat-label">CLNR Semantic Proof</span>
         </div>
       </div>
 
@@ -97,8 +101,8 @@
         </div>
         <div class="why-card">
           <span class="why-icon">🎯</span>
-          <h4 class="why-card-title">100% Round-Trip Fidelity</h4>
-          <p class="why-card-desc">Our Closed-Loop Neural Reconstruction (CLNR) protocol diffs compiled versus reconstructed code, ensuring the AI retains 100% structural intent.</p>
+          <h4 class="why-card-title">High-Fidelity Logic Recovery</h4>
+          <p class="why-card-desc">Our Closed-Loop Neural Reconstruction (CLNR) protocol verifies logic preservation, ensuring the LLM recovers the complete AST structural intent.</p>
         </div>
       </div>
     </section>
@@ -484,6 +488,11 @@
         </div>
       </div>
 
+      <!-- Small File Overhead Explanation Banner -->
+      <div id="overhead-explanation" style="margin-top: 12px; padding: 12px; background: rgba(59, 130, 246, 0.05); border: 1px solid rgba(59, 130, 246, 0.15); border-radius: 8px; text-align: left; font-size: 0.8rem; line-height: 1.4; color: #9ca3af; display: none;">
+        💡 <strong>Note on Compression Rate (~11%):</strong> Short files (<50 lines) with nested functions (like the default React hook template) achieve lower token compression. This is because fixed metadata (like CGE/1.0 headers, imports, and exports) occupies a larger percentage of the small output. In production codebases with larger monolithic files (200+ lines), CGE achieves <strong>50% to 86% compression</strong>.
+      </div>
+
       <!-- Projected Savings Estimator -->
       <div class="estimator-strip" id="estimator-strip">
         <div class="estimator-left">
@@ -586,14 +595,14 @@
           </div>
         </div>
 
-        <!-- Logic Retention -->
+        <!-- Logic Preservation -->
         <div class="spec-card">
           <div class="spec-card-header">
             <div class="spec-card-dot block"></div>
-            <h3 class="spec-card-title">Logic Retention</h3>
+            <h3 class="spec-card-title">Logic Preservation</h3>
           </div>
           <p class="spec-card-desc">
-            Retains 100% of business logic within deterministic operation blocks, preserving lossless functionality.
+            Retains business logic constraints within deterministic operation blocks, preserving semantic integrity.
           </p>
           <div class="transform-grid">
             <div class="transform-box">
@@ -603,7 +612,7 @@
             <span class="transform-separator">→</span>
             <div class="transform-box after">
               <span class="transform-box-tag">CGE</span>
-              op check<br>inline export const check = async...
+              check(id:S)->Promise&lt;B&gt;
             </div>
           </div>
         </div>

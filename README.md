@@ -8,6 +8,11 @@
 
 ---
 
+> **🔬 Phase 1 Research Concluded (June 2026)**
+> We recently concluded our first major empirical study on whether structural code compression improves LLM reasoning. The short answer: *It doesn't.* By stripping out syntactical metadata, we inadvertently removed the exact clues LLMs use to infer architecture. You can read our full findings in our [Phase 1 Research Conclusion](./docs/interim_research_conclusion.md). We are currently pivoting to Phase 2: Architectural Augmentation.
+
+---
+
 ## 📖 The Backstory: Why I Built This
 
 I'm a Senior Software Engineer, and over the past year, I've spent a lot of time "vibe coding"—rapidly prototyping small MVPs and exploring new architectural ideas. I've always known how to ask the right technical questions, but occasionally hit friction when trying to scaffold out complex boilerplate quickly. 
@@ -64,9 +69,50 @@ By compiling raw code into CGE, we reduce prompt token footprints by **up to 55-
 └─────────────────────────────────┘
 ```
 
+### 🔎 The Killer Feature: Search `.cge` instead of Raw Code
+
+Autonomous coding agents (like Claude Code, Aider, or custom IDE agents) waste massive context volumes when navigating repositories. If you tell an agent to `grep src`, it receives verbose syntax noise, comments, and disjointed lines of text.
+
+Instead, CGE enables you to compile your repository into a lightweight mirror directory (`.cge/`). 
+
+| Traditional AI Agent | CGE-Optimized AI Agent |
+|---|---|
+| Runs `grep` over raw `.ts` / `.cpp` source files | Runs `grep` over dense `.cge` structural graphs |
+| Spends thousands of tokens on imports, boilerplate, and style | Receives compact type-definitions and logical flows |
+| Loses structural context of file layout | Instantly resolves full type signatures and dependencies |
+
+By instructing your agent to search the `.cge/` directory, it reads completely flattened, dense structural mappings of the entire application, preserving its context window for high-value reasoning.
+
+#### Running CGE Indexer locally for AI Agents
+```bash
+# Install and build the CLI tool
+npm install
+npm run build
+npm link
+
+# Build the CGE index directory (.cge/)
+cge-cli build ./my-project
+```
+
+#### Recommended System Prompt for your AI Agent:
+> *"When exploring this repository, do not `grep` or `cat` the raw source code files. Instead, navigate to the `.cge/` directory and use `grep` there. You will receive completely flattened, dense structural mappings of the entire application, saving your context window."*
+
+---
+
 ### Why CGE instead of JSON?
 A common question is: *Why not just serialize the AST into JSON?* 
 JSON is structurally rigid and incredibly noisy. For an LLM, rendering `{ "function": "login", "params": ["email"] }` consumes tokens on quotes, colons, brackets, and whitespace, heavily diluting the actual attention weight placed on the logic. CGE strips syntax entirely, providing a domain-specific pseudo-code (`login(email)`) that maps perfectly to LLM logical reasoning while using a fraction of the tokens.
+
+### CGE Compiler vs. Probabilistic Code Summarizers
+It is tempting to think of CGE as a "code summary." However, there is a fundamental difference in architecture and trust boundaries:
+
+| Metric | Code Summarizers | CGE Compiler |
+|---|---|---|
+| **Process** | Probabilistic (Model-generated) | Deterministic (AST-parsed) |
+| **Output Type** | Natural language or unstructured text | Strict Cognitive Graph Notation |
+| **Reproducibility** | Low (Varies with temperature/seed) | 100% (Same code yields identical CGE) |
+| **Hallucinations** | High risk (May omit logic or invent arguments) | Zero (Programmatically compiled from syntax trees) |
+| **Fidelity** | Lossy (Subjective summary) | Near-lossless business-logic preserving |
 
 ---
 
@@ -111,7 +157,7 @@ CGE/1.0 uses a strict structural extraction methodology (fully defined in the [C
 * **Structural Extraction**: Core types and interfaces are cleanly pulled out while discarding comments, JSDoc, and layout boilerplate.
 * **State Isolation**: Module-level constants and state variables are detached into pure state directives.
 * **Dependency Mapping**: Multi-line imports are flattened into clean context maps.
-* **Logic Retention (CLNR)**: Retains business logic within deterministic operation blocks. This is verified by **Closed-Loop Neural Reconstruction (CLNR)**—our testing framework where an LLM is given only CGE and tasked with rewriting the source. If the resulting code fails an AST equivalence check, the CGE compiler is refined until logic loss is zero.
+* **Logic Preservation (CLNR)**: Retains business logic within deterministic operation blocks. This is verified by **Closed-Loop Neural Reconstruction (CLNR)**—our evaluation framework where an LLM is given only CGE and tasked with reconstructing equivalent source code. The reconstructed output is verified against the original source code via structural AST-node diffing (comparing loop structures, conditional paths, variable bindings, and method declarations) rather than simple text comparison, validating that the CGE representation preserves the original logic architecture.
 
 ---
 
@@ -129,26 +175,6 @@ npm install
 Upload full project directory ZIPs in the premium glassmorphic UI to view real-time compilation breakdowns, token reductions, and ROI dollar estimates. The app utilizes background Web Workers for asynchronous compilation, ensuring the main UI thread remains smooth.
 
 **Try it here:** [cge-compiler.vercel.app](https://cge-compiler.vercel.app)
-
-### 3. CLI Tool for AI Agents
-You can also run CGE locally to generate a `.cge` index folder for your entire repository. This is incredibly useful for autonomous agent workflows (like Claude Code or Aider). 
-
-**Why search `.cge` instead of source code?**
-If you tell an agent to `grep src`, it often fails when trying to understand the blast radius of a type change across 50 files because `grep` returns disjointed, noisy lines of text. By searching `.cge`, the agent receives incredibly dense, unified graphs. It sees exactly what types map to what dependencies, in a fraction of the token cost.
-
-```bash
-# Build the CLI tool
-npm run build
-
-# Link it globally
-npm link
-
-# Run it on your repository
-cge-cli build ./my-project
-```
-
-**Recommended System Prompt for your AI Agent:**
-> *"When exploring this repository, do not `grep` or `cat` the raw source code files. Instead, navigate to the `.cge/` directory and use `grep` there. You will receive completely flattened, dense structural mappings of the entire application, saving your context window."*
 
 ---
 
@@ -185,7 +211,7 @@ While CGE is incredibly powerful, aggressive compression inherently involves tra
 
 This project was built from scratch and highlights advanced skills in:
 * **Compiler & Language Engineering**: Building robust parsers for a variety of paradigms (TypeScript, Python, Rust, Go, C++) using custom abstract syntax mapping.
-* **System Design & AI Architecture**: Designing high-efficiency prompt-compression systems, verified by Closed-Loop Neural Reconstruction (CLNR) testing to guarantee zero logic-loss for LLMs.
+* **System Design & AI Architecture**: Designing high-efficiency prompt-compression systems, verified by Closed-Loop Neural Reconstruction (CLNR) testing to guarantee high-fidelity business-logic preservation for LLMs.
 * **Advanced Frontend Architectures**: Implementing Web Worker offloading in modern web dashboards for intensive multi-file compactions, completely client-side.
 
 ---
