@@ -1,0 +1,15 @@
+Architecture Map Generator Version Info
+=======================================
+Generator:    ArchitectureMapGeneratorPhase2
+Date:         2026-06-03
+Commit Hash:  551f76445230c1eaedb07288aaa4d7ef3eef8625
+Branch:       main
+Framework:    NestJS (TypeScript AST-based extraction)
+
+Extraction Capabilities:
+  - Directory topology
+  - Routes & authentication flows
+  - Middleware chains (including dynamic apply().forRoutes())
+  - Permissions & role guards
+  - Dependency injection graph
+  - Database entity relations (@ManyToOne, @OneToMany, etc.)

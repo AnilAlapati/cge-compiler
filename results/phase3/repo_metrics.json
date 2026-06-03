@@ -77,16 +77,16 @@
   {
     "repo": "nestjs-realworld",
     "rawTokens": 8535,
-    "mapTokens": 2333,
-    "rawPlusMapTokens": 10868,
-    "compressionRatio": 3.7,
-    "tokenReductionPercent": 72.7,
+    "mapTokens": 0,
+    "rawPlusMapTokens": 8535,
+    "compressionRatio": 8535,
+    "tokenReductionPercent": 100,
     "costRawPerQuery": 0.00128,
-    "costMapPerQuery": 0.00035,
-    "costSavingPerQuery": 0.00093,
-    "costSaving100Queries": 0.093,
-    "mapFileExists": true,
+    "costMapPerQuery": 0,
+    "costSavingPerQuery": 0.00128,
+    "costSaving100Queries": 0.128,
+    "mapFileExists": false,
     "rawCharacters": 34139,
-    "mapCharacters": 9329
+    "mapCharacters": 0
   }
 ]

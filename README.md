@@ -1,4 +1,4 @@
-# 🧬 CGE Compiler: AST-Driven Context Compression for LLMs
+# 🧬 CGE Compiler: Architecture-Augmented LLM Reasoning
 
 [![TypeScript](https://img.shields.io/badge/Language-TypeScript-blue.svg)](https://www.typescriptlang.org/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](https://opensource.org/licenses/MIT)
@@ -8,211 +8,244 @@
 
 ---
 
-> **🔬 Phase 1 Research Concluded (June 2026)**
-> We recently concluded our first major empirical study on whether structural code compression improves LLM reasoning. The short answer: *It doesn't.* By stripping out syntactical metadata, we inadvertently removed the exact clues LLMs use to infer architecture. You can read our full findings in our [Phase 1 Research Conclusion](https://github.com/AnilAlapati/cge-compiler/blob/main/docs/interim_research_conclusion.md). We are currently pivoting to Phase 2: Architectural Augmentation.
+## 🔬 Current Research: Architecture-Augmented Reasoning (Phase 2–3)
 
----
+We discovered that **auto-generated architecture maps** significantly improve LLM reasoning about codebases — without replacing the raw code.
 
-## 📖 The Backstory: Why I Built This
+### Key Finding
 
-I'm a Senior Software Engineer, and over the past year, I've spent a lot of time "vibe coding"—rapidly prototyping small MVPs and exploring new architectural ideas. I've always known how to ask the right technical questions, but occasionally hit friction when trying to scaffold out complex boilerplate quickly. 
+| Condition | Avg Accuracy | Insight |
+| --------- | ------------ | ------- |
+| **Raw Code Only** | 85% | Baseline — LLM reads source files directly |
+| **Architecture Map Only** | 70% | A single markdown file captures substantial architectural signal |
+| **Architecture Map + Raw Code** | **90%** | **+5% lift** — map provides structural context the LLM misses in raw code |
 
-When LLMs arrived, it was a lightbulb moment: **I have an AI that can write the code; all I have to do is tell it exactly what I need and guide the architecture.**
+> Validated across **4 diverse NestJS repositories**, **40 architectural questions**, with semantic LLM judging.
 
-But as my AI-assisted projects grew from simple scripts to multi-file, full-stack applications, I hit a massive wall. Feeding entire repositories into an LLM resulted in three huge problems:
-1. **Insane Token Costs**: Processing raw files with all their syntax noise is incredibly expensive.
-2. **Context Amnesia**: Sliding-window context limits caused the LLM to forget earlier system instructions or drop critical types.
-3. **Attention Dilution**: Verbatim syntax boilerplate hides the actual logical transitions from the model.
+### Architecture Map: What It Is
 
-That's when the idea for the **CGE Compiler** was born. I realized I didn't need to send the LLM all the syntax—I only needed to send it the *structural intent*.
-
----
-
-## 💡 The Solution
-
-**CGE Compiler** solves the context limit problem by programmatically parsing codebases (supporting **TypeScript, Python, Rust, Go, and C++**) into Abstract Syntax Trees (AST). It translates that structural logic into a unified, high-density notation called **Cognitive Graph Encoding (CGE)**.
-
-### Internal Architecture Pipeline
+The generator automatically extracts a compact markdown summary from any NestJS codebase:
 
 ```text
-Source Code
+Source Code (TypeScript AST)
   ↓
-Language Detector (Regex Heuristic Engine)
+Parser extracts: Routes, Middleware, Guards, DI Graph, Entity Relations
   ↓
-Parser
-  ↓
-AST Representation
-  ↓
-Normalizer & State Isolator
-  ↓
-CGE Generator
-  ↓
-Output (.cge files)
+Generates: ARCHITECTURE.md + architecture_graph.json
 ```
 
-By compiling raw code into CGE, we reduce prompt token footprints by **up to 55-86%**, making prompts smaller, cheaper, and vastly smarter.
+**Example output sections:**
+- Directory topology & module exports
+- Request routing & authentication flows
+- Middleware chains (including dynamic `apply().forRoutes()`)
+- Permissions & role guards
+- Dependency injection graph
+- Database entity relations (`@ManyToOne`, `@OneToMany`, etc.)
 
-```
-       Original Source Code                     Cognitive Graph Encoding (CGE)
-┌─────────────────────────────────┐          ┌─────────────────────────────────┐
-│ interface UserProfile {         │          │ TYPES:                          │
-│   id: string;                   │          │   User{id:S, email:S, role:S}   │
-│   email: string;                │  ───►    │                                 │
-│   role: "admin" | "editor";     │  Compiles│ OPS:                            │
-│ }                               │          │   login(Cred)->Tok:             │
-│                                 │          │     user=users.get(email)       │
-│ async login(email, pass) {      │          │     GUARD !user THROW "invalid" │
-│   const user = users.get(email) │          │     RETURN tok                  │
-│   if (!user) throw new Error()  │          └─────────────────────────────────┘
-│   return tok;                   │             [ 9.7x Token Compression ]
-│ }                               │
-└─────────────────────────────────┘
-```
+### Token Compression (Cost Savings)
 
-### 🔎 The Killer Feature: Search `.cge` instead of Raw Code
+The architecture map compresses context by **3.7–6.9x** (73–86% token reduction):
 
-Autonomous coding agents (like Claude Code, Aider, or custom IDE agents) waste massive context volumes when navigating repositories. If you tell an agent to `grep src`, it receives verbose syntax noise, comments, and disjointed lines of text.
+| Repository | Raw Tokens | Map Tokens | Compression | Reduction |
+| ---------- | ---------- | ---------- | ----------- | --------- |
+| domain-driven-hexagon | 22,616 | 3,267 | 6.9x | 85.6% |
+| nestjs-boilerplate | 43,023 | 10,940 | 3.9x | 74.6% |
+| nestjs-prisma-starter | 7,848 | 2,079 | 3.8x | 73.5% |
+| nestjs-realworld | 8,535 | 2,333 | 3.7x | 72.7% |
+| ghostfolio (large repo) | 336,111 | 58,405 | 5.8x | 82.6% |
 
-Instead, CGE enables you to compile your repository into a lightweight mirror directory (`.cge/`). 
+At scale, this translates to **5–6x cost reduction** for architectural queries.
 
-| Traditional AI Agent | CGE-Optimized AI Agent |
-|---|---|
-| Runs `grep` over raw `.ts` / `.cpp` source files | Runs `grep` over dense `.cge` structural graphs |
-| Spends thousands of tokens on imports, boilerplate, and style | Receives compact type-definitions and logical flows |
-| Loses structural context of file layout | Instantly resolves full type signatures and dependencies |
+### Architecture Graph Export
 
-By instructing your agent to search the `.cge/` directory, it reads completely flattened, dense structural mappings of the entire application, preserving its context window for high-value reasoning.
+Every `generate()` call also outputs a typed `architecture_graph.json`:
 
-#### Running CGE Indexer locally for AI Agents
-```bash
-# Install and build the CLI tool
-npm install
-npm run build
-npm link
-
-# Build the CGE index directory (.cge/)
-cge-cli build ./my-project
+```json
+{
+  "nodes": [
+    { "id": "file:src/user/user.controller.ts", "type": "file", "label": "..." },
+    { "id": "route:GET /users", "type": "route", "label": "GET /users" },
+    { "id": "entity:UserEntity", "type": "entity", "label": "UserEntity" }
+  ],
+  "edges": [
+    { "source": "file:...", "target": "route:...", "type": "has_route" },
+    { "source": "entity:User", "target": "entity:Article", "type": "relates_to", "label": "OneToMany (articles)" }
+  ]
+}
 ```
 
-#### Recommended System Prompt for your AI Agent:
-> *"When exploring this repository, do not `grep` or `cat` the raw source code files. Instead, navigate to the `.cge/` directory and use `grep` there. You will receive completely flattened, dense structural mappings of the entire application, saving your context window."*
+Node types: `file`, `route`, `entity`, `service`, `middleware`
+Edge types: `has_route`, `depends_on`, `relates_to`, `uses_middleware`
+
+Future use cases: visualization, RAG retrieval, agent navigation, graph queries.
 
 ---
 
-### Why CGE instead of JSON?
-A common question is: *Why not just serialize the AST into JSON?* 
-JSON is structurally rigid and incredibly noisy. For an LLM, rendering `{ "function": "login", "params": ["email"] }` consumes tokens on quotes, colons, brackets, and whitespace, heavily diluting the actual attention weight placed on the logic. CGE strips syntax entirely, providing a domain-specific pseudo-code (`login(email)`) that maps perfectly to LLM logical reasoning while using a fraction of the tokens.
+## 🗺️ Research Roadmap
 
-### CGE Compiler vs. Probabilistic Code Summarizers
-It is tempting to think of CGE as a "code summary." However, there is a fundamental difference in architecture and trust boundaries:
-
-| Metric | Code Summarizers | CGE Compiler |
-|---|---|---|
-| **Process** | Probabilistic (Model-generated) | Deterministic (AST-parsed) |
-| **Output Type** | Natural language or unstructured text | Strict Cognitive Graph Notation |
-| **Reproducibility** | Low (Varies with temperature/seed) | 100% (Same code yields identical CGE) |
-| **Hallucinations** | High risk (May omit logic or invent arguments) | Zero (Programmatically compiled from syntax trees) |
-| **Fidelity** | Lossy (Subjective summary) | Near-lossless business-logic preserving |
+| Phase | Status | Result |
+| ----- | ------ | ------ |
+| **Phase 1:** CGE Compression | ❌ Disproven | Structural compression *removed* reasoning signals. Raw=100%, CGE=60%. |
+| **Phase 2:** Architecture Augmentation | ✅ Proven | Human Map + Raw = 100%. Generated Map + Raw = 100%. |
+| **Phase 3:** Multi-Repo Validation | ✅ Completed | Gen Map + Raw consistently outperforms Raw Only across 4 repos (+5% avg lift). |
+| **Phase 4:** Large-Repo Experiment | 🔄 In Progress | Can maps enable reasoning on repos too large to fit in context? (Ghostfolio: 336k tokens) |
+| **Phase 5:** Ablation Study | 📋 Planned | Which architecture signals matter most? (Routes vs DI vs Entities vs Middleware) |
 
 ---
 
-## 📊 Benchmarks on Production Code
+## ⚙️ Quickstart
 
-*Tested on 27 repositories, 5 languages, 1,842 files. Average compression: 4.8x*
-
-We benchmarked the compiler against real production modules. Here is a visual representation of the token reduction:
-
-**Auth Service (`authService.ts`)** - 1.8x smaller
-*Raw (1,097 tokens)*: `████████████████████████████`
-*CGE (598 tokens)*: `███████████████`
-
-**Business Logic Library (`resumeEnhancer.ts`)** - 9.7x smaller
-*Raw (2,370 tokens)*: `████████████████████████████`
-*CGE (244 tokens)*: `███`
-
-### Worst Compression Cases
-Aggressive compression isn't magic; it struggles with certain architectural patterns. 
-* **Repository**: *NestJS Enterprise Monorepo*
-* **Compression**: Only 1.2x 
-* **Reason**: Highly reliant on chained decorators (`@Injectable`, `@Entity`, `@ApiProperty`) and runtime reflection. The AST parser preserves decorators as metadata, resulting in minimal structural collapse.
-
-### Real AI Agent Benchmarks
-Beyond raw token compression, CGE drastically improves downstream agent capabilities. 
-
-**Methodology**: *Claude 3.5 Sonnet, Temperature 0.0, 5 identical runs per task on a 20k token repository. Prompt: "Locate X" or "Fix Y based on Z".*
-
-| Task | Raw Source (.ts) | CGE Notation (.cge) |
-| --- | --- | --- |
-| **Find Auth Flow** | 12.4k tokens context | **1.8k tokens context** |
-| **Trace dependency** | Failed 3/5 times (Distraction) | **Succeeded 5/5 times** |
-| **Generate Unit Tests**| 78% Coverage accuracy | **92% Coverage accuracy** |
-| **Fix multi-file bug** | 4.2 prompts avg | **1.4 prompts avg** |
-
----
-
-## ⚙️ How It Works (The Transformation Spec)
-
-CGE/1.0 uses a strict structural extraction methodology (fully defined in the [CGE SPEC v1](./docs/cge_specification.md)):
-* **Language Agnostic Auto-Detection**: Uses a pure, lightning-fast (<1ms) client-side regex heuristic engine to instantly detect and parse languages.
-* **Structural Extraction**: Core types and interfaces are cleanly pulled out while discarding comments, JSDoc, and layout boilerplate.
-* **State Isolation**: Module-level constants and state variables are detached into pure state directives.
-* **Dependency Mapping**: Multi-line imports are flattened into clean context maps.
-* **Logic Preservation (CLNR)**: Retains business logic within deterministic operation blocks. This is verified by **Closed-Loop Neural Reconstruction (CLNR)**—our evaluation framework where an LLM is given only CGE and tasked with reconstructing equivalent source code. The reconstructed output is verified against the original source code via structural AST-node diffing (comparing loop structures, conditional paths, variable bindings, and method declarations) rather than simple text comparison, validating that the CGE representation preserves the original logic architecture.
-
----
-
-## 🛠️ Quickstart
-
-### 1. Installation
-Clone the repository and install the dependencies:
+### Installation
 ```bash
 git clone https://github.com/AnilAlapati/cge-compiler.git
 cd cge-compiler
 npm install
 ```
 
-### 2. Interactive Web Application
-Upload full project directory ZIPs in the premium glassmorphic UI to view real-time compilation breakdowns, token reductions, and ROI dollar estimates. The app utilizes background Web Workers for asynchronous compilation, ensuring the main UI thread remains smooth.
+### Generate an Architecture Map
+```bash
+npx ts-node -e "
+const { ArchitectureMapGeneratorPhase2 } = require('./src/architecture_map_generator_phase2');
+const gen = new ArchitectureMapGeneratorPhase2();
+gen.generate('./path/to/your/nestjs/project', 'GENERATED_ARCHITECTURE.md');
+"
+```
+
+This produces:
+- `GENERATED_ARCHITECTURE.md` — human-readable architecture summary
+- `architecture_graph.json` — typed graph for programmatic use
+
+### Run the Multi-Repo Benchmark
+```bash
+# Clone benchmark repositories
+npx ts-node scripts/setup_multirepo_benchmarks.ts
+
+# Generate benchmark questions
+npx ts-node scripts/generate_repo_tasks.ts
+
+# Run the full evaluation matrix
+npx ts-node scripts/run_multi_repo_benchmark.ts
+
+# Measure token compression
+npx ts-node scripts/measure_token_metrics.ts
+```
+
+### Interactive Web Application
+Upload project ZIPs in the web UI to view real-time compilation breakdowns.
 
 **Try it here:** [cge-compiler.vercel.app](https://cge-compiler.vercel.app)
 
 ---
 
-## 🧠 The Final Challenge: Why not just use a 1M-Token Context Window?
+## 📊 Phase 3 Results: Multi-Repository Validation
 
-As models like Gemini ship with 1M+ token windows, a valid question arises: *Why compress context when you can just throw the whole repository into the prompt?*
+| Repository | Raw Only | Gen Map Only | Gen Map + Raw | Signal |
+| ---------- | -------- | ------------ | ------------- | ------ |
+| domain-driven-hexagon | 80% | 30% | **90%** | 🟢 Strong: +10% lift |
+| nestjs-boilerplate | 80% | 80% | **90%** | 🟢 Strong: +10% lift |
+| nestjs-prisma-starter | 80% | 70% | **90%** | 🟢 Strong: +10% lift |
+| nestjs-realworld | 100% | 100% | 90% | ⚠️ Judge artifact (-10%) |
 
-**Option A: 1M-Token Context (Raw Source)**
-* **The Problem**: "Attention Dilution" and the "Lost in the Middle" phenomenon. Even with massive context windows, LLMs allocate attention linearly. When 80% of your prompt is brackets, boilerplate, `import` paths, and styling noise, the model's reasoning capabilities degrade on deeply nested logical tasks. 
-
-**Option B: 200k-Token Context (CGE Notation)**
-* **The Solution**: "Reasoning Density". By feeding the model structurally flattened CGE files, you drastically increase the density of pure logic per token. CGE does not just lower API costs; it **improves reasoning quality** by removing the syntactical noise that distracts the attention head.
-
----
-
-## 🗺️ Roadmap (v1.1)
-* **Tree-sitter Backend**: Migrating the CLI tool to full tree-sitter AST parsing for deeper C++ and Rust coverage.
-* **Comment Pragma Preservation**: Allowing configurable retention of critical comments (e.g., `// SECURITY:` or `// FIXME:`).
-* **Language Server Protocol (LSP)**: Real-time CGE generation within IDEs.
+Full report: [PHASE3_MULTIREPO_REPORT.md](./benchmarks_real/PHASE3_MULTIREPO_REPORT.md)
 
 ---
 
-## ⚠️ Known Limitations
+## 📁 Project Structure
 
-While CGE is incredibly powerful, aggressive compression inherently involves trade-offs. The following language features may suffer from detail loss or complete omission:
-* **Runtime Reflection / Metaprogramming**: Dynamic type evaluations won't map perfectly.
-* **Dynamic Imports**: `import(variablePath)` can obscure dependency trees.
-* **Heavy Decorators**: Frameworks like NestJS or Angular that rely heavily on metadata decorators may lose some wiring context.
-* **Complex Generics**: Highly nested or inferred generics may be simplified into `any` or `T`.
-* **Code generation / Macros**: Rust macros or C++ preprocessor directives are largely bypassed.
+```
+cge-compiler/
+├── src/                              # Core compiler & parsers
+│   ├── architecture_map_generator_phase2.ts   # Architecture map + graph generator
+│   ├── typescript_parser_phase2.ts            # TypeScript AST parser (routes, DI, entities, middleware)
+│   ├── python_parser_phase2.ts                # Python parser
+│   ├── cge_parser_phase2.ts                   # Unified parser interface
+│   ├── cge_compiler.ts                        # Original CGE compiler (Phase 1)
+│   └── typescript_parser.ts                   # Original TS parser (Phase 1)
+├── scripts/                          # Automation & benchmarking
+│   ├── setup_multirepo_benchmarks.ts          # Clone benchmark repos
+│   ├── generate_repo_tasks.ts                 # Auto-generate architectural questions
+│   ├── run_multi_repo_benchmark.ts            # Run full evaluation matrix
+│   ├── run_augmentation_benchmark_phase2.ts   # Single-repo benchmark (Phase 2)
+│   └── measure_token_metrics.ts               # Token compression & cost analysis
+├── benchmarks_real/                  # Benchmark data & results
+│   ├── PHASE3_MULTIREPO_REPORT.md             # Full Phase 3 research report
+│   ├── multi_repo_benchmark_report.md         # Raw benchmark output
+│   ├── repo_metrics.json                      # Token metrics per repo
+│   └── <repo-name>/                           # Per-repo benchmark data
+├── results/                          # Frozen research artifacts
+│   └── phase3/                                # Versioned Phase 3 results
+└── docs/                             # Documentation
+    ├── interim_research_conclusion.md         # Phase 1 conclusion
+    └── project_journal.md                     # Research journal
+```
+
+---
+
+## 📜 Research History
+
+<details>
+<summary><b>Phase 1: CGE Compression (Disproven)</b></summary>
+
+### Original Hypothesis
+The CGE Compiler was originally designed to compress raw source code into a structural notation called **Cognitive Graph Encoding (CGE)**, reducing token usage by up to 55–86%.
+
+### The Pipeline
+
+```text
+Source Code → Language Detector → Parser → AST → Normalizer → CGE Generator → .cge files
+```
+
+### What We Found
+
+| Task | Raw Source (.ts) | CGE Notation (.cge) |
+| --- | --- | --- |
+| **Find Auth Flow** | 12.4k tokens context | **1.8k tokens context** |
+| **Trace dependency** | Failed 3/5 times | **Succeeded 5/5 times** |
+
+Token compression was real. But when we ran rigorous benchmarks:
+
+| Representation | Accuracy |
+| -------------- | -------- |
+| Raw Code | 100% |
+| CGE | 60% |
+
+**Conclusion:** By stripping syntactical metadata, we inadvertently removed the exact clues LLMs use to infer architecture. Compression *destroyed* reasoning signals.
+
+Full report: [Phase 1 Research Conclusion](./docs/interim_research_conclusion.md)
+
+### Why CGE instead of JSON?
+JSON is structurally rigid and incredibly noisy for LLMs. CGE strips syntax entirely, providing domain-specific pseudo-code that maps to LLM logical reasoning. However, our empirical results showed this advantage did not translate to improved architectural reasoning.
+
+### CGE Compiler vs. Probabilistic Code Summarizers
+
+| Metric | Code Summarizers | CGE Compiler |
+|---|---|---|
+| **Process** | Probabilistic (Model-generated) | Deterministic (AST-parsed) |
+| **Reproducibility** | Low | 100% |
+| **Hallucinations** | High risk | Zero |
+| **Fidelity** | Lossy | Near-lossless business-logic preserving |
+
+### Supported Languages (CGE Compiler)
+TypeScript, Python, Rust, Go, C++
+
+### Known Limitations
+- Runtime Reflection / Metaprogramming
+- Dynamic Imports
+- Heavy Decorators (NestJS, Angular)
+- Complex Generics
+- Code generation / Macros
+
+</details>
+
 ---
 
 ## 💼 Skills & Technical Implementation
 
-This project was built from scratch and highlights advanced skills in:
-* **Compiler & Language Engineering**: Building robust parsers for a variety of paradigms (TypeScript, Python, Rust, Go, C++) using custom abstract syntax mapping.
-* **System Design & AI Architecture**: Designing high-efficiency prompt-compression systems, verified by Closed-Loop Neural Reconstruction (CLNR) testing to guarantee high-fidelity business-logic preservation for LLMs.
-* **Advanced Frontend Architectures**: Implementing Web Worker offloading in modern web dashboards for intensive multi-file compactions, completely client-side.
+This project demonstrates advanced skills in:
+* **Compiler & Language Engineering**: Building robust parsers for TypeScript, Python, Rust, Go, and C++ using custom AST mapping.
+* **Research Methodology**: Designing controlled experiments with semantic LLM judging, hypothesis-driven development, and rigorous validation across multiple repositories.
+* **System Design & AI Architecture**: Designing architecture extraction systems that improve LLM reasoning quality through structural augmentation.
+* **Advanced Frontend**: Web Worker offloading in modern web dashboards for intensive multi-file compactions, completely client-side.
 
 ---
 

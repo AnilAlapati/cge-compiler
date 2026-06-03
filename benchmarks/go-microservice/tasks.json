@@ -1,0 +1,27 @@
+[
+  {
+    "id": "go-1",
+    "question": "How is the product inventory stored and synchronized?",
+    "expectedAnswer": "It is stored in a global map named 'inventory' and protected by a sync.RWMutex."
+  },
+  {
+    "id": "go-2",
+    "question": "Which route is protected by the AuthMiddleware?",
+    "expectedAnswer": "The /api/admin/product route."
+  },
+  {
+    "id": "go-3",
+    "question": "What is the expected token value in the AuthMiddleware?",
+    "expectedAnswer": "'Bearer secret-go-token'."
+  },
+  {
+    "id": "go-4",
+    "question": "What HTTP status code is returned when a product is created successfully?",
+    "expectedAnswer": "201 Created (http.StatusCreated)."
+  },
+  {
+    "id": "go-5",
+    "question": "What fields are validated to be non-empty when creating a product?",
+    "expectedAnswer": "The ID and Name fields."
+  }
+]

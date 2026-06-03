@@ -1,0 +1,27 @@
+[
+  {
+    "id": "py-1",
+    "question": "What does the @require_api_key decorator do?",
+    "expectedAnswer": "It checks if the 'X-API-Key' header equals 'secret_key_999' and returns a 401 Unauthorized error if it doesn't."
+  },
+  {
+    "id": "py-2",
+    "question": "Which HTTP method is explicitly required to create a user?",
+    "expectedAnswer": "The POST method."
+  },
+  {
+    "id": "py-3",
+    "question": "Where is the user database stored in memory?",
+    "expectedAnswer": "In the global DB dictionary under the 'users' key."
+  },
+  {
+    "id": "py-4",
+    "question": "What happens if a user is not found in the /api/v1/users/<user_id> endpoint?",
+    "expectedAnswer": "It returns a 404 status with {\"error\": \"User not found\"}."
+  },
+  {
+    "id": "py-5",
+    "question": "What is the default role assigned when creating a new user if not provided?",
+    "expectedAnswer": "The default role is 'user'."
+  }
+]

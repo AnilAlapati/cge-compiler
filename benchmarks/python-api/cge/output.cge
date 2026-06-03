@@ -1,0 +1,39 @@
+// --- File: benchmarks/python-api/source/main.py ---
+CGE/1.0 main (Python)
+
+IMPORTS:
+  Flask, jsonify, request from flask
+  wraps from functools
+  time
+
+STATE:
+  app:any = Flask(__name__)
+  CONST DB:any = {
+
+OPS:
+  require_api_key(f:any)->void:
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+    api_key = request.headers.get('X-API-Key')
+    GUARD not api_key or api_key != 'secret_key_999' RETURN jsonify({"error": "Unauthorized"}), 401
+    RETURN f(*args, **kwargs)
+    RETURN decorated_function
+
+  status()->void:
+    RETURN jsonify({"status": "online", "time": time.time()})
+
+  get_user(user_id:any)->void:
+    user = DB["users"].get(user_id)
+    GUARD not user RETURN jsonify({"error": "User not found"}), 404
+    RETURN jsonify({"data": user})
+
+  create_user()->void:
+    data = request.get_json()
+    GUARD 'name' not in data RETURN jsonify({"error": "Name is required"}), 400
+    new_id = str(len(DB["users"]) + 1)
+    DB["users"][new_id] = {"name": data["name"], "role": data.get("role", "user")}
+    RETURN jsonify({"data": DB["users"][new_id], "id": new_id}), 201
+
+EXPORTS: app, DB, require_api_key, status, get_user, create_user
+
+

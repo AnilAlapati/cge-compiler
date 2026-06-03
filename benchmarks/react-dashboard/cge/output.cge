@@ -1,0 +1,25 @@
+// --- File: benchmarks/react-dashboard/source/Dashboard.jsx ---
+CGE/1.0 Dashboard (TypeScript)
+
+IMPORTS:
+  React, useState,useEffect from react
+  fetchDashboardStats from ./api
+  StatCard from ./components/StatCard
+  UserTable from ./components/UserTable
+
+OPS:
+  EXPORT Dashboard()->void:
+    DESTRUCTURE [stats, setStats] = useState(null)
+    DESTRUCTURE [loading, setLoading] = useState(true)
+    DESTRUCTURE [error, setError] = useState(null)
+    useEffect(()=>async function loadData() {
+      try {
+        const data = await fetchDashboar
+loadData(),[])
+    GUARD loading RETURN <div>Loadingdashboard...</div>
+    GUARD error RETURN <divclassName="error">Error:{error}</div>
+    RETURN (<divclassName="dashboard-container"><h1>AdminDashboard</h1><divclassName="stats-grid"><StatCardtitle="TotalUsers"value={stats.totalUsers}trend={stats.userTrend}/><StatCardtitle="Revenue"value={`$${stats.revenue}`}trend={stats.revenueTrend}/></div><divclassName="recent-activity"><h2>RecentUsers</h2><UserTableusers={stats.recentUsers}onEdit={(id)=>console.log('Edit',id)}/></div></div>)
+
+EXPORTS: Dashboard
+
+

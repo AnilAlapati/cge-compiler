@@ -1,0 +1,27 @@
+[
+  {
+    "id": "exp-1",
+    "question": "Where is authentication enforced for API endpoints?",
+    "expectedAnswer": "In auth.js using the authMiddleware function, applied to /api/users/me and /api/admin/config in app.js."
+  },
+  {
+    "id": "exp-2",
+    "question": "Which endpoints are publicly accessible without authentication?",
+    "expectedAnswer": "The /health endpoint is public."
+  },
+  {
+    "id": "exp-3",
+    "question": "What happens if an authorization token is completely missing from the request?",
+    "expectedAnswer": "The server returns a 401 status with the JSON body {\"error\": \"Missing token\"}."
+  },
+  {
+    "id": "exp-4",
+    "question": "How is the admin role checked for configuration changes?",
+    "expectedAnswer": "The roleCheck('admin') middleware is applied to the POST /api/admin/config route."
+  },
+  {
+    "id": "exp-5",
+    "question": "What is the hardcoded required token value?",
+    "expectedAnswer": "'Bearer valid_token_123'."
+  }
+]

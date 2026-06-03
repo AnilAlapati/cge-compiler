@@ -1,0 +1,36 @@
+// --- File: benchmarks/express-middleware/source/app.js ---
+CGE/1.0 app (TypeScript)
+
+STATE:
+  CONST express:any = require("express")
+  CONST { authMiddleware, roleCheck }:any = require("./auth")
+  CONST app:any = express()
+  CONST PORT:any = process.env.PORT||3000
+
+ROUTES:
+  GET "/health" -> anonymous_handler
+  GET "/api/users/me" -> authMiddleware -> anonymous_handler
+  POST "/api/admin/config" -> authMiddleware -> roleCheck() -> anonymous_handler
+
+MIDDLEWARE:
+  USE -> call
+
+
+// --- File: benchmarks/express-middleware/source/auth.js ---
+CGE/1.0 auth (TypeScript)
+
+STATE:
+  CONST express:any = require("express")
+
+PERMISSIONS:
+  authMiddleware(req:any, res:any, next:any)->void:
+    token = req.headers['authorization']
+    GUARD !token RETURN res.status(401).json({error:"Missing token"})
+    GUARD token!=="Bearer valid_token_123" RETURN res.status(403).json({error:"Invalid token"})
+    req.user={id:1,role:"admin"}
+    next()
+  roleCheck(requiredRole:any)->void:
+    RETURN (req,res,next)=>GUARD !req.user||req.user.role!==requiredRole RETURN res.status(403).json({error:"Insufficient permissions"})
+next()
+
+

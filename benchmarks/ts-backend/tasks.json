@@ -1,0 +1,27 @@
+[
+  {
+    "id": "ts-1",
+    "question": "What is the maximum number of retries for processPayment?",
+    "expectedAnswer": "It defaults to 3, but can be set via the constructor."
+  },
+  {
+    "id": "ts-2",
+    "question": "What condition immediately throws an error in processPayment?",
+    "expectedAnswer": "If the amount is less than or equal to zero."
+  },
+  {
+    "id": "ts-3",
+    "question": "How long is the simulated delay in the mockApiCall?",
+    "expectedAnswer": "100 milliseconds."
+  },
+  {
+    "id": "ts-4",
+    "question": "What is the simulated success rate of the mockApiCall?",
+    "expectedAnswer": "80%."
+  },
+  {
+    "id": "ts-5",
+    "question": "What error string is returned if all retries fail?",
+    "expectedAnswer": "'Payment failed after retries'."
+  }
+]

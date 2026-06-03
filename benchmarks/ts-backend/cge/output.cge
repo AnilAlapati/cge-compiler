@@ -1,0 +1,26 @@
+// --- File: benchmarks/ts-backend/source/StripeGateway.ts ---
+CGE/1.0 StripeGateway (TypeScript)
+
+IMPORTS:
+  PaymentGateway,PaymentResult from ./types
+
+STATE:
+  EXPORT StripeGateway.apiKey:S
+  EXPORT StripeGateway.maxRetries:N
+
+OPS:
+  EXPORT StripeGateway.processPayment(amount:N, currency:S, sourceId:S)->Promise<PaymentResult>:
+    GUARD amount<=0 THROW new Error("Amount must be greater than zero")
+    attempts = 0
+    while (attempts < this.maxRetries) {
+            try {
+                // Simula
+    RETURN {success:false,error:"Payment failed after retries"}
+
+PRIVATE:
+  StripeGateway.mockApiCall(amount:N, sourceId:S)->Promise<B>:
+    RETURN new Promise((resolve)=>setTimeout(()=>resolve(Math.random()>0.2),100))
+
+EXPORTS: StripeGateway
+
+
