@@ -1,0 +1,19 @@
+CGE/1.0 app.service (Ts)
+
+IMPORTS:
+  Injectable from @nestjs/common
+  RedisService from nestjs-redis
+
+OPS:
+  EXPORT AppService.getPublicData()->void:
+    RETURN {data:"Public Content"}
+
+  EXPORT AppService.getUserProfile()->void:
+    RETURN {name:"John Doe",role:"user"}
+
+  EXPORT AppService.updateSettings(settings:any)->void:
+    client = this.redisService.getClient()
+    await client.set("app_settings",JSON.stringify(settings))
+    RETURN {success:true}
+
+EXPORTS: AppService

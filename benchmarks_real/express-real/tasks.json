@@ -1,0 +1,27 @@
+[
+  {
+    "id": "exp-real-1",
+    "question": "Which endpoints can be accessed without a JWT token?",
+    "expectedAnswer": "Only GET /health is public. The /api/users and /api/admin/reset endpoints require verifyToken."
+  },
+  {
+    "id": "exp-real-2",
+    "question": "What is the global dependency injected into every request?",
+    "expectedAnswer": "The PrismaClient instance (prisma) is injected into req.db via a global middleware."
+  },
+  {
+    "id": "exp-real-3",
+    "question": "What specific string role is required to reset the system?",
+    "expectedAnswer": "The string role 'super_admin' is required."
+  },
+  {
+    "id": "exp-real-4",
+    "question": "What happens if a token is present but the signature is invalid in verifyToken?",
+    "expectedAnswer": "It catches the error and returns a 403 status with { error: 'Invalid token' }."
+  },
+  {
+    "id": "exp-real-5",
+    "question": "How is the user identity extracted from the JWT token?",
+    "expectedAnswer": "It is extracted using jwt.verify and assigned to req.user."
+  }
+]

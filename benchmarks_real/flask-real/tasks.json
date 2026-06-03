@@ -1,0 +1,27 @@
+[
+  {
+    "id": "flask-real-1",
+    "question": "Which endpoint requires authentication?",
+    "expectedAnswer": "The POST /api/data endpoint requires authentication."
+  },
+  {
+    "id": "flask-real-2",
+    "question": "What is the specific token string required for authorization?",
+    "expectedAnswer": "The required token is 'secret-token'."
+  },
+  {
+    "id": "flask-real-3",
+    "question": "What dependency is instantiated at the global level?",
+    "expectedAnswer": "SQLAlchemy is instantiated (db = SQLAlchemy(app))."
+  },
+  {
+    "id": "flask-real-4",
+    "question": "What error message is returned if the token is invalid?",
+    "expectedAnswer": "It returns {'error': 'Unauthorized'}."
+  },
+  {
+    "id": "flask-real-5",
+    "question": "Which database type is configured for SQLAlchemy?",
+    "expectedAnswer": "An in-memory SQLite database ('sqlite:///:memory:')."
+  }
+]

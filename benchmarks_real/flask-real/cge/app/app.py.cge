@@ -1,0 +1,27 @@
+CGE/1.0 app (Py)
+
+IMPORTS:
+  Flask, jsonify, request from flask
+  wraps from functools
+  SQLAlchemy from flask_sqlalchemy
+
+STATE:
+  app:any = Flask(__name__)
+  db:any = SQLAlchemy(app)
+
+OPS:
+  require_auth(f:any)->void:
+    @wraps(f)
+    def decorated(*args, **kwargs):
+    token = request.headers.get('Authorization')
+    GUARD not token or token != "secret-token" RETURN jsonify({"error": "Unauthorized"}), 401
+    RETURN f(*args, **kwargs)
+    RETURN decorated
+
+  get_status()->void:
+    RETURN jsonify({"status": "running"})
+
+  secure_data()->void:
+    RETURN jsonify({"data": "secure payload"})
+
+EXPORTS: app, db, require_auth, get_status, secure_data
