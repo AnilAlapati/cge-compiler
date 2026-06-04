@@ -2,141 +2,169 @@
   {
     "id": "gf_1",
     "question": "What services are injected into PortfolioService, and what role does each play in portfolio calculation?",
-    "expected": "PortfolioService depends on AccountBalanceService, AccountService, ActivitiesService, BenchmarkService, PortfolioCalculatorFactory, DataProviderService, ExchangeRateDataService, I18nService, ImpersonationService, RulesService, SymbolProfileService, and UserService. AccountService provides cash/account data, ActivitiesService provides transaction data, PortfolioCalculatorFactory creates calculator instances (TWR/MWR/ROI/ROAI), DataProviderService fetches market data, ExchangeRateDataService handles currency conversion, ImpersonationService enables admin access to other users' portfolios, and SymbolProfileService resolves asset metadata."
+    "expected": "PortfolioService depends on AccountBalanceService, AccountService, ActivitiesService, BenchmarkService, PortfolioCalculatorFactory, DataProviderService, ExchangeRateDataService, I18nService, ImpersonationService, RulesService, SymbolProfileService, and UserService. AccountService provides cash/account data, ActivitiesService provides transaction data, PortfolioCalculatorFactory creates calculator instances (TWR/MWR/ROI/ROAI), DataProviderService fetches market data, ExchangeRateDataService handles currency conversion, ImpersonationService enables admin access to other users' portfolios, and SymbolProfileService resolves asset metadata.",
+    "category": "Dependency"
   },
   {
     "id": "gf_2",
     "question": "How is authentication handled across the Ghostfolio API? What strategies are supported?",
-    "expected": "Authentication is handled in AuthModule using Passport strategies: JwtStrategy for JWT token validation, GoogleStrategy for Google OAuth, OidcStrategy for generic OpenID Connect, and ApiKeyStrategy for API key authentication. AuthService validates logins by looking up or creating users via UserService and issuing JWT tokens via JwtService. The OidcStrategy is dynamically constructed at module initialization based on OIDC configuration settings. JWT tokens are signed with JWT_SECRET_KEY and expire after 180 days."
+    "expected": "Authentication is handled in AuthModule using Passport strategies: JwtStrategy for JWT token validation, GoogleStrategy for Google OAuth, OidcStrategy for generic OpenID Connect, and ApiKeyStrategy for API key authentication. AuthService validates logins by looking up or creating users via UserService and issuing JWT tokens via JwtService. The OidcStrategy is dynamically constructed at module initialization based on OIDC configuration settings. JWT tokens are signed with JWT_SECRET_KEY and expire after 180 days.",
+    "category": "Security"
   },
   {
     "id": "gf_3",
     "question": "How does the permissions system work, and how are permissions enforced on API endpoints?",
-    "expected": "Permissions are defined as constants in libs/common/src/lib/permissions.ts. The getPermissions() function maps roles (ADMIN, DEMO, USER) to arrays of permission strings. Enforcement uses HasPermissionGuard which reads required permissions from controller method decorators (via @HasPermission decorator and Reflector), then checks if the user's permissions array includes the required permission. UserService dynamically adjusts permissions based on subscription type (Basic users lose access to features like createOwnTag, accessHoldingsChart, readAiPrompt) and feature flags."
+    "expected": "Permissions are defined as constants in libs/common/src/lib/permissions.ts. The getPermissions() function maps roles (ADMIN, DEMO, USER) to arrays of permission strings. Enforcement uses HasPermissionGuard which reads required permissions from controller method decorators (via @HasPermission decorator and Reflector), then checks if the user's permissions array includes the required permission. UserService dynamically adjusts permissions based on subscription type (Basic users lose access to features like createOwnTag, accessHoldingsChart, readAiPrompt) and feature flags.",
+    "category": "Security"
   },
   {
     "id": "gf_4",
     "question": "What are the different performance calculation types supported, and how does the system select which one to use?",
-    "expected": "The system supports four performance calculation types: TWR (Time-Weighted Return), MWR (Money-Weighted Return), ROI (Return on Investment), and ROAI (Return on Average Investment). PortfolioCalculatorFactory creates the appropriate calculator subclass based on the calculationType parameter. The user's preferred calculation type is stored in their settings (defaulting to ROAI) and retrieved via UserService.user() which sets the default in user.settings.settings.performanceCalculationType."
+    "expected": "The system supports four performance calculation types: TWR (Time-Weighted Return), MWR (Money-Weighted Return), ROI (Return on Investment), and ROAI (Return on Average Investment). PortfolioCalculatorFactory creates the appropriate calculator subclass based on the calculationType parameter. The user's preferred calculation type is stored in their settings (defaulting to ROAI) and retrieved via UserService.user() which sets the default in user.settings.settings.performanceCalculationType.",
+    "category": "Business Logic"
   },
   {
     "id": "gf_5",
     "question": "How are scheduled/cron jobs organized in Ghostfolio, and what does each job do?",
-    "expected": "Cron jobs are centralized in CronService (services/cron/cron.service.ts) using NestJS @Cron decorators. Jobs include: (1) EVERY_HOUR - adds statistics gathering jobs if enabled, (2) EVERY_HOUR_AT_RANDOM_MINUTE - gathers 7 days of market data via DataGatheringService.gather7Days(), (3) EVERY_12_HOURS - reloads currency exchange rates via ExchangeRateDataService.loadCurrencies(), (4) EVERY_DAY_AT_5PM - tweets Fear and Greed Index via TwitterBotService, (5) EVERY_DAY_AT_MIDNIGHT - resets analytics counters via UserService.resetAnalytics(), (6) EVERY_SUNDAY_AT_LUNCH_TIME - refreshes stale asset profiles (>60 days old) via DataGatheringService."
+    "expected": "Cron jobs are centralized in CronService (services/cron/cron.service.ts) using NestJS @Cron decorators. Jobs include: (1) EVERY_HOUR - adds statistics gathering jobs if enabled, (2) EVERY_HOUR_AT_RANDOM_MINUTE - gathers 7 days of market data via DataGatheringService.gather7Days(), (3) EVERY_12_HOURS - reloads currency exchange rates via ExchangeRateDataService.loadCurrencies(), (4) EVERY_DAY_AT_5PM - tweets Fear and Greed Index via TwitterBotService, (5) EVERY_DAY_AT_MIDNIGHT - resets analytics counters via UserService.resetAnalytics(), (6) EVERY_SUNDAY_AT_LUNCH_TIME - refreshes stale asset profiles (>60 days old) via DataGatheringService.",
+    "category": "Infrastructure"
   },
   {
     "id": "gf_6",
     "question": "How does the data provider system work? How are multiple data sources (Yahoo, CoinGecko, etc.) integrated?",
-    "expected": "DataProviderService implements a plugin architecture. It receives an array of DataProviderInterface implementations via dependency injection (@Inject('DataProviderInterfaces')). Each provider (AlphaVantageService, CoinGeckoService, EodHistoricalDataService, FinancialModelingPrepService, GhostfolioService, GoogleSheetsService, ManualService, RapidApiService, YahooFinanceService) implements a common interface with methods like getAssetProfile(), getHistorical(), getQuotes(), search(). DataProviderService routes requests to the correct provider based on the DataSource enum. A data source mapping (stored as a Property) allows overriding provider routing."
+    "expected": "DataProviderService implements a plugin architecture. It receives an array of DataProviderInterface implementations via dependency injection (@Inject('DataProviderInterfaces')). Each provider (AlphaVantageService, CoinGeckoService, EodHistoricalDataService, FinancialModelingPrepService, GhostfolioService, GoogleSheetsService, ManualService, RapidApiService, YahooFinanceService) implements a common interface with methods like getAssetProfile(), getHistorical(), getQuotes(), search(). DataProviderService routes requests to the correct provider based on the DataSource enum. A data source mapping (stored as a Property) allows overriding provider routing.",
+    "category": "Data Model"
   },
   {
     "id": "gf_7",
     "question": "What is the event system used for in Ghostfolio, and what events exist?",
-    "expected": "Ghostfolio uses NestJS EventEmitterModule with two domain events: PortfolioChangedEvent and AssetProfileChangedEvent. PortfolioChangedListener responds to portfolio changes by invalidating Redis cache (removing portfolio snapshots for the affected user) with a 5-second debounce. AssetProfileChangedListener responds to asset profile changes by detecting new currencies, reinitializing exchange rate data, and triggering data gathering for new currency pairs. Events are emitted from services like UserService (when updating user settings) and ActivitiesService."
+    "expected": "Ghostfolio uses NestJS EventEmitterModule with two domain events: PortfolioChangedEvent and AssetProfileChangedEvent. PortfolioChangedListener responds to portfolio changes by invalidating Redis cache (removing portfolio snapshots for the affected user) with a 5-second debounce. AssetProfileChangedListener responds to asset profile changes by detecting new currencies, reinitializing exchange rate data, and triggering data gathering for new currency pairs. Events are emitted from services like UserService (when updating user settings) and ActivitiesService.",
+    "category": "Data Flow"
   },
   {
     "id": "gf_8",
     "question": "How does the import flow work from receiving a file to creating activities in the database?",
-    "expected": "ImportService.import() receives DTOs for accounts, activities, asset profiles, and tags. It: (1) creates new accounts if needed, mapping old to new IDs, (2) creates new asset profiles and maps symbols, (3) creates tags with permission checks, (4) remaps activity references to new IDs, (5) validates activities via DataProviderService.validateActivities() which checks data source validity and subscription permissions, (6) checks for duplicates via extendActivitiesWithErrors(), (7) creates activities via ActivitiesService.createActivity(), (8) triggers background data gathering via DataGatheringService.gatherSymbols() at high priority."
+    "expected": "ImportService.import() receives DTOs for accounts, activities, asset profiles, and tags. It: (1) creates new accounts if needed, mapping old to new IDs, (2) creates new asset profiles and maps symbols, (3) creates tags with permission checks, (4) remaps activity references to new IDs, (5) validates activities via DataProviderService.validateActivities() which checks data source validity and subscription permissions, (6) checks for duplicates via extendActivitiesWithErrors(), (7) creates activities via ActivitiesService.createActivity(), (8) triggers background data gathering via DataGatheringService.gatherSymbols() at high priority.",
+    "category": "Data Flow"
   },
   {
     "id": "gf_9",
     "question": "How does the exchange rate system work, including derived currencies?",
-    "expected": "ExchangeRateDataService manages currency conversion. On initialization, it collects currencies from accounts, symbol profiles, and custom properties, then creates currency pairs relative to DEFAULT_CURRENCY (USD). It supports DERIVED_CURRENCIES with configurable factors (e.g., GBX = GBP * 100). loadCurrencies() fetches historical and current rates from the configured exchange rate data source. toCurrency() converts using cached rates, falling back to indirect conversion via USD. toCurrencyAtDate() handles historical conversion by querying MarketDataService for date-specific rates."
+    "expected": "ExchangeRateDataService manages currency conversion. On initialization, it collects currencies from accounts, symbol profiles, and custom properties, then creates currency pairs relative to DEFAULT_CURRENCY (USD). It supports DERIVED_CURRENCIES with configurable factors (e.g., GBX = GBP * 100). loadCurrencies() fetches historical and current rates from the configured exchange rate data source. toCurrency() converts using cached rates, falling back to indirect conversion via USD. toCurrencyAtDate() handles historical conversion by querying MarketDataService for date-specific rates.",
+    "category": "Data Model"
   },
   {
     "id": "gf_10",
     "question": "What is the role of the Redis cache in Ghostfolio, and what data is cached?",
-    "expected": "RedisCacheService provides caching for: (1) portfolio snapshots per user (invalidated when portfolio changes via PortfolioChangedEvent), (2) market data quotes from data providers (cached with configurable TTL via CACHE_QUOTES_TTL), (3) statistics information (active users, GitHub stars, etc.), and (4) various other computed results. The cache is used by DataProviderService.getQuotes() to avoid redundant API calls, by InfoService for statistics, and by the portfolio calculation pipeline to cache expensive portfolio snapshot computations."
+    "expected": "RedisCacheService provides caching for: (1) portfolio snapshots per user (invalidated when portfolio changes via PortfolioChangedEvent), (2) market data quotes from data providers (cached with configurable TTL via CACHE_QUOTES_TTL), (3) statistics information (active users, GitHub stars, etc.), and (4) various other computed results. The cache is used by DataProviderService.getQuotes() to avoid redundant API calls, by InfoService for statistics, and by the portfolio calculation pipeline to cache expensive portfolio snapshot computations.",
+    "category": "Infrastructure"
   },
   {
     "id": "gf_11",
     "question": "How does the impersonation system work, and who can impersonate whom?",
-    "expected": "ImpersonationService.validateImpersonationId() checks if a user can view another user's data. For authenticated users, it queries the Access table to see if the current user (granteeUserId) has been granted access by the target user. If no explicit access exists but the user has the 'impersonateAllUsers' permission (only ADMIN role in non-production), they can impersonate anyone. For public (unauthenticated) access, it checks for Access records with null granteeUserId. PortfolioService uses impersonation IDs to load another user's portfolio data."
+    "expected": "ImpersonationService.validateImpersonationId() checks if a user can view another user's data. For authenticated users, it queries the Access table to see if the current user (granteeUserId) has been granted access by the target user. If no explicit access exists but the user has the 'impersonateAllUsers' permission (only ADMIN role in non-production), they can impersonate anyone. For public (unauthenticated) access, it checks for Access records with null granteeUserId. PortfolioService uses impersonation IDs to load another user's portfolio data.",
+    "category": "Security"
   },
   {
     "id": "gf_12",
     "question": "What is the database schema structure, and what are the key entity relationships?",
-    "expected": "The Prisma schema defines 15 models. User is the central entity with relations to Account (1:N), Order/activities (1:N), Analytics (1:1), Settings (1:1), Subscription (1:N), ApiKey (1:N), AuthDevice (1:N), Tag (1:N), Access (1:N as both grantor and grantee), and SymbolProfile (1:N for owned profiles, M:N for watchlist). Account has AccountBalance (1:N) and Order (1:N). Order references SymbolProfile (N:1) and Tag (M:N). SymbolProfile has SymbolProfileOverrides (1:1) and MarketData entries. Platform has Account (1:N)."
+    "expected": "The Prisma schema defines 15 models. User is the central entity with relations to Account (1:N), Order/activities (1:N), Analytics (1:1), Settings (1:1), Subscription (1:N), ApiKey (1:N), AuthDevice (1:N), Tag (1:N), Access (1:N as both grantor and grantee), and SymbolProfile (1:N for owned profiles, M:N for watchlist). Account has AccountBalance (1:N) and Order (1:N). Order references SymbolProfile (N:1) and Tag (M:N). SymbolProfile has SymbolProfileOverrides (1:1) and MarketData entries. Platform has Account (1:N).",
+    "category": "Data Model"
   },
   {
     "id": "gf_13",
     "question": "How does the queue system work for background data gathering?",
-    "expected": "Ghostfolio uses Bull queues backed by Redis with three queue types: DATA_GATHERING_QUEUE, PORTFOLIO_SNAPSHOT_QUEUE, and a statistics gathering queue. DataGatheringService manages the data gathering queue, adding jobs with different priorities (HIGH, MEDIUM, LOW). gather7Days() adds currency pairs at HIGH priority, subscribed user symbols at MEDIUM, and non-subscribed at LOW. Jobs are processed by DataGatheringProcessor which fetches historical market data from data providers and upserts it into the MarketData table. PortfolioSnapshotQueueModule handles portfolio snapshot computation offloading."
+    "expected": "Ghostfolio uses Bull queues backed by Redis with three queue types: DATA_GATHERING_QUEUE, PORTFOLIO_SNAPSHOT_QUEUE, and a statistics gathering queue. DataGatheringService manages the data gathering queue, adding jobs with different priorities (HIGH, MEDIUM, LOW). gather7Days() adds currency pairs at HIGH priority, subscribed user symbols at MEDIUM, and non-subscribed at LOW. Jobs are processed by DataGatheringProcessor which fetches historical market data from data providers and upserts it into the MarketData table. PortfolioSnapshotQueueModule handles portfolio snapshot computation offloading.",
+    "category": "Infrastructure"
   },
   {
     "id": "gf_14",
     "question": "How does subscription management work, and how does it affect feature access?",
-    "expected": "SubscriptionService manages Stripe integration for premium subscriptions. It creates Stripe checkout sessions, handles callbacks to create Subscription records with expiration dates, and determines subscription type (Basic/Premium) based on the latest subscription's expiry. UserService.user() uses subscription status to modify permissions: Basic users lose access to holdings chart, AI prompts, custom tags, watchlist, and own asset profile market data. Premium users gain API key creation, Ghostfolio data provider access, market data reading, and data glitch reporting. Subscription frequency-based interstitials are shown to Basic users."
+    "expected": "SubscriptionService manages Stripe integration for premium subscriptions. It creates Stripe checkout sessions, handles callbacks to create Subscription records with expiration dates, and determines subscription type (Basic/Premium) based on the latest subscription's expiry. UserService.user() uses subscription status to modify permissions: Basic users lose access to holdings chart, AI prompts, custom tags, watchlist, and own asset profile market data. Premium users gain API key creation, Ghostfolio data provider access, market data reading, and data glitch reporting. Subscription frequency-based interstitials are shown to Basic users.",
+    "category": "Business Logic"
   },
   {
     "id": "gf_15",
     "question": "What interceptors exist in the API, and what do they do?",
-    "expected": "Four interceptors exist: (1) PerformanceLoggingInterceptor - logs execution time of requests/methods using @LogPerformance decorator, (2) RedactValuesInResponseInterceptor - redacts sensitive financial values in responses for restricted-view or read-restricted-access users, (3) TransformDataSourceInRequestInterceptor - decodes obfuscated data source identifiers in incoming requests (used when ENABLE_FEATURE_SUBSCRIPTION is enabled), (4) TransformDataSourceInResponseInterceptor - encodes/obfuscates data source identifiers in outgoing responses to hide internal data source names from non-premium users."
+    "expected": "Four interceptors exist: (1) PerformanceLoggingInterceptor - logs execution time of requests/methods using @LogPerformance decorator, (2) RedactValuesInResponseInterceptor - redacts sensitive financial values in responses for restricted-view or read-restricted-access users, (3) TransformDataSourceInRequestInterceptor - decodes obfuscated data source identifiers in incoming requests (used when ENABLE_FEATURE_SUBSCRIPTION is enabled), (4) TransformDataSourceInResponseInterceptor - encodes/obfuscates data source identifiers in outgoing responses to hide internal data source names from non-premium users.",
+    "category": "Security"
   },
   {
     "id": "gf_16",
     "question": "How does the admin module manage asset profiles and market data?",
-    "expected": "AdminService provides admin-level operations: addAssetProfile() creates symbol profiles by fetching data from the data provider, patchAssetProfileData() updates profiles using SymbolProfileOverrides for non-MANUAL sources (preserving original data), deleteProfileData() removes market data and optionally the profile. getMarketData() supports filtered/sorted queries with presets (BENCHMARKS, CURRENCIES, ETF_WITHOUT_COUNTRIES, ETF_WITHOUT_SECTORS, NO_ACTIVITIES). getMarketDataBySymbol() returns detailed market data with data provider info. Admin can also manage system settings via putSetting(), which triggers side effects like reinitializing exchange rates."
+    "expected": "AdminService provides admin-level operations: addAssetProfile() creates symbol profiles by fetching data from the data provider, patchAssetProfileData() updates profiles using SymbolProfileOverrides for non-MANUAL sources (preserving original data), deleteProfileData() removes market data and optionally the profile. getMarketData() supports filtered/sorted queries with presets (BENCHMARKS, CURRENCIES, ETF_WITHOUT_COUNTRIES, ETF_WITHOUT_SECTORS, NO_ACTIVITIES). getMarketDataBySymbol() returns detailed market data with data provider info. Admin can also manage system settings via putSetting(), which triggers side effects like reinitializing exchange rates.",
+    "category": "Data Model"
   },
   {
     "id": "gf_17",
     "question": "How does the data enhancer system work to enrich asset profiles?",
-    "expected": "DataGatheringService uses a plugin-based data enhancement pipeline. It injects an array of DataEnhancerInterface implementations via @Inject('DataEnhancers'). When gathering asset profiles via gatherAssetProfiles(), after fetching base data from the data provider, it iterates through each data enhancer (OpenFIGI, Trackinsight, YahooFinance) calling enhance() on the response. Each enhancer can add additional data (FIGI identifiers, country/sector breakdowns, etc.). Symbol mapping from SymbolProfile allows enhancers to look up symbols under different identifiers."
+    "expected": "DataGatheringService uses a plugin-based data enhancement pipeline. It injects an array of DataEnhancerInterface implementations via @Inject('DataEnhancers'). When gathering asset profiles via gatherAssetProfiles(), after fetching base data from the data provider, it iterates through each data enhancer (OpenFIGI, Trackinsight, YahooFinance) calling enhance() on the response. Each enhancer can add additional data (FIGI identifiers, country/sector breakdowns, etc.). Symbol mapping from SymbolProfile allows enhancers to look up symbols under different identifiers.",
+    "category": "Data Model"
   },
   {
     "id": "gf_18",
     "question": "What is the data flow from when a user creates a new buy activity to when it appears in portfolio performance?",
-    "expected": "1. Client sends POST to ActivitiesController, 2. ActivitiesService.createActivity() validates and creates an Order record in the database, 3. EventEmitter emits PortfolioChangedEvent, 4. PortfolioChangedListener invalidates Redis portfolio snapshot cache for the user, 5. DataGatheringService.gatherSymbols() is triggered to fetch historical market data for the symbol, 6. When portfolio is viewed, PortfolioService.getDetails() calls ActivitiesService.getActivitiesForPortfolioCalculator(), 7. PortfolioCalculatorFactory creates appropriate calculator, 8. Calculator fetches current rates via CurrentRateService, exchange rates via ExchangeRateDataService, 9. Calculator computes snapshot with positions, performance metrics, and returns holdings/summary."
+    "expected": "1. Client sends POST to ActivitiesController, 2. ActivitiesService.createActivity() validates and creates an Order record in the database, 3. EventEmitter emits PortfolioChangedEvent, 4. PortfolioChangedListener invalidates Redis portfolio snapshot cache for the user, 5. DataGatheringService.gatherSymbols() is triggered to fetch historical market data for the symbol, 6. When portfolio is viewed, PortfolioService.getDetails() calls ActivitiesService.getActivitiesForPortfolioCalculator(), 7. PortfolioCalculatorFactory creates appropriate calculator, 8. Calculator fetches current rates via CurrentRateService, exchange rates via ExchangeRateDataService, 9. Calculator computes snapshot with positions, performance metrics, and returns holdings/summary.",
+    "category": "Data Flow"
   },
   {
     "id": "gf_19",
     "question": "How does the watchlist feature work architecturally?",
-    "expected": "The watchlist is implemented through a many-to-many relationship between User and SymbolProfile (via 'UserWatchlist' relation in Prisma schema). WatchlistModule in the endpoints directory provides the API with WatchlistController. The controller allows adding and removing symbol profiles from a user's watchlist. The watchlist is stored directly as a relation on the User model (user.watchlist = SymbolProfile[]), and the feature requires the createWatchlistItem and deleteWatchlistItem permissions, which are available to ADMIN and USER roles but not DEMO or Basic subscription users."
+    "expected": "The watchlist is implemented through a many-to-many relationship between User and SymbolProfile (via 'UserWatchlist' relation in Prisma schema). WatchlistModule in the endpoints directory provides the API with WatchlistController. The controller allows adding and removing symbol profiles from a user's watchlist. The watchlist is stored directly as a relation on the User model (user.watchlist = SymbolProfile[]), and the feature requires the createWatchlistItem and deleteWatchlistItem permissions, which are available to ADMIN and USER roles but not DEMO or Basic subscription users.",
+    "category": "Architecture"
   },
   {
     "id": "gf_20",
     "question": "What middleware is applied globally, and what does each middleware do?",
-    "expected": "Two middlewares exist: (1) HtmlTemplateMiddleware - applied to all routes ('*wildcard') via AppModule.configure(). It intercepts responses for language-specific routes, reading HTML template files and injecting dynamic metadata (title, description, image, language) for SEO and social media sharing. (2) BullBoardAuthMiddleware - applied specifically to the Bull Board route, protecting the job queue dashboard by requiring admin authentication (checking for valid JWT and ADMIN role)."
+    "expected": "Two middlewares exist: (1) HtmlTemplateMiddleware - applied to all routes ('*wildcard') via AppModule.configure(). It intercepts responses for language-specific routes, reading HTML template files and injecting dynamic metadata (title, description, image, language) for SEO and social media sharing. (2) BullBoardAuthMiddleware - applied specifically to the Bull Board route, protecting the job queue dashboard by requiring admin authentication (checking for valid JWT and ADMIN role).",
+    "category": "Infrastructure"
   },
   {
     "id": "gf_21",
     "question": "How does the Access model enable portfolio sharing between users?",
-    "expected": "The Access model creates a granter-grantee relationship between users. A user (identified by userId) can grant access to another user (granteeUserId) with specific permissions (READ or READ_RESTRICTED via AccessPermission enum). When granteeUserId is null, it represents a public access link. Access records can have an alias for identification and settings as JSON. The AccessModule provides CRUD operations. ImpersonationService checks Access records to validate if a user can view another's portfolio. hasReadRestrictedAccessPermission() in permissions.ts checks if an impersonated view should redact values."
+    "expected": "The Access model creates a granter-grantee relationship between users. A user (identified by userId) can grant access to another user (granteeUserId) with specific permissions (READ or READ_RESTRICTED via AccessPermission enum). When granteeUserId is null, it represents a public access link. Access records can have an alias for identification and settings as JSON. The AccessModule provides CRUD operations. ImpersonationService checks Access records to validate if a user can view another's portfolio. hasReadRestrictedAccessPermission() in permissions.ts checks if an impersonated view should redact values.",
+    "category": "Security"
   },
   {
     "id": "gf_22",
     "question": "How does Ghostfolio handle multi-currency portfolio calculations?",
-    "expected": "ExchangeRateDataService maintains exchange rate pairs relative to USD (DEFAULT_CURRENCY). During portfolio calculation, PortfolioCalculator fetches exchange rates via ExchangeRateDataService.getExchangeRatesByCurrency() for all currencies used in the portfolio over the calculation period. Values are converted using toCurrency() for current rates and toCurrencyAtDate() for historical rates (querying MarketData table). The system supports derived currencies (e.g., GBX = GBP * 100) via factor-based conversion. If direct rates aren't available, indirect conversion through USD is attempted."
+    "expected": "ExchangeRateDataService maintains exchange rate pairs relative to USD (DEFAULT_CURRENCY). During portfolio calculation, PortfolioCalculator fetches exchange rates via ExchangeRateDataService.getExchangeRatesByCurrency() for all currencies used in the portfolio over the calculation period. Values are converted using toCurrency() for current rates and toCurrencyAtDate() for historical rates (querying MarketData table). The system supports derived currencies (e.g., GBX = GBP * 100) via factor-based conversion. If direct rates aren't available, indirect conversion through USD is attempted.",
+    "category": "Business Logic"
   },
   {
     "id": "gf_23",
     "question": "What modules are in the 'endpoints' subdirectory, and how do they differ from top-level app modules?",
-    "expected": "The endpoints directory contains newer/feature-specific modules: AiModule (AI assistant), ApiKeysModule (API key management), AssetsModule (asset profile info), BenchmarksModule (benchmark data), GhostfolioModule (Ghostfolio data provider integration), MarketDataModule (market data CRUD), PlatformsModule (platform management with account counts), PublicModule (public portfolio access), SitemapModule (sitemap generation), TagsModule (tag management), WatchlistModule (watchlist features). These differ from top-level modules (portfolio, auth, admin, etc.) by being more focused, single-purpose feature modules that were likely added as the app grew."
+    "expected": "The endpoints directory contains newer/feature-specific modules: AiModule (AI assistant), ApiKeysModule (API key management), AssetsModule (asset profile info), BenchmarksModule (benchmark data), GhostfolioModule (Ghostfolio data provider integration), MarketDataModule (market data CRUD), PlatformsModule (platform management with account counts), PublicModule (public portfolio access), SitemapModule (sitemap generation), TagsModule (tag management), WatchlistModule (watchlist features). These differ from top-level modules (portfolio, auth, admin, etc.) by being more focused, single-purpose feature modules that were likely added as the app grew.",
+    "category": "Architecture"
   },
   {
     "id": "gf_24",
     "question": "How does the portfolio rules/X-Ray analysis system work?",
-    "expected": "RulesService evaluates portfolio health rules. Rules are defined as classes in the models/rules directory, covering: AccountClusterRisk (current investment, single account), AssetClassClusterRisk (equity, fixed income), CurrencyClusterRisk (base currency, current investment), EconomicMarketClusterRisk (developed, emerging), EmergencyFundSetup, FeeRatio, BuyingPower/Liquidity, and RegionalMarketClusterRisk (Asia-Pacific, Emerging, Europe, Japan, North America). UserService.user() initializes rule settings from user preferences. PortfolioService.getReport() evaluates these rules against actual portfolio data to generate a PortfolioReportResponse with rule pass/fail results."
+    "expected": "RulesService evaluates portfolio health rules. Rules are defined as classes in the models/rules directory, covering: AccountClusterRisk (current investment, single account), AssetClassClusterRisk (equity, fixed income), CurrencyClusterRisk (base currency, current investment), EconomicMarketClusterRisk (developed, emerging), EmergencyFundSetup, FeeRatio, BuyingPower/Liquidity, and RegionalMarketClusterRisk (Asia-Pacific, Emerging, Europe, Japan, North America). UserService.user() initializes rule settings from user preferences. PortfolioService.getReport() evaluates these rules against actual portfolio data to generate a PortfolioReportResponse with rule pass/fail results.",
+    "category": "Business Logic"
   },
   {
     "id": "gf_25",
     "question": "How does the InfoService aggregate system information and what data does it expose?",
-    "expected": "InfoService.get() assembles an InfoItem containing: global permissions (based on feature flags like ENABLE_FEATURE_AUTH_GOOGLE, ENABLE_FEATURE_SUBSCRIPTION, etc.), benchmark asset profiles from BenchmarkService, a demo auth token from PropertyService, user signup status, statistics (active users 1d/30d, new users 30d, Docker Hub pulls, GitHub contributors/stargazers, Slack users, uptime from PropertyService), subscription offers, base currency (USD), available currencies from ExchangeRateDataService, and read-only mode status. Statistics are cached in Redis."
+    "expected": "InfoService.get() assembles an InfoItem containing: global permissions (based on feature flags like ENABLE_FEATURE_AUTH_GOOGLE, ENABLE_FEATURE_SUBSCRIPTION, etc.), benchmark asset profiles from BenchmarkService, a demo auth token from PropertyService, user signup status, statistics (active users 1d/30d, new users 30d, Docker Hub pulls, GitHub contributors/stargazers, Slack users, uptime from PropertyService), subscription offers, base currency (USD), available currencies from ExchangeRateDataService, and read-only mode status. Statistics are cached in Redis.",
+    "category": "Data Flow"
   },
   {
     "id": "gf_26",
     "question": "Which services depend on the PropertyService, and what key-value properties does it manage?",
-    "expected": "PropertyService is used by AdminService, AuthService, ConfigurationService, CronService, DataGatheringService, DataProviderService, ExchangeRateDataService, InfoService, SubscriptionService, and UserService. It manages Property key-value pairs including: PROPERTY_BENCHMARKS (benchmark configs), PROPERTY_CURRENCIES (custom currencies), PROPERTY_DATA_SOURCE_MAPPING (data source overrides), PROPERTY_DEMO_USER_ID, PROPERTY_IS_DATA_GATHERING_ENABLED, PROPERTY_IS_READ_ONLY_MODE, PROPERTY_IS_USER_SIGNUP_ENABLED, PROPERTY_STRIPE_CONFIG, PROPERTY_SYSTEM_MESSAGE, PROPERTY_API_KEY_GHOSTFOLIO, and various statistics properties (Docker Hub, GitHub, Slack, uptime)."
+    "expected": "PropertyService is used by AdminService, AuthService, ConfigurationService, CronService, DataGatheringService, DataProviderService, ExchangeRateDataService, InfoService, SubscriptionService, and UserService. It manages Property key-value pairs including: PROPERTY_BENCHMARKS (benchmark configs), PROPERTY_CURRENCIES (custom currencies), PROPERTY_DATA_SOURCE_MAPPING (data source overrides), PROPERTY_DEMO_USER_ID, PROPERTY_IS_DATA_GATHERING_ENABLED, PROPERTY_IS_READ_ONLY_MODE, PROPERTY_IS_USER_SIGNUP_ENABLED, PROPERTY_STRIPE_CONFIG, PROPERTY_SYSTEM_MESSAGE, PROPERTY_API_KEY_GHOSTFOLIO, and various statistics properties (Docker Hub, GitHub, Slack, uptime).",
+    "category": "Dependency"
   },
   {
     "id": "gf_27",
     "question": "How does the CurrentRateService work and what role does it play in portfolio calculation?",
-    "expected": "CurrentRateService is responsible for providing current and historical market prices to the portfolio calculators. It combines data from DataProviderService (for live quotes) and MarketDataService (for historical prices from the database). It resolves asset profile identifiers to their current market prices, handling the lookup and caching of rates. The PortfolioCalculator base class uses CurrentRateService to get the prices needed for computing positions, performance, and valuations across date ranges."
+    "expected": "CurrentRateService is responsible for providing current and historical market prices to the portfolio calculators. It combines data from DataProviderService (for live quotes) and MarketDataService (for historical prices from the database). It resolves asset profile identifiers to their current market prices, handling the lookup and caching of rates. The PortfolioCalculator base class uses CurrentRateService to get the prices needed for computing positions, performance, and valuations across date ranges.",
+    "category": "Business Logic"
   },
   {
     "id": "gf_28",
     "question": "How does user creation work, and what default resources are set up for a new user?",
-    "expected": "UserService.createUser() creates a user with: (1) Provider defaults to ANONYMOUS if not specified, (2) Role defaults to ADMIN for the first user, USER for subsequent users (checked via hasAdmin()), (3) A default account is auto-created with DEFAULT_CURRENCY (USD) and localized name 'My Account', (4) Default settings are created with base currency USD, (5) If ENABLE_FEATURE_SUBSCRIPTION is enabled, an Analytics record is created, (6) For ANONYMOUS providers, an access token is generated using HMAC-SHA512 with a random salt. The access token is hashed and stored, while the unhashed version is returned to the user."
+    "expected": "UserService.createUser() creates a user with: (1) Provider defaults to ANONYMOUS if not specified, (2) Role defaults to ADMIN for the first user, USER for subsequent users (checked via hasAdmin()), (3) A default account is auto-created with DEFAULT_CURRENCY (USD) and localized name 'My Account', (4) Default settings are created with base currency USD, (5) If ENABLE_FEATURE_SUBSCRIPTION is enabled, an Analytics record is created, (6) For ANONYMOUS providers, an access token is generated using HMAC-SHA512 with a random salt. The access token is hashed and stored, while the unhashed version is returned to the user.",
+    "category": "Business Logic"
   }
 ]

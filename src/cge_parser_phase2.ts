@@ -20,5 +20,12 @@ export interface CGEParserPhase2 {
     permissions?: string[];
     dependencies?: string[];
     entityRelations?: string[];
+    methods?: string[];
+    eventEmissions?: string[];
+    eventListeners?: string[];
+    cronJobs?: string[];
+    calls?: string[];
+    classProperties?: string[];
   };
 }
+

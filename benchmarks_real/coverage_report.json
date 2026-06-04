@@ -1,0 +1,32 @@
+{
+  "domain-driven-hexagon": {
+    "routes": 8,
+    "services": 28,
+    "entities": 0,
+    "middleware": 0
+  },
+  "nestjs-boilerplate": {
+    "routes": 25,
+    "services": 76,
+    "entities": 5,
+    "middleware": 0
+  },
+  "nestjs-prisma-starter": {
+    "routes": 8,
+    "services": 25,
+    "entities": 3,
+    "middleware": 0
+  },
+  "nestjs-realworld": {
+    "routes": 30,
+    "services": 20,
+    "entities": 3,
+    "middleware": 3
+  },
+  "ghostfolio": {
+    "routes": 147,
+    "services": 687,
+    "entities": 24,
+    "middleware": 1
+  }
+}

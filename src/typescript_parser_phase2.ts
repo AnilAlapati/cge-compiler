@@ -19,6 +19,11 @@ export class TypeScriptParserPhase2 implements CGEParserPhase2 {
     permissions?: string[];
     dependencies?: string[];
     entityRelations?: string[];
+    methods?: string[];
+    eventEmissions?: string[];
+    eventListeners?: string[];
+    cronJobs?: string[];
+    calls?: string[];
   } {
     const sourceFileName = fileName || "temp.ts";
     const sourceFile = ts.createSourceFile(
@@ -41,6 +46,16 @@ export class TypeScriptParserPhase2 implements CGEParserPhase2 {
     const permissions: string[] = [];
     const dependencies: string[] = [];
     const entityRelations: string[] = [];
+    const methods: string[] = [];
+    const eventEmissions: string[] = [];
+    const eventListeners: string[] = [];
+    const cronJobs: string[] = [];
+    const calls: string[] = [];
+    const classProperties: string[] = [];
+
+    // Semantic Resolution: track file-scoped const array assignments
+    // e.g. const commandHandlers: Provider[] = [CreateUserService, DeleteUserService]
+    const fileScopedArrays = new Map<string, string[]>();
 
     ts.forEachChild(sourceFile, (node) => {
       // 1. Imports
@@ -76,13 +91,77 @@ export class TypeScriptParserPhase2 implements CGEParserPhase2 {
              }
           });
         }
+
+        // Semantic: Resolve @Module() decorator spread variables
+        const rawDecorators = ts.canHaveDecorators(node) ? ts.getDecorators(node) : undefined;
+        if (rawDecorators) {
+          for (const dec of rawDecorators) {
+            if (ts.isCallExpression(dec.expression) && dec.expression.expression.getText() === 'Module') {
+              const moduleArg = dec.expression.arguments[0];
+              if (moduleArg && ts.isObjectLiteralExpression(moduleArg)) {
+                for (const prop of moduleArg.properties) {
+                  if (ts.isPropertyAssignment(prop)) {
+                    const key = prop.name.getText();
+                    if (['controllers', 'providers', 'imports', 'exports'].includes(key) && ts.isArrayLiteralExpression(prop.initializer)) {
+                      const resolved: string[] = [];
+                      for (const el of prop.initializer.elements) {
+                        if (ts.isSpreadElement(el) && ts.isIdentifier(el.expression)) {
+                          const varName = el.expression.text;
+                          const contents = fileScopedArrays.get(varName);
+                          if (contents) {
+                            resolved.push(...contents);
+                          } else {
+                            resolved.push(`...${varName}`);
+                          }
+                        } else {
+                          resolved.push(el.getText());
+                        }
+                      }
+                      if (resolved.length > 0) {
+                        dependencies.push(`${className} @Module.${key}: [${resolved.join(', ')}]`);
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
         
+        // Phase 5: Pre-scan constructor to find injected service dependencies
+        const injects = new Map<string, string>();
+        node.members.forEach((member) => {
+          if (ts.isConstructorDeclaration(member)) {
+            member.parameters.forEach(param => {
+               if (this.hasModifier(param, ts.SyntaxKind.ReadonlyKeyword) || this.hasModifier(param, ts.SyntaxKind.PrivateKeyword) || this.hasModifier(param, ts.SyntaxKind.PublicKeyword)) {
+                   const paramName = param.name.getText();
+                   const paramType = param.type ? param.type.getText() : "any";
+                   injects.set(paramName, paramType);
+               }
+            });
+          }
+        });
+
         node.members.forEach((member) => {
           if (ts.isPropertyDeclaration(member)) {
             const prefix = isClassExport ? "EXPORT " : "";
             state.push(`${prefix}${className}.${this.formatProperty(member)}`);
 
             const propDecorators = this.formatDecorators(member);
+
+            // Semantic: Extract class properties with decorator metadata
+            const propName = member.name.getText();
+            const propType = member.type ? this.mapType(member.type) : "any";
+            const decoratorStrs = propDecorators
+              .filter(d => !d.startsWith('@ManyToOne') && !d.startsWith('@OneToMany') && !d.startsWith('@OneToOne') && !d.startsWith('@ManyToMany'))
+              .map(d => d);
+            if (decoratorStrs.length > 0) {
+              classProperties.push(`${className}.${propName}: ${propType} [${decoratorStrs.join(', ')}]`);
+            } else if (!ts.canHaveModifiers(member) || !ts.getModifiers(member)?.some(m => m.kind === ts.SyntaxKind.PrivateKeyword)) {
+              // Include non-private properties even without decorators
+              classProperties.push(`${className}.${propName}: ${propType}`);
+            }
+
             propDecorators.forEach(d => {
               const relMatch = d.match(/@(ManyToOne|OneToMany|OneToOne|ManyToMany)\((?:\s*(?:\(\s*\)|[\w]+)\s*=>\s*)?([\w]+)/);
               if (relMatch) {
@@ -102,6 +181,9 @@ export class TypeScriptParserPhase2 implements CGEParserPhase2 {
             });
           } else if (ts.isMethodDeclaration(member)) {
             const isPrivate = this.hasModifier(member, ts.SyntaxKind.PrivateKeyword);
+            const isProtected = this.hasModifier(member, ts.SyntaxKind.ProtectedKeyword);
+            const isPublic = !isPrivate && !isProtected;
+            const methodName = member.name.getText();
             const methodStr = this.formatMethod(member);
             const prefix = (isClassExport && !isPrivate) ? "EXPORT " : "";
             
@@ -110,12 +192,23 @@ export class TypeScriptParserPhase2 implements CGEParserPhase2 {
             
             methodDecorators.forEach(d => {
                if (d.includes('Get') || d.includes('Post') || d.includes('Put') || d.includes('Delete') || d.includes('Patch')) {
-                   routes.push(`${d} -> ${className}.${member.name.getText()}`);
+                   routes.push(`${d} -> ${className}.${methodName}`);
                }
                if (d.includes('UseGuards') || d.includes('Roles')) {
-                   permissions.push(`${className}.${member.name.getText()} REQUIRES ${d}`);
+                   permissions.push(`${className}.${methodName} REQUIRES ${d}`);
+               }
+               if (d.startsWith('@Cron(')) {
+                   cronJobs.push(`${className}.${methodName} [On schedule: ${d.substring(6, d.length - 1)}]`);
+               }
+               if (d.startsWith('@OnEvent(')) {
+                   eventListeners.push(`${className}.${methodName} [On event: ${d.substring(9, d.length - 1)}]`);
                }
             });
+
+            if (isPublic) {
+              const signature = this.formatMethodSignature(member, className);
+              methods.push(signature);
+            }
 
             if (member.body) {
               member.body.statements.forEach(stmt => {
@@ -134,9 +227,14 @@ export class TypeScriptParserPhase2 implements CGEParserPhase2 {
                   }
                 }
               });
+
+              // Phase 5: Scan method body for calls and events
+              const scanResult = this.scanMethodBody(member.body, className, methodName, injects);
+              scanResult.eventEmissions.forEach(e => eventEmissions.push(`${className}.${methodName} -[emits]-> Event(${e})`));
+              scanResult.calls.forEach(c => calls.push(c));
             }
             
-            if (/(auth|role|permission|guard|login|verify|token)/i.test(member.name.getText())) {
+            if (/(auth|role|permission|guard|login|verify|token)/i.test(methodName)) {
               permissions.push(`${decoratorPrefix}${className}.${methodStr}`);
             } else if (isPrivate) {
               privateOps.push(`${decoratorPrefix}${className}.${methodStr}`);
@@ -152,6 +250,45 @@ export class TypeScriptParserPhase2 implements CGEParserPhase2 {
         const isConst = (node.declarationList.flags & ts.NodeFlags.Const) !== 0;
         
         node.declarationList.declarations.forEach((decl) => {
+          // Semantic: Track const array assignments for module provider resolution
+          // e.g. const commandHandlers: Provider[] = [CreateUserService, DeleteUserService]
+          if (isConst && ts.isIdentifier(decl.name) && decl.initializer && ts.isArrayLiteralExpression(decl.initializer)) {
+            const arrName = decl.name.text;
+            const elements = decl.initializer.elements
+              .map(e => e.getText())
+              .filter(e => e.length > 0);
+            if (elements.length > 0) {
+              fileScopedArrays.set(arrName, elements);
+            }
+          }
+
+          // Semantic: Detect APP_INTERCEPTOR / APP_GUARD / APP_PIPE provider objects
+          // e.g. { provide: APP_INTERCEPTOR, useClass: ContextInterceptor }
+          if (decl.initializer && ts.isArrayLiteralExpression(decl.initializer)) {
+            decl.initializer.elements.forEach(el => {
+              if (ts.isObjectLiteralExpression(el)) {
+                let provideToken = '';
+                let useClassName = '';
+                el.properties.forEach(prop => {
+                  if (ts.isPropertyAssignment(prop)) {
+                    const key = prop.name.getText();
+                    const val = prop.initializer.getText();
+                    if (key === 'provide' && /^APP_(INTERCEPTOR|GUARD|PIPE|FILTER)$/.test(val)) {
+                      provideToken = val;
+                    }
+                    if (key === 'useClass') {
+                      useClassName = val;
+                    }
+                  }
+                });
+                if (provideToken && useClassName) {
+                  const kind = provideToken.replace('APP_', 'Global ').replace('_', ' ');
+                  middleware.push(`${useClassName} [${kind} via ${provideToken}]`);
+                }
+              }
+            });
+          }
+
           if (isExport && ts.isIdentifier(decl.name) && decl.name.text.startsWith("use") && decl.initializer && (ts.isArrowFunction(decl.initializer) || ts.isFunctionExpression(decl.initializer))) {
             exportsList.push(decl.name.text);
             ops.push(`EXPORT ${this.formatExportedHook(decl.name.text, decl.initializer)}`);
@@ -258,8 +395,75 @@ export class TypeScriptParserPhase2 implements CGEParserPhase2 {
       permissions,
       dependencies,
       entityRelations,
+      methods,
+      eventEmissions,
+      eventListeners,
+      cronJobs,
+      calls,
+      classProperties,
     };
   }
+
+  // --- PHASE 5 HELPERS ---
+
+  private formatMethodSignature(node: ts.MethodDeclaration, className: string): string {
+    const name = node.name.getText();
+    const params = node.parameters.map((p) => {
+      const pName = p.name.getText();
+      const pType = p.type ? this.mapType(p.type) : "any";
+      return `${pName}: ${pType}`;
+    }).join(", ");
+    const retType = node.type ? this.mapType(node.type) : "any";
+    return `${className}.${name}(${params}): ${retType}`;
+  }
+
+  private scanMethodBody(body: ts.Block, className: string, methodName: string, injects: Map<string, string>): {
+    eventEmissions: string[];
+    calls: string[];
+  } {
+    const eventEmissions: string[] = [];
+    const calls: string[] = [];
+
+    const walk = (node: ts.Node) => {
+      if (ts.isCallExpression(node)) {
+        const expr = node.expression;
+        // Check for event emitter: this.eventEmitter.emit('event', ...)
+        if (
+          ts.isPropertyAccessExpression(expr) &&
+          expr.name.text === "emit" &&
+          ts.isPropertyAccessExpression(expr.expression) &&
+          expr.expression.expression.kind === ts.SyntaxKind.ThisKeyword
+        ) {
+          const emitterName = expr.expression.name.text;
+          if (/(eventEmitter|emitter)/i.test(emitterName)) {
+            const firstArg = node.arguments[0];
+            if (firstArg) {
+              const eventName = firstArg.getText().replace(/['"]/g, "");
+              eventEmissions.push(eventName);
+            }
+          }
+        }
+        // Check for service calls: this.userService.create(...)
+        else if (
+          ts.isPropertyAccessExpression(expr) &&
+          ts.isPropertyAccessExpression(expr.expression) &&
+          expr.expression.expression.kind === ts.SyntaxKind.ThisKeyword
+        ) {
+          const propName = expr.expression.name.text;
+          const calledMethod = expr.name.text;
+          if (injects.has(propName)) {
+            const serviceType = injects.get(propName);
+            calls.push(`${className}.${methodName} -[calls]-> ${serviceType}.${calledMethod}`);
+          }
+        }
+      }
+      ts.forEachChild(node, walk);
+    };
+
+    walk(body);
+    return { eventEmissions, calls };
+  }
+
 
   // --- PHASE 2 HELPERS ---
   private formatDecorators(node: ts.Node): string[] {

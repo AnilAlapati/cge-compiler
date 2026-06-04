@@ -8,19 +8,19 @@
 
 ---
 
-## 🔬 Current Research: Architecture-Augmented Reasoning (Phase 2–3)
+## 🔬 Research Finding: Repository Cognition Taxonomy
 
-We discovered that **auto-generated architecture maps** significantly improve LLM reasoning about codebases — without replacing the raw code.
+We discovered that **LLM reasoning about codebases requires different abstraction layers depending on the repository's architecture**.
 
-### Key Finding
+### The Three-Layer Taxonomy
 
-| Condition | Avg Accuracy | Insight |
-| --------- | ------------ | ------- |
-| **Raw Code Only** | 85% | Baseline — LLM reads source files directly |
-| **Architecture Map Only** | 70% | A single markdown file captures substantial architectural signal |
-| **Architecture Map + Raw Code** | **90%** | **+5% lift** — map provides structural context the LLM misses in raw code |
+| Repository Type | Required Abstraction | Best Score |
+| :--- | :--- | :--- |
+| **CRUD** (REST, Entity-centric) | Structure | 70–100% |
+| **Event-Driven** (Orchestrated, Pub/Sub) | Structure + Behavior | 61% |
+| **Domain-Driven** (DDD, Value Objects) | Structure + Behavior + Semantics | 50% |
 
-> Validated across **4 diverse NestJS repositories**, **40 architectural questions**, with semantic LLM judging.
+> Validated across **5 diverse repositories**, **68 architectural questions**, with semantic LLM judging.
 
 ### Architecture Map: What It Is
 
@@ -88,8 +88,10 @@ Future use cases: visualization, RAG retrieval, agent navigation, graph queries.
 | **Phase 1:** CGE Compression | ❌ Disproven | Structural compression *removed* reasoning signals. Raw=100%, CGE=60%. |
 | **Phase 2:** Architecture Augmentation | ✅ Proven | Human Map + Raw = 100%. Generated Map + Raw = 100%. |
 | **Phase 3:** Multi-Repo Validation | ✅ Completed | Gen Map + Raw consistently outperforms Raw Only across 4 repos (+5% avg lift). |
-| **Phase 4:** Large-Repo Experiment | 🔄 In Progress | Can maps enable reasoning on repos too large to fit in context? (Ghostfolio: 336k tokens) |
-| **Phase 5:** Ablation Study | 📋 Planned | Which architecture signals matter most? (Routes vs DI vs Entities vs Middleware) |
+| **Phase 4:** Large-Repo Experiment | ✅ Completed | Architecture map alone: 46% on Ghostfolio (336k token repo). Proved structural boundary. |
+| **Phase 4.5:** Failure Taxonomy | ✅ Completed | 73.3% of failures traced to missing method-level behavioral information. |
+| **Phase 5:** Behavioral Abstraction (MDA) | ✅ Completed | Ghostfolio: 46%→61%. But zero lift on CRUD repos — behavior only helps event-driven systems. |
+| **Semantic Experiment** | ✅ Completed | domain-driven-hexagon: 30%→50%. Proved third abstraction layer (semantics) helps DDD repos. |
 
 ---
 
@@ -165,15 +167,22 @@ cge-compiler/
 │   ├── setup_multirepo_benchmarks.ts          # Clone benchmark repos
 │   ├── generate_repo_tasks.ts                 # Auto-generate architectural questions
 │   ├── run_multi_repo_benchmark.ts            # Run full evaluation matrix
+│   ├── run_multi_repo_mda_benchmark.ts        # MDA (behavioral) multi-repo benchmark
+│   ├── run_ghostfolio_benchmark.ts            # Ghostfolio beyond-context benchmark
+│   ├── run_hexagon_semantic_benchmark.ts      # Semantic experiment benchmark
 │   ├── run_augmentation_benchmark_phase2.ts   # Single-repo benchmark (Phase 2)
 │   └── measure_token_metrics.ts               # Token compression & cost analysis
 ├── benchmarks_real/                  # Benchmark data & results
 │   ├── PHASE3_MULTIREPO_REPORT.md             # Full Phase 3 research report
-│   ├── multi_repo_benchmark_report.md         # Raw benchmark output
+│   ├── multi_repo_benchmark_report.md         # Structural benchmark output
+│   ├── multi_repo_mda_benchmark_report.md     # MDA benchmark output
 │   ├── repo_metrics.json                      # Token metrics per repo
 │   └── <repo-name>/                           # Per-repo benchmark data
 ├── results/                          # Frozen research artifacts
-│   └── phase3/                                # Versioned Phase 3 results
+│   ├── phase3/                                # Versioned Phase 3 results
+│   ├── phase4/                                # Phase 4 Ghostfolio results
+│   ├── phase5/                                # Phase 5 MDA results
+│   └── semantic_experiment/                   # Final semantic experiment results
 └── docs/                             # Documentation
     ├── interim_research_conclusion.md         # Phase 1 conclusion
     └── project_journal.md                     # Research journal

@@ -38,9 +38,15 @@ export class ArchitectureMapGeneratorPhase2 {
         let dependenciesMap: string[] = [];
         let middlewareMap: string[] = [];
         let entityRelationsMap: string[] = [];
+        let methodsMap: string[] = [];
+        let eventEmissionsMap: string[] = [];
+        let eventListenersMap: string[] = [];
+        let cronJobsMap: string[] = [];
+        let callsMap: string[] = [];
+        let classPropertiesMap: string[] = [];
 
         for (const file of files) {
-            if (file.includes('node_modules') || file.includes('.git') || file.includes('/dist/') || file.includes('.spec.ts') || file.includes('.spec.js')) continue;
+            if (file.includes('node_modules') || file.includes('.git') || file.includes('/dist/') || file.includes('.spec.ts') || file.includes('.spec.js') || file.includes('/apps/client/') || file.includes('/client/')) continue;
 
             const ext = path.extname(file).toLowerCase();
             const relPath = path.relative(rootDir, file);
@@ -53,6 +59,11 @@ export class ArchitectureMapGeneratorPhase2 {
                     parsed = this.tsParser.parse(code, file);
                 } else if (ext === '.py') {
                     parsed = this.pyParser.parse(code, file);
+                } else if (ext === '.prisma') {
+                    const prismaRelations = this.parsePrisma(code);
+                    if (prismaRelations.length > 0) {
+                        parsed = { entityRelations: prismaRelations, exports: [], routes: [], permissions: [], dependencies: [], middleware: [], methods: [], eventEmissions: [], eventListeners: [], cronJobs: [], calls: [] };
+                    }
                 }
 
                 if (parsed) {
@@ -73,34 +84,87 @@ export class ArchitectureMapGeneratorPhase2 {
                     if (parsed.entityRelations && parsed.entityRelations.length > 0) {
                         parsed.entityRelations.forEach((er: string) => entityRelationsMap.push(er));
                     }
+                    if (parsed.methods && parsed.methods.length > 0) {
+                        parsed.methods.forEach((m: string) => methodsMap.push(`- [${relPath}] ${m}`));
+                    }
+                    if (parsed.eventEmissions && parsed.eventEmissions.length > 0) {
+                        parsed.eventEmissions.forEach((e: string) => eventEmissionsMap.push(`- [${relPath}] ${e}`));
+                    }
+                    if (parsed.eventListeners && parsed.eventListeners.length > 0) {
+                        parsed.eventListeners.forEach((l: string) => eventListenersMap.push(`- [${relPath}] ${l}`));
+                    }
+                    if (parsed.cronJobs && parsed.cronJobs.length > 0) {
+                        parsed.cronJobs.forEach((cj: string) => cronJobsMap.push(`- [${relPath}] ${cj}`));
+                    }
+                    if (parsed.calls && parsed.calls.length > 0) {
+                        parsed.calls.forEach((c: string) => callsMap.push(`- [${relPath}] ${c}`));
+                    }
+                    if (parsed.classProperties && parsed.classProperties.length > 0) {
+                        parsed.classProperties.forEach((cp: string) => classPropertiesMap.push(`- [${relPath}] ${cp}`));
+                    }
                 }
             } catch (err) {
                 console.error(`Error parsing ${relPath}: ${err}`);
             }
         }
 
-        const markdown = this.formatMarkdown(topology, routesMap, permissionsMap, dependenciesMap, middlewareMap, entityRelationsMap);
+        const markdown = this.formatMarkdown(topology, routesMap, permissionsMap, dependenciesMap, middlewareMap, entityRelationsMap, methodsMap, cronJobsMap, eventListenersMap, eventEmissionsMap, callsMap, classPropertiesMap);
         fs.writeFileSync(path.join(rootDir, outputFile), markdown);
         console.log(`Successfully generated ${outputFile}`);
 
         // Also write graph.json for visualization/RAG/agent-navigation use-cases
-        const graph = this.buildGraph(rootDir, routesMap, dependenciesMap, entityRelationsMap, middlewareMap);
+        const graph = this.buildGraph(rootDir, routesMap, dependenciesMap, entityRelationsMap, middlewareMap, methodsMap, cronJobsMap, eventListenersMap, eventEmissionsMap, callsMap);
         const graphPath = path.join(rootDir, 'architecture_graph.json');
         fs.writeFileSync(graphPath, JSON.stringify(graph, null, 2));
         console.log(`Successfully generated architecture_graph.json (${graph.nodes.length} nodes, ${graph.edges.length} edges)`);
     }
 
-    /**
-     * Builds a typed graph representation from the parsed architecture data.
-     * Nodes: files, routes, entity relations, services, middleware.
-     * Edges: has_route, depends_on, relates_to, uses_middleware.
-     */
+    private parsePrisma(code: string): string[] {
+        const relations: string[] = [];
+        let currentModel = '';
+        const lines = code.split('\n');
+        for (const line of lines) {
+            const trimmed = line.trim();
+            const modelMatch = trimmed.match(/^model\s+([A-Za-z0-9_]+)\s*\{/);
+            if (modelMatch) {
+                currentModel = modelMatch[1]!;
+                continue;
+            }
+            if (trimmed === '}') {
+                currentModel = '';
+                continue;
+            }
+            if (currentModel) {
+                // If type is capitalized and not standard, treat as relation
+                const fieldMatch = trimmed.match(/^([A-Za-z0-9_]+)\s+([A-Z][A-Za-z0-9_]*)(\[\])?\s*(.*)/);
+                if (fieldMatch) {
+                    const fieldName = fieldMatch[1]!;
+                    const fieldType = fieldMatch[2]!;
+                    const isArray = !!fieldMatch[3];
+                    const rest = fieldMatch[4] || '';
+                    
+                    const standardTypes = ['String', 'Int', 'Boolean', 'DateTime', 'Json', 'Float', 'Decimal', 'Bytes', 'BigInt'];
+                    if (!standardTypes.includes(fieldType)) {
+                        const relType = isArray ? 'OneToMany' : (rest.includes('@relation') ? 'ManyToOne' : 'OneToOne');
+                        relations.push(`${currentModel} -[${relType}]-> ${fieldType} (${fieldName})`);
+                    }
+                }
+            }
+        }
+        return relations;
+    }
+
     private buildGraph(
         rootDir: string,
         routesMap: string[],
         dependenciesMap: string[],
         entityRelationsMap: string[],
-        middlewareMap: string[]
+        middlewareMap: string[],
+        methodsMap: string[],
+        cronJobsMap: string[],
+        eventListenersMap: string[],
+        eventEmissionsMap: string[],
+        callsMap: string[]
     ): ArchitectureGraph {
         const nodes: GraphNode[] = [];
         const edges: GraphEdge[] = [];
@@ -140,7 +204,6 @@ export class ArchitectureMapGeneratorPhase2 {
         }
 
         // Parse entity relations: "EntityA -[RelType]-> EntityB (property)"
-        // e.g. "ArticleEntity -[ManyToOne]-> UserEntity (author)"
         for (const entry of entityRelationsMap) {
             const match = entry.match(/^(.+?) -\[(.+?)\]-> (.+?) \((.+?)\)$/);
             if (!match) continue;
@@ -173,6 +236,86 @@ export class ArchitectureMapGeneratorPhase2 {
             edges.push({ source: fileId, target: mwId, type: 'uses_middleware', label: middlewareLabel });
         }
 
+        // Phase 5 Graph Additions:
+        
+        // Parse methods: "- [src/foo.ts] ClassName.methodName(params): ReturnType"
+        for (const entry of methodsMap) {
+            const match = entry.match(/^- \[(.+?)\] (.+?)\.(.+?)\(/);
+            if (!match) continue;
+            const filePath = match[1]!;
+            const className = match[2]!;
+            const methodName = match[3]!;
+            const methodId = `method:${className}.${methodName}`;
+            const fileId = `file:${filePath}`;
+            addNode({ id: methodId, type: 'service', label: `${className}.${methodName}` });
+            edges.push({ source: fileId, target: methodId, type: 'depends_on', label: 'defines' });
+        }
+
+        // Parse callsMap: "- [src/foo.ts] ClassName.methodName -[calls]-> TargetClass.calledMethod"
+        for (const entry of callsMap) {
+            const match = entry.match(/^- \[(.+?)\] (.+?)\.(.+?) -\[calls\]-> (.+?)\.(.+)$/);
+            if (!match) continue;
+            const sourceClass = match[2]!;
+            const sourceMethod = match[3]!;
+            const targetClass = match[4]!;
+            const targetMethod = match[5]!;
+
+            const sourceId = `method:${sourceClass}.${sourceMethod}`;
+            const targetId = `method:${targetClass}.${targetMethod}`;
+
+            addNode({ id: sourceId, type: 'service', label: `${sourceClass}.${sourceMethod}` });
+            addNode({ id: targetId, type: 'service', label: `${targetClass}.${targetMethod}` });
+            edges.push({ source: sourceId, target: targetId, type: 'depends_on', label: 'calls' });
+        }
+
+        // Parse eventEmissionsMap: "- [src/foo.ts] ClassName.methodName -[emits]-> Event(eventName)"
+        for (const entry of eventEmissionsMap) {
+            const match = entry.match(/^- \[(.+?)\] (.+?)\.(.+?) -\[emits\]-> Event\((.+?)\)$/);
+            if (!match) continue;
+            const className = match[2]!;
+            const methodName = match[3]!;
+            const eventName = match[4]!;
+
+            const methodId = `method:${className}.${methodName}`;
+            const eventId = `event:${eventName}`;
+
+            addNode({ id: methodId, type: 'service', label: `${className}.${methodName}` });
+            addNode({ id: eventId, type: 'entity', label: `Event: ${eventName}` });
+            edges.push({ source: methodId, target: eventId, type: 'depends_on', label: 'emits' });
+        }
+
+        // Parse eventListenersMap: "- [src/foo.ts] ClassName.methodName [On event: eventName]"
+        for (const entry of eventListenersMap) {
+            const match = entry.match(/^- \[(.+?)\] (.+?)\.(.+?) \[On event: (.+?)\]$/);
+            if (!match) continue;
+            const className = match[2]!;
+            const methodName = match[3]!;
+            const eventName = match[4]!.trim();
+
+            const methodId = `method:${className}.${methodName}`;
+            const eventId = `event:${eventName}`;
+
+            addNode({ id: methodId, type: 'service', label: `${className}.${methodName}` });
+            addNode({ id: eventId, type: 'entity', label: `Event: ${eventName}` });
+            edges.push({ source: eventId, target: methodId, type: 'depends_on', label: 'listens' });
+        }
+
+        // Parse cronJobsMap: "- [src/foo.ts] ClassName.methodName [On schedule: schedule]"
+        for (const entry of cronJobsMap) {
+            const match = entry.match(/^- \[(.+?)\] (.+?)\.(.+?) \[On schedule: (.+?)\]$/);
+            if (!match) continue;
+            const className = match[2]!;
+            const methodName = match[3]!;
+            const schedule = match[4]!;
+
+            const methodId = `method:${className}.${methodName}`;
+            const cronId = `cron:${className}.${methodName}`;
+
+            addNode({ id: methodId, type: 'service', label: `${className}.${methodName}` });
+            addNode({ id: cronId, type: 'middleware', label: `Cron: ${schedule}` });
+            edges.push({ source: cronId, target: methodId, type: 'depends_on', label: 'triggers' });
+        }
+
         return {
             generatedAt: new Date().toISOString(),
             rootDir,
@@ -187,7 +330,13 @@ export class ArchitectureMapGeneratorPhase2 {
         permissions: string[],
         dependencies: string[],
         middleware: string[],
-        entityRelations: string[]
+        entityRelations: string[],
+        methods: string[],
+        cronJobs: string[],
+        eventListeners: string[],
+        eventEmissions: string[],
+        calls: string[],
+        classProperties: string[]
     ): string {
         return `# Project Architecture Map (Phase 2)
 
@@ -208,6 +357,25 @@ ${dependencies.length > 0 ? dependencies.join('\n') : '*No explicit DI detected*
 
 ## 6. Database & Entity Relations
 ${entityRelations.length > 0 ? entityRelations.map(er => `- ${er}`).join('\n') : '*No database relations detected*'}
+
+## 7. Class Methods & Operations
+${methods.length > 0 ? methods.join('\n') : '*No public method signatures detected*'}
+
+## 8. Behavioral Workflows & Event Flows
+### Scheduled Jobs (Cron)
+${cronJobs.length > 0 ? cronJobs.join('\n') : '*No scheduled cron jobs detected*'}
+
+### Event Listeners (OnEvent)
+${eventListeners.length > 0 ? eventListeners.join('\n') : '*No event listeners detected*'}
+
+### Event Emissions
+${eventEmissions.length > 0 ? eventEmissions.join('\n') : '*No event emissions detected*'}
+
+### Inter-Service Calls
+${calls.length > 0 ? calls.join('\n') : '*No inter-service method calls detected*'}
+
+## 9. Class Properties & Validation
+${classProperties.length > 0 ? classProperties.join('\n') : '*No class properties detected*'}
 `;
     }
 
