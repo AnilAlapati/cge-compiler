@@ -84,6 +84,24 @@ For each repository, we challenged an LLM with rigorous architectural questions 
 
 ---
 
+## 💰 The Enterprise Business Case
+
+For engineering teams utilizing Claude 3.5 Sonnet or GPT-4o for daily development, context minification directly impacts the bottom line.
+
+**Scenario:** 100 Developers | 500 prompts/day | 20,000 average context tokens
+
+| Metric | Raw Code | Minified Code (42% Avg Savings) |
+| :--- | :--- | :--- |
+| **Tokens per Day** | 10,000,000 | 5,800,000 |
+| **Monthly Cost** ($5/1M) | ~$1,500 / mo | ~$870 / mo |
+
+For larger context windows (e.g., passing 100,000 tokens of repository context to an agent):
+- **Raw Cost:** $15,000 / month
+- **Minified Cost:** $8,700 / month
+- **Direct Savings:** **$6,300 / month ($75,600 / year)**
+
+---
+
 ## ⚙️ Quickstart CLI
 
 ### Installation
