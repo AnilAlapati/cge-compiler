@@ -3,18 +3,17 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>CGE Playground — High-Fidelity Code Compactor for Large Language Models</title>
-  <meta name="description" content="Cognitive Graph Encoding (CGE) Compiles source code into business-logic preserving compressed shorthand notation, optimizing prompt token footprints up to 86% across multiple modern programming languages.">
+  <title>AI Minify — Smart Token Optimizer for AI Coding Tools</title>
+  <meta name="description" content="Surgically strip comments, dead code, and unnecessary whitespace from source files before they reach AI models. Save up to 46% on token costs with zero reasoning degradation.">
 
   <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&family=Outfit:wght@500;600;700&display=swap" rel="stylesheet">
 
-  <link rel="stylesheet" href="playground.css">
+  <link rel="stylesheet" href="minify.css">
   
-  <!-- JSZip for Client-Side Directory / Zip Compaction -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+  <script src="dist/minify_engine.js"></script>
   
   <!-- Vercel Web Analytics -->
   <script>
@@ -32,632 +31,192 @@
          HERO SECTION
          ================================================================ -->
     <section class="hero" id="hero">
-      <div class="hero-spec-tag">CGE/1.0 Specification</div>
+      <div class="hero-spec-tag">AI Minify v1.0</div>
 
       <h1>
-        Compact Code. Expand Context.
+        Reduce AI token costs by up to 46%<br/>without sacrificing code understanding.
       </h1>
 
-      <div style="margin: 2rem auto; max-width: 800px; padding: 1.5rem; background: rgba(255, 60, 60, 0.1); border-left: 4px solid #ff3c3c; text-align: left; border-radius: 4px;">
-        <h3 style="margin-top: 0; color: #fff;">🔬 Phase 1 Research Concluded (June 2026)</h3>
-        <p style="margin-bottom: 0; color: #ccc;">We recently concluded our first major empirical study on whether structural code compression improves LLM reasoning. The short answer: <em>It doesn't.</em> By stripping out syntactical metadata, we inadvertently removed the exact clues LLMs use to infer architecture. You can read our full findings in our <a href="https://github.com/AnilAlapati/cge-compiler/blob/main/docs/interim_research_conclusion.md" style="color: #64ffda; text-decoration: underline;">Phase 1 Research Conclusion</a>. We are currently pivoting to Phase 2: Architectural Augmentation.</p>
-      </div>
-
       <p class="hero-subtitle">
-        An experimental research project exploring how AI agents navigate complex codebases.
+        Surgically strip comments, dead code, and unnecessary whitespace from source files before sending them to Copilot, Cursor, or Gemini.
       </p>
 
       <div class="hero-stats">
         <div class="hero-stat">
-          <span class="stat-value" id="hero-langs" style="font-size: 1.5rem;">Language Agnostic Architecture</span>
-          <span class="stat-label">Multi-Language Parsers</span>
+          <span class="stat-value">0%</span>
+          <span class="stat-label">Reasoning Degradation</span>
         </div>
         <div class="hero-stat">
-          <span class="stat-value">Semantic Fidelity</span>
-          <span class="stat-label">Logic-Preserving Compression</span>
+          <span class="stat-value">10 - 46%</span>
+          <span class="stat-label">Token Savings</span>
         </div>
         <div class="hero-stat">
-          <span class="stat-value">Deterministic</span>
-          <span class="stat-label">Zero AI Latency</span>
-        </div>
-        <div class="hero-stat">
-          <span class="stat-value">Closed-Loop Verified</span>
-          <span class="stat-label">CLNR Semantic Proof</span>
+          <span class="stat-value">Language Agnostic</span>
+          <span class="stat-label">TS, JS, Python, Java, Rust</span>
         </div>
       </div>
 
       <div class="scroll-cta">
-        <a href="#why-cge">
-          Why CGE?
+        <a href="#playground">
+          Try it instantly
           <span class="scroll-arrow">↓</span>
         </a>
       </div>
     </section>
 
     <!-- ================================================================
-         THE CORE INTENT — WHY CGE?
+         BEFORE VS AFTER PLAYGROUND
          ================================================================ -->
-    <section class="why-section reveal-element" id="why-cge">
-      <h3 class="why-title">Why Cognitive Graph Encoding?</h3>
-      <p class="why-subtitle">
-        AI models process code structure, not syntax noise. CGE compiles raw files into optimized topological shorthands, solving critical constraints in high-frequency developer workflows.
-      </p>
-
-      <div class="why-grid">
-        <div class="why-card">
-          <span class="why-icon">🗜️</span>
-          <h4 class="why-card-title">Bypass Context Windows</h4>
-          <p class="why-card-desc">Fit entire multi-file directories or bulky libraries into standard context limits without losing type declarations, state structures, or API contracts.</p>
-        </div>
-        <div class="why-card">
-          <span class="why-icon">💸</span>
-          <h4 class="why-card-title">Slash Prompt Billing</h4>
-          <p class="why-card-desc">Reduce prompt token consumption by up to 55%. Prevent escalating API costs for high-frequency coding agents and repository indexing cycles.</p>
-        </div>
-        <div class="why-card">
-          <span class="why-icon">⚡</span>
-          <h4 class="why-card-title">Accelerate Agent Workflows</h4>
-          <p class="why-card-desc">Smaller prompt volumes directly decrease model pre-fill parsing times, returning agent code solutions up to 2x faster with zero additional AI latency.</p>
-        </div>
-        <div class="why-card">
-          <span class="why-icon">🎯</span>
-          <h4 class="why-card-title">High-Fidelity Logic Recovery</h4>
-          <p class="why-card-desc">Our Closed-Loop Neural Reconstruction (CLNR) protocol verifies logic preservation, ensuring the LLM recovers the complete AST structural intent.</p>
-        </div>
+    <section class="workspace-section reveal-element" id="playground">
+      <div class="workspace-header" style="justify-content: center;">
+        <h3 style="margin:0; font-family: 'Outfit', sans-serif; font-size: 1.5rem; color: #fff;">Interactive Before / After</h3>
       </div>
-    </section>
 
-    <!-- ================================================================
-         WORKSPACE SECTION
-         ================================================================ -->
-    <section class="workspace-section reveal-element" id="workspace">
-      <div class="workspace-header">
-        <div class="segment-tabs" id="segment-tabs">
-          <!-- Dynamically populated by playground.js -->
+      <!-- Controls Panel -->
+      <div class="controls-panel">
+        <div class="controls-group">
+          <label class="control-checkbox">
+            <input type="checkbox" id="opt-dead-code" checked>
+            <span class="checkmark"></span>
+            Remove comments & dead code
+          </label>
+          <label class="control-checkbox">
+            <input type="checkbox" id="opt-jsdoc">
+            <span class="checkmark"></span>
+            Remove JSDoc / docstrings
+          </label>
+        </div>
+        
+        <div class="advanced-cli">
+          <strong>CLI Equivalent:</strong> <span id="cli-hint">@minify /rc</span>
         </div>
       </div>
 
+      <!-- Split Editor View -->
       <div class="editor-grid">
-        <!-- Input Panel -->
+        
+        <!-- Input Code -->
         <div class="editor-card" id="input-card">
           <div class="card-header">
-            <div class="panel-header-switcher" id="input-switcher">
-              <button class="switcher-btn active" id="btn-input-code">📝 Single File</button>
-              <button class="switcher-btn" id="btn-input-zip">📦 Project Zip</button>
-            </div>
-            <span class="tag-label">Source Input</span>
+            <span class="tag-label">Raw Source Code (Before)</span>
           </div>
-          
-          <!-- Mode 1: Code Input -->
-          <div class="editor-body mode-container active" id="input-container-code" style="display: flex;">
-            <div class="gutter" id="gutter-lines"></div>
+          <div class="editor-body">
             <textarea
               id="code-input"
               class="textarea-editor"
               spellcheck="false"
-              placeholder="Input code..."
+              placeholder="Paste your bloated code here..."
+            >
+/**
+ * Creates a user account and provisions default resources.
+ * @param {Object} userData - The user's registration payload
+ * @returns {Promise<UserRecord>}
+ */
+export async function createUser(userData: any) {
+  // Validate the incoming payload
+  if (!userData || !userData.email) {
+    throw new Error("Invalid payload");
+  }
+
+  // const oldHandler = async () => {
+  //   return db.users.insertLegacy(userData);
+  // }
+  // TODO: remove legacy handler code next sprint
+
+  const user = await db.users.insert({
+    email: userData.email,
+    createdAt: new Date()
+  });
+
+  /*
+    Provisioning default resources
+    We give them a free tier workspace to start
+  */
+  await provisionWorkspace(user.id, "free_tier");
+
+  return user;
+}
+            </textarea>
+          </div>
+          <div class="card-footer" style="background: rgba(255,255,255,0.05); padding: 12px; font-family: 'JetBrains Mono', monospace; font-size: 0.9rem;">
+            Raw Tokens: <span id="raw-tokens" style="font-weight: 600; color: #fff;">0</span>
+          </div>
+        </div>
+
+        <!-- Arrow indicator for large screens -->
+        <div class="transformation-arrow" style="display: flex; align-items: center; justify-content: center; font-size: 2rem; color: #10b981;">
+          &rarr;
+        </div>
+
+        <!-- Output Code -->
+        <div class="editor-card" id="output-card" style="border-color: rgba(16, 185, 129, 0.3);">
+          <div class="card-header">
+            <span class="tag-label" style="background: rgba(16, 185, 129, 0.2); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.5);">Minified Output (After)</span>
+          </div>
+          <div class="editor-body">
+            <textarea
+              id="code-output"
+              class="textarea-editor"
+              spellcheck="false"
+              readonly
             ></textarea>
           </div>
-
-          <!-- Mode 2: Zip Input -->
-          <div class="editor-body mode-container" id="input-container-zip" style="display: none; padding: 20px; flex-direction: column; gap: 16px;">
-            <div class="audit-intro">
-              <p style="font-size: 0.875rem; color: #9ca3af; margin: 0; line-height: 1.5;">
-                Upload a codebase as a <strong>.zip</strong> archive. The compiler will recursively extract all files and compute your token & cost savings.
-              </p>
-            </div>
-            <!-- Upload Area -->
-            <div class="audit-dropzone" id="audit-dropzone" style="border: 2px dashed #4b5563; border-radius: 12px; padding: 40px 20px; text-align: center; background: rgba(31, 41, 55, 0.4); cursor: pointer; transition: all 0.3s ease; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; height: 100%;">
-              <!-- Normal State -->
-              <div id="dropzone-normal-state" style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px;">
-                <div style="font-size: 3rem; animation: float 3s ease-in-out infinite;">📦</div>
-                <div style="font-weight: 600; font-size: 1rem; color: #f3f4f6;">Drag & Drop Zip file here</div>
-                <div id="zip-supported-langs" style="color: #9ca3af; font-size: 0.8rem; line-height: 1.4; max-width: 320px; margin: 0 auto;">
-                  <!-- Dynamically populated by playground.js -->
-                </div>
-                <button class="utility-btn accent" id="audit-upload-trigger" style="background: #3b82f6; color: #fff; padding: 8px 16px; border: none; border-radius: 6px; cursor: pointer; font-weight: 500; outline: none; margin-top: 8px;">
-                  Browse Zip File
-                </button>
-              </div>
-
-              <!-- Processing State -->
-              <div id="dropzone-processing-state" style="display: none; flex-direction: column; align-items: center; justify-content: center; gap: 16px; width: 100%;">
-                <!-- Glowing Spinning Loader -->
-                <div style="position: relative; width: 60px; height: 60px; border-radius: 50%; background: conic-gradient(from 180deg at 50% 50%, #10b981 0deg, #3b82f6 360deg); animation: spin 1s linear infinite; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 15px rgba(59, 130, 246, 0.4);">
-                  <div style="width: 50px; height: 50px; border-radius: 50%; background: #111827; display: flex; align-items: center; justify-content: center;">
-                    <span style="font-size: 1.5rem;">⚡</span>
-                  </div>
-                </div>
-                <div style="text-align: center;">
-                  <div style="font-weight: 700; color: #fff; font-size: 1rem; margin-bottom: 4px;" id="dropzone-status-title">Processing Codebase...</div>
-                  <div style="font-size: 0.8rem; color: #9ca3af;" id="dropzone-status-subtitle">Extracting zip files...</div>
-                  <div style="font-size: 0.68rem; color: #86868b; margin-top: 6px; font-weight: 500;" id="dropzone-status-notice">Compiling code (.ts, .tsx, .js, .py, .rs). Other formats ignored.</div>
-                </div>
-                <!-- Mini Progress Bar -->
-                <div style="width: 80%; height: 6px; background: #1f2937; border-radius: 3px; overflow: hidden; margin-top: 4px; display: inline-block;">
-                  <div id="dropzone-progress-bar" style="width: 0%; height: 100%; background: linear-gradient(90deg, #10b981, #3b82f6); transition: width 0.1s ease;"></div>
-                </div>
-              </div>
-
-              <input type="file" id="audit-file-input" accept=".zip" style="display: none;" />
-            </div>
-          </div>
-
-          <!-- Mode 3: Project Audit & ROI Dashboard -->
-          <div class="mode-container audit-container" id="container-audit" style="display: none;">
-            <div class="audit-intro">
-              <h4 class="audit-title">
-                💼 Project Token Compaction & ROI Audit
-              </h4>
-              <p class="audit-subtitle">
-                Compaction audit calculations & monetary ROI savings.
-              </p>
-            </div>
-
-            <!-- Results Dashboard -->
-            <div class="audit-results-wrapper" id="audit-results">
-              
-              <!-- Metrics Grid -->
-              <div class="audit-metrics-grid">
-                <div class="audit-metric-card files">
-                  <span class="audit-metric-label">Files Audited</span>
-                  <span id="audit-total-files" class="audit-metric-value blue">0</span>
-                </div>
-                <div class="audit-metric-card original">
-                  <span class="audit-metric-label">Original Tokens</span>
-                  <span id="audit-orig-tokens" class="audit-metric-value red">0</span>
-                </div>
-                <div class="audit-metric-card cge">
-                  <span class="audit-metric-label">CGE Tokens</span>
-                  <span id="audit-comp-tokens" class="audit-metric-value emerald">0</span>
-                </div>
-                <div class="audit-metric-card savings">
-                  <span class="audit-metric-label">Compaction Savings</span>
-                  <span id="audit-savings" class="audit-metric-value gold">0%</span>
-                </div>
-              </div>
-
-              <!-- File Breakdown Section -->
-              <div id="audit-file-breakdown" class="audit-breakdown-card">
-                <div class="audit-breakdown-header">
-                  <span class="audit-breakdown-title">📂 File Type & Exclusions Breakdown</span>
-                  <span id="audit-breakdown-summary" class="audit-breakdown-summary">0 processed / 0 bypassed</span>
-                </div>
-                <!-- Breakdown progress visualization -->
-                <div id="audit-breakdown-bar-container" class="audit-breakdown-progress-container">
-                  <div id="audit-breakdown-bar-processed" class="audit-progress-bar compiled" style="width: 0%;"></div>
-                  <div id="audit-breakdown-bar-excluded" class="audit-progress-bar bypassed" style="width: 0%;"></div>
-                </div>
-                <!-- Breakdown list -->
-                <div id="audit-breakdown-list" class="audit-chips-grid">
-                  <!-- Dynamic extension cards will go here -->
-                </div>
-              </div>
-
-              <!-- ROI Price Comparison Cards -->
-              <div class="audit-cost-comparison">
-                <!-- Standard Cost Card -->
-                <div class="audit-cost-card legacy">
-                  <span class="audit-cost-card-title legacy">🔴 Verbatim Source Cost</span>
-                  <p class="audit-cost-desc">Cost to process uncompressed codebase over 1,000 queries:</p>
-                  <span id="audit-orig-cost" class="audit-cost-value red">$0.00</span>
-                  <span class="audit-cost-subtitle">GPT-4o input rates ($2.50 / 1M tokens)</span>
-                </div>
-                <!-- CGE Cost Card -->
-                <div class="audit-cost-card cge">
-                  <span class="audit-cost-card-title cge">🟢 CGE Compacted Cost</span>
-                  <p class="audit-cost-desc">Cost using CGE AST Compaction overhead:</p>
-                  <span id="audit-comp-cost" class="audit-cost-value emerald">$0.00</span>
-                  <span id="audit-cost-saved" class="audit-cost-saved-tag">Saved: 0%</span>
-                </div>
-              </div>
-
-              <!-- ROI Highlight Banner -->
-              <div class="audit-roi-banner">
-                <div class="audit-roi-left">
-                  <span class="audit-roi-banner-title">🎓 Academic & Financial Savings ROI</span>
-                  <p class="audit-roi-banner-desc">Recursive AST compaction proves massive dollar economies under real production prompt frequencies.</p>
-                </div>
-                <div id="audit-roi-saved" class="audit-roi-badge">
-                  -$0.00
-                </div>
-              </div>
-
-              <!-- Beta Disclaimer -->
-              <div style="margin-top: 16px; padding: 12px; background: rgba(255, 170, 0, 0.05); border: 1px solid rgba(255, 170, 0, 0.2); border-radius: 8px; text-align: left;">
-                <p style="font-size: 0.75rem; color: #fbbf24; margin: 0; line-height: 1.4;">
-                  <strong>⚠️ Beta Disclaimer:</strong> This compiler is currently in active beta testing. All financial figures shown are strictly illustrative estimates based on standard GPT-4 input pricing and are intended to demonstrate potential architectural token-efficiency, rather than exact accounting.
-                </p>
-              </div>
-
-            </div>
+          <div class="card-footer" style="background: rgba(16, 185, 129, 0.1); padding: 12px; font-family: 'JetBrains Mono', monospace; font-size: 0.9rem; border-top: 1px solid rgba(16,185,129,0.2);">
+            Minified Tokens: <span id="minified-tokens" style="font-weight: 600; color: #10b981;">0</span> 
+            <span style="float: right; font-weight: bold; color: #10b981;">Savings: <span id="savings-percent">0%</span></span>
           </div>
         </div>
+      </div>
+      
+      <!-- Metrics & Copy Action -->
+      <div style="margin-top: 24px; text-align: center;">
+        <button id="copy-btn" class="utility-btn accent" style="font-size: 1.1rem; padding: 12px 32px; background: #10b981;">
+          Copy Minified Code
+        </button>
+      </div>
 
-        <!-- Middle Compile Indicator -->
-        <div class="compile-bridge">
-          <span class="compile-bridge-arrow">→</span>
+    </section>
+
+    <!-- ================================================================
+         SAVINGS CALCULATOR
+         ================================================================ -->
+    <section class="why-section reveal-element" style="margin-top: 60px; max-width: 800px; margin-left: auto; margin-right: auto; background: rgba(16, 185, 129, 0.05); border: 1px solid rgba(16, 185, 129, 0.2); padding: 40px; border-radius: 16px;">
+      <h3 class="why-title" style="text-align: center; color: #fff;">Monthly Savings Calculator</h3>
+      <p class="why-subtitle" style="text-align: center;">See how much your engineering team saves on API costs by minifying context before hitting Claude or GPT-4o.</p>
+      
+      <div style="display: flex; flex-direction: column; gap: 20px; margin-top: 30px;">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+          <label style="font-family: 'Outfit'; font-weight: 500; font-size: 1.1rem;">Queries per day</label>
+          <input type="range" id="queries-slider" min="10" max="1000" value="100" style="width: 200px; accent-color: #10b981;">
+          <span id="queries-val" style="font-family: 'JetBrains Mono'; font-weight: bold; width: 60px; text-align: right;">100</span>
         </div>
-
-        <!-- Output Panel with Code vs Visual AST Toggle -->
-        <div class="editor-card" id="output-card">
-          <div class="card-header">
-            <div class="panel-header-switcher">
-              <button class="switcher-btn active" id="btn-mode-code">CGE Code</button>
-              <button class="switcher-btn" id="btn-mode-visual">Visual AST</button>
-              <button class="switcher-btn" id="btn-mode-verify">CLNR Verify</button>
-            </div>
-            <button class="utility-btn" id="copy-btn">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
-                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
-              </svg>
-              Copy
-            </button>
-          </div>
-          
-          <div class="editor-body">
-            <!-- Mode 1: Code Text View -->
-            <div class="mode-container active" id="container-code" style="flex-direction: column;">
-              <div class="output-scroller" style="flex-grow: 1;">
-                <pre><code id="cge-output" class="output-code"></code></pre>
-              </div>
-              
-              <!-- Verify Live in LLM Bridge -->
-              <div class="llm-bridge-panel">
-                <div class="llm-bridge-info">
-                  <span class="llm-bridge-title">Verify AST Comprehension</span>
-                  <span class="llm-bridge-subtitle">Test compressed code directly in real models</span>
-                </div>
-                <div class="llm-bridge-actions">
-                  <button class="utility-btn accent" id="llm-prompt-btn">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                      <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/>
-                      <rect x="8" y="2" width="8" height="4" rx="1" ry="1"/>
-                    </svg>
-                    Copy with Prompt
-                  </button>
-                  <div class="llm-deep-links">
-                    <a href="https://claude.ai" target="_blank" class="llm-link-icon" title="Test in Anthropic Claude">
-                      <span>Claude</span>
-                    </a>
-                    <a href="https://chat.openai.com" target="_blank" class="llm-link-icon" title="Test in OpenAI ChatGPT">
-                      <span>ChatGPT</span>
-                    </a>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <!-- Mode 2: Interactive AST Visual Explorer -->
-            <div class="mode-container" id="container-visual">
-              <div class="ast-explorer">
-                <div class="ast-tree-view" id="ast-tree-view">
-                  <!-- Dynamic Tree Nodes Inject Here -->
-                </div>
-
-                <!-- Slide-Out AST Inspection Drawer -->
-                <div class="ast-drawer" id="ast-drawer">
-                  <div class="drawer-header">
-                    <div class="drawer-title-area">
-                      <span class="drawer-title" id="drawer-node-name">—</span>
-                      <span class="drawer-rule-tag" id="drawer-node-rule">—</span>
-                    </div>
-                    <button class="utility-btn" id="drawer-close-btn">Close</button>
-                  </div>
-                  
-                  <div class="drawer-body">
-                    <div class="drawer-detail-section">
-                      <span class="drawer-section-lbl">AST Translation Rule</span>
-                      <p class="drawer-desc-box" id="drawer-node-desc">—</p>
-                    </div>
-
-                    <div class="drawer-stats-row">
-                      <div class="drawer-stat">
-                        <span class="drawer-stat-num" id="drawer-metric-ratio">—</span>
-                        <span class="drawer-stat-lbl">Savings Rate</span>
-                      </div>
-                      <div class="drawer-stat">
-                        <span class="drawer-stat-num saved" id="drawer-metric-tokens">—</span>
-                        <span class="drawer-stat-lbl">Tokens Saved</span>
-                      </div>
-                    </div>
-
-                    <div class="drawer-detail-section">
-                      <span class="drawer-section-lbl">Original Statement</span>
-                      <pre class="drawer-code-block before"><code id="drawer-code-before"></code></pre>
-                    </div>
-
-                    <div class="drawer-detail-section">
-                      <span class="drawer-section-lbl font-emerald">CGE Compacted Shorthand</span>
-                      <pre class="drawer-code-block after"><code id="drawer-code-after"></code></pre>
-                    </div>
-                  </div>
-                </div>
-
-              </div>
-            </div>
-
-            <!-- Mode 3: CLNR Verifier -->
-            <div class="mode-container" id="container-verify">
-              <div class="verify-layout">
-                <div class="verify-instructions" style="display: flex; justify-content: space-between; align-items: center; gap: 20px; width: 100%;">
-                  <div style="flex-grow: 1;">
-                    <h4>Decompression Feedback Loop</h4>
-                    <p>Paste the LLM's reconstructed code below. The Diff Engine will extract structural identifiers and verify against the source AST.</p>
-                  </div>
-                  <button class="utility-btn accent" id="simulate-clnr-btn" style="flex-shrink: 0; background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: #fff; font-weight: 600; padding: 10px 16px; border: none; border-radius: 6px; cursor: pointer; display: flex; align-items: center; gap: 8px; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2); transition: all 0.2s ease; outline: none;">
-                    🔬 Simulate Auto-CLNR
-                  </button>
-                </div>
-                
-                <div class="verify-editor-container">
-                  <div class="gutter" id="verify-gutter-lines"></div>
-                  <textarea
-                    id="llm-reconstructed-input"
-                    class="textarea-editor verify-textarea"
-                    spellcheck="false"
-                    placeholder="Paste reconstructed LLM code here..."
-                  ></textarea>
-                </div>
-
-                <div class="verify-results" id="verify-results">
-                  <div class="verify-status" id="verify-status">Awaiting Input...</div>
-                  <div class="verify-diff-list" id="verify-diff-list"></div>
-                  
-                  <div class="patch-action" id="patch-action" style="display: none;">
-                    <button class="utility-btn accent" id="copy-patch-btn">
-                      Copy Correction Patch
-                    </button>
-                  </div>
-                </div>
-            </div>
-          </div>
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+          <label style="font-family: 'Outfit'; font-weight: 500; font-size: 1.1rem;">Avg Tokens per query</label>
+          <input type="range" id="tokens-slider" min="1000" max="100000" step="1000" value="20000" style="width: 200px; accent-color: #10b981;">
+          <span id="tokens-val" style="font-family: 'JetBrains Mono'; font-weight: bold; width: 60px; text-align: right;">20k</span>
+        </div>
+      </div>
+      
+      <div style="margin-top: 40px; text-align: center; padding-top: 30px; border-top: 1px solid rgba(255,255,255,0.1);">
+        <div style="font-size: 1rem; color: #9ca3af; margin-bottom: 8px;">Estimated savings (at $5.00 / 1M input tokens):</div>
+        <div style="font-size: 3.5rem; font-family: 'JetBrains Mono'; font-weight: 700; color: #10b981;">
+          $<span id="dollar-savings">45.00</span><span style="font-size: 1.2rem; color: #9ca3af; font-family: 'Inter';">/mo</span>
         </div>
       </div>
     </section>
 
     <!-- ================================================================
-         METRICS SECTION — Unified Analytics Panel
+         FOOTER & ARCHIVE LINK
          ================================================================ -->
-    <section class="metrics-section reveal-element" id="metrics">
-      <span class="section-label">compaction performance (current code)</span>
-
-      <div class="perf-panel">
-        <!-- Left: Hero Compression Stat -->
-        <div class="perf-hero">
-          <div class="perf-ring" id="perf-ring">
-            <svg viewBox="0 0 120 120" class="ring-svg">
-              <circle cx="60" cy="60" r="52" class="ring-track"/>
-              <circle cx="60" cy="60" r="52" class="ring-fill" id="ring-fill"
-                stroke-dasharray="326.73"
-                stroke-dashoffset="326.73"/>
-            </svg>
-            <div class="ring-label">
-              <span class="ring-value" id="metric-ratio">—</span>
-              <span class="ring-sub">compression</span>
-            </div>
-          </div>
-          <span class="perf-hero-caption">Context window reduction factor</span>
-        </div>
-
-        <!-- Center: Visual Proportion Bar -->
-        <div class="perf-center">
-          <div class="proportion-header">
-            <span class="proportion-title">Token Allocation</span>
-          </div>
-          <div class="proportion-bar">
-            <div class="proportion-original" id="proportion-original" style="width: 100%;">
-              <span class="proportion-inner-label">Original</span>
-            </div>
-            <div class="proportion-compressed" id="proportion-compressed" style="width: 0%;">
-              <span class="proportion-inner-label">CGE</span>
-            </div>
-          </div>
-          <div class="proportion-legend">
-            <div class="legend-item">
-              <span class="legend-dot dot-original"></span>
-              <span class="legend-label">Original</span>
-              <span class="legend-val" id="orig-tokens">—</span>
-            </div>
-            <div class="legend-item">
-              <span class="legend-dot dot-compressed"></span>
-              <span class="legend-label">CGE Output</span>
-              <span class="legend-val highlight" id="comp-tokens">—</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- Right: Summary Stats -->
-        <div class="perf-stats">
-          <div class="perf-stat-row">
-            <span class="perf-stat-label">Tokens saved</span>
-            <span class="perf-stat-value saved" id="metric-savings">—</span>
-          </div>
-          <div class="perf-divider"></div>
-          <div class="perf-stat-row">
-            <span class="perf-stat-label">Characters freed</span>
-            <span class="perf-stat-value" id="chars-freed">—</span>
-          </div>
-          <div class="perf-divider"></div>
-          <div class="perf-stat-row">
-            <span class="perf-stat-label">Cost reduction</span>
-            <span class="perf-stat-value saved" id="metric-percent">—</span>
-          </div>
-          <div class="perf-summary" id="savings-summary">Paste code to analyze</div>
-        </div>
-      </div>
-
-      <!-- Small File Overhead Explanation Banner -->
-      <div id="overhead-explanation" style="margin-top: 12px; padding: 12px; background: rgba(59, 130, 246, 0.05); border: 1px solid rgba(59, 130, 246, 0.15); border-radius: 8px; text-align: left; font-size: 0.8rem; line-height: 1.4; color: #9ca3af; display: none;">
-        💡 <strong>Note on Compression Rate (~11%):</strong> Short files (<50 lines) with nested functions (like the default React hook template) achieve lower token compression. This is because fixed metadata (like CGE/1.0 headers, imports, and exports) occupies a larger percentage of the small output. In production codebases with larger monolithic files (200+ lines), CGE achieves <strong>50% to 86% compression</strong>.
-      </div>
-
-      <!-- Projected Savings Estimator -->
-      <div class="estimator-strip" id="estimator-strip">
-        <div class="estimator-left">
-          <span class="estimator-title">Projected Savings</span>
-          <span class="estimator-badge">beta</span>
-        </div>
-        <div class="estimator-center">
-          <span class="estimator-hint">Prompts per day</span>
-          <div class="estimator-track">
-            <div class="estimator-line"></div>
-            <button class="estimator-pill" data-mult="10">10</button>
-            <button class="estimator-pill active" data-mult="50">50</button>
-            <button class="estimator-pill" data-mult="200">200</button>
-            <button class="estimator-pill" data-mult="1000">1K</button>
-          </div>
-        </div>
-        <div class="estimator-right">
-          <div class="estimator-result">
-            <span class="estimator-result-num" id="est-tokens">—</span>
-            <span class="estimator-result-lbl">tokens saved / month</span>
-          </div>
-          <div class="estimator-result">
-            <span class="estimator-result-num saved" id="est-cost">—</span>
-            <span class="estimator-result-lbl">est. monthly savings</span>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- ================================================================
-         HOW IT WORKS SECTION
-         ================================================================ -->
-    <section class="spec-section reveal-element" id="how-it-works">
-      <span class="section-label">Transformation specification</span>
-
-      <div class="spec-grid">
-        <!-- Structural Extraction -->
-        <div class="spec-card">
-          <div class="spec-card-header">
-            <div class="spec-card-dot blue"></div>
-            <h3 class="spec-card-title">Structural Extraction</h3>
-          </div>
-          <p class="spec-card-desc">
-            Extracts core types and interfaces while discarding comments, JSDoc, and layout boilerplate.
-          </p>
-          <div class="transform-grid">
-            <div class="transform-box">
-              <span class="transform-box-tag">Input</span>
-              export interface User {<br>&nbsp;&nbsp;// Unique ID<br>&nbsp;&nbsp;id: string;<br>}
-            </div>
-            <span class="transform-separator">→</span>
-            <div class="transform-box after">
-              <span class="transform-box-tag">CGE</span>
-              type User { id: string; }
-            </div>
-          </div>
-        </div>
-
-        <!-- State Isolation -->
-        <div class="spec-card">
-          <div class="spec-card-header">
-            <div class="spec-card-dot guard"></div>
-            <h3 class="spec-card-title">State Isolation</h3>
-          </div>
-          <p class="spec-card-desc">
-            Isolates module-level constants and state variables, detaching them from structural logic.
-          </p>
-          <div class="transform-grid">
-            <div class="transform-box">
-              <span class="transform-box-tag">Input</span>
-              export const COL = "users";<br>let isReady = false;
-            </div>
-            <span class="transform-separator">→</span>
-            <div class="transform-box after">
-              <span class="transform-box-tag">CGE</span>
-              state const COL<br>state let isReady
-            </div>
-          </div>
-        </div>
-
-        <!-- Dependency Mapping -->
-        <div class="spec-card">
-          <div class="spec-card-header">
-            <div class="spec-card-dot scan"></div>
-            <h3 class="spec-card-title">Dependency Mapping</h3>
-          </div>
-          <p class="spec-card-desc">
-            Maps external dependencies and module imports into a clean, flat list for context resolution.
-          </p>
-          <div class="transform-grid">
-            <div class="transform-box">
-              <span class="transform-box-tag">Input</span>
-              import { <br>&nbsp;&nbsp;getDoc, <br>&nbsp;&nbsp;setDoc <br>} from "firebase";
-            </div>
-            <span class="transform-separator">→</span>
-            <div class="transform-box after">
-              <span class="transform-box-tag">CGE</span>
-              import { getDoc, setDoc }
-            </div>
-          </div>
-        </div>
-
-        <!-- Logic Preservation -->
-        <div class="spec-card">
-          <div class="spec-card-header">
-            <div class="spec-card-dot block"></div>
-            <h3 class="spec-card-title">Logic Preservation</h3>
-          </div>
-          <p class="spec-card-desc">
-            Retains business logic constraints within deterministic operation blocks, preserving semantic integrity.
-          </p>
-          <div class="transform-grid">
-            <div class="transform-box">
-              <span class="transform-box-tag">Input</span>
-              export const check = async (<br>&nbsp;&nbsp;id: string<br>): Promise&lt;boolean&gt; =&gt; {
-            </div>
-            <span class="transform-separator">→</span>
-            <div class="transform-box after">
-              <span class="transform-box-tag">CGE</span>
-              check(id:S)->Promise&lt;B&gt;
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- Footer -->
-    <footer class="footer">
-      <p class="footer-text">🧬 Cognitive Graph Encoding · Developed by <a href="https://www.linkedin.com/in/anilalapati/" target="_blank">Anil Alapati</a> · Fully Client-Side</p>
+    <footer style="margin-top: 80px; text-align: center; padding: 40px; border-top: 1px solid rgba(255,255,255,0.1);">
+      <p style="color: #9ca3af; font-size: 0.9rem;">
+        Part of the CGE Compiler Project. <br/>
+        <a href="cge.html" style="color: #10b981; text-decoration: none; border-bottom: 1px solid rgba(16, 185, 129, 0.5); padding-bottom: 2px; margin-top: 10px; display: inline-block;">View our Phase 1 Research Archive (CGE)</a>
+      </p>
     </footer>
 
   </div>
 
-  <!-- Feedback Floating Action Button -->
-  <button class="feedback-fab" id="feedback-fab" title="Send Feedback">
-    <span class="fab-icon">💬</span> Feedback
-  </button>
-
-  <!-- Feedback Modal -->
-  <div class="feedback-modal-overlay" id="feedback-modal">
-    <div class="feedback-modal-content">
-      <div class="feedback-header">
-        <h3>We'd love your feedback!</h3>
-        <button class="feedback-close" id="feedback-close">✕</button>
-      </div>
-      <p class="feedback-desc">How can we improve the CGE Compiler for your workflow? Feedback goes directly to our team.</p>
-      <form id="feedback-form" action="https://formspree.io/f/xjgznllq" method="POST">
-        <div class="input-group">
-          <label for="fb-email">Email (Optional)</label>
-          <input type="email" id="fb-email" name="email" placeholder="you@example.com" class="textarea-editor" style="height: 40px; padding: 10px;">
-        </div>
-        <div class="input-group">
-          <label for="fb-message">Message <span style="color: #ef4444;">*</span></label>
-          <textarea id="fb-message" name="message" placeholder="I think CGE could be better if..." required rows="4" class="textarea-editor" style="padding: 10px;"></textarea>
-        </div>
-        <!-- This hidden input helps formspree prevent spam -->
-        <input type="text" name="_gotcha" style="display:none" />
-        <button type="submit" class="utility-btn accent" id="fb-submit-btn" style="width: 100%; margin-top: 12px; font-size: 1rem; padding: 12px;">Send Feedback</button>
-      </form>
-    </div>
-  </div>
-
-  <!-- Apple Slick Toast Notification -->
-  <div class="toast-bar" id="toast-bar"></div>
-
-  <script src="playground.js"></script>
+  <script src="minify.js"></script>
 </body>
 </html>

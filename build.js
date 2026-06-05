@@ -12,28 +12,40 @@ fs.mkdirSync(distDir);
 
 console.log('⚡ Starting build & minification process...');
 
-// 2. Copy index.html
-fs.copyFileSync(
-  path.join(__dirname, 'index.html'),
-  path.join(distDir, 'index.html')
-);
-console.log('✓ index.html copied.');
+// 2. Copy HTML files
+if (fs.existsSync(path.join(__dirname, 'index.html'))) {
+  fs.copyFileSync(path.join(__dirname, 'index.html'), path.join(distDir, 'index.html'));
+}
+if (fs.existsSync(path.join(__dirname, 'cge.html'))) {
+  fs.copyFileSync(path.join(__dirname, 'cge.html'), path.join(distDir, 'cge.html'));
+}
+console.log('✓ HTML files copied.');
 
-// 3. Copy playground.css (or simple compression by removing whitespace)
-const css = fs.readFileSync(path.join(__dirname, 'playground.css'), 'utf-8');
-const minifiedCss = css
-  .replace(/\/\*[\s\S]*?\*\//g, '') // remove comments
-  .replace(/\s+/g, ' ') // collapse whitespaces
-  .replace(/\s*([\{\}:;,])\s*/g, '$1') // trim whitespace around selectors
-  .trim();
-fs.writeFileSync(path.join(distDir, 'playground.css'), minifiedCss, 'utf-8');
-console.log('✓ playground.css compressed & copied.');
+// 3. Copy and compress CSS files
+const compressCss = (filename) => {
+  if (!fs.existsSync(path.join(__dirname, filename))) return;
+  const css = fs.readFileSync(path.join(__dirname, filename), 'utf-8');
+  const minifiedCss = css
+    .replace(/\/\*[\s\S]*?\*\//g, '') // remove comments
+    .replace(/\s+/g, ' ') // collapse whitespaces
+    .replace(/\s*([\{\}:;,])\s*/g, '$1') // trim whitespace around selectors
+    .trim();
+  fs.writeFileSync(path.join(distDir, filename), minifiedCss, 'utf-8');
+  console.log(`✓ ${filename} compressed & copied.`);
+};
+
+compressCss('playground.css');
+compressCss('minify.css');
 
 // 4. Minify JS files using Terser CLI
-console.log('📦 Minifying playground.js...');
-execSync('npx terser playground.js --compress --mangle -o dist/playground.js', { stdio: 'inherit' });
+const minifyJs = (filename) => {
+  if (!fs.existsSync(path.join(__dirname, filename))) return;
+  console.log(`📦 Minifying ${filename}...`);
+  execSync(`npx terser ${filename} --compress --mangle -o dist/${filename}`, { stdio: 'inherit' });
+};
 
-console.log('📦 Minifying compiler_worker.js...');
-execSync('npx terser compiler_worker.js --compress --mangle -o dist/compiler_worker.js', { stdio: 'inherit' });
+minifyJs('playground.js');
+minifyJs('minify.js');
+minifyJs('compiler_worker.js');
 
 console.log('🎉 Build complete! Deploy the contents of the "dist" directory to Vercel.');
