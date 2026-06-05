@@ -169,8 +169,8 @@ export class CommentStripper {
         
         // Handle closing triple quotes
         if (stringChar === '"""' || stringChar === "'''") {
-          if (char === stringChar[0] && nextChar === stringChar[0] && thirdChar === stringChar[0]) {
-            result += stringChar[0] + stringChar[0]; // Add the other two
+          if (char === stringChar.charAt(0) && nextChar === stringChar.charAt(0) && thirdChar === stringChar.charAt(0)) {
+            result += char + char; // Add the other two
             inString = false;
             i += 3;
             continue;

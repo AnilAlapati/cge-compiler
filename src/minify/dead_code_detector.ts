@@ -59,8 +59,7 @@ export class DeadCodeDetector {
     
     let consecutiveCommentedCodeLines = 0;
 
-    for (let i = 0; i < lines.length; i++) {
-      const line = lines[i];
+    for (const line of lines) {
       const trimmed = line.trim();
 
       // We only analyze single-line comments for dead code
