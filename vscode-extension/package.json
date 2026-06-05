@@ -1,0 +1,73 @@
+{
+  "name": "leancontext",
+  "displayName": "LeanContext",
+  "publisher": "anilalapati",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/anilalapati/cge-compiler.git"
+  },
+  "description": "Optimize code context for AI tools like Claude, ChatGPT, and Copilot.",
+  "version": "0.1.0",
+  "engines": {
+    "vscode": "^1.120.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [],
+  "main": "./dist/extension.js",
+  "contributes": {
+    "chatParticipants": [
+      {
+        "id": "leancontext.participant",
+        "name": "lc",
+        "fullName": "LeanContext",
+        "description": "Strip noise from the active file and send it to Copilot",
+        "isSticky": true,
+        "commands": [
+          {
+            "name": "all",
+            "description": "Strip inline/block comments, JSDoc, and dead code (Default)"
+          },
+          {
+            "name": "comments",
+            "description": "Strip ONLY regular inline and block comments"
+          },
+          {
+            "name": "docs",
+            "description": "Strip ONLY JSDoc and docstrings"
+          },
+          {
+            "name": "deadcode",
+            "description": "Strip ONLY commented-out dead code"
+          }
+        ]
+      }
+    ],
+    "commands": [
+      {
+        "command": "leancontext.previewOptimized",
+        "title": "LeanContext: Preview Optimized Code"
+      }
+    ]
+  },
+  "extensionDependencies": [
+    "github.copilot-chat"
+  ],
+  "scripts": {
+    "vscode:prepublish": "npm run package",
+    "compile": "node esbuild.js",
+    "watch": "node esbuild.js --watch",
+    "package": "node esbuild.js --production"
+  },
+  "dependencies": {
+    "gpt-tokenizer": "^2.1.2"
+  },
+  "devDependencies": {
+    "@types/node": "18.x",
+    "@types/vscode": "^1.120.0",
+    "esbuild": "^0.28.0",
+    "npm-run-all": "^4.1.5",
+    "typescript": "^5.0.0"
+  }
+}

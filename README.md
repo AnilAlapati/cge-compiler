@@ -5,13 +5,13 @@
 
 **Live Demo / Savings Calculator:** [cge-compiler.vercel.app](https://cge-compiler.vercel.app)
 
-**AI Minify** reduces your LLM prompt token costs by up to 46% without sacrificing a single percentage point of architectural reasoning or code understanding. It works by surgically stripping comments, dead code, license boilerplate, and unnecessary whitespace before sending context to AI agents like Copilot, Cursor, or Gemini.
+**LeanContext** (formerly AI Minify) reduces your LLM prompt token costs by up to 46% without sacrificing a single percentage point of architectural reasoning or code understanding. It works by surgically stripping comments, dead code, license boilerplate, and unnecessary whitespace before sending context to AI agents like Copilot, Cursor, or Gemini.
 
 ---
 
 ## ⚡ The Value Proposition: Before vs. After
 
-AI Minify deletes the noise that LLMs don't need to read.
+LeanContext deletes the noise that LLMs don't need to read.
 
 ### Before (Raw Source)
 ```typescript
@@ -102,6 +102,35 @@ For larger context windows (e.g., passing 100,000 tokens of repository context t
 
 ---
 
+## 🚀 VS Code Extension (Recommended)
+
+The fastest and most frictionless way to use LeanContext is through our native VS Code Extension. It integrates directly into GitHub Copilot Chat as a Chat Participant.
+
+### Installation
+1. Download the latest `leancontext-X.X.X.vsix` from the `vscode-extension` directory.
+2. Open VS Code -> Extensions Panel -> `...` (More Actions) -> **Install from VSIX...**
+3. Select the `.vsix` file and reload your editor.
+
+### Usage
+Open any file in your editor, open Copilot Chat, and type:
+> `@lc Can you review this code and suggest improvements?`
+
+Behind the scenes, LeanContext intercepts the prompt, minifies your active file using RegEx, appends the optimized code to your question, and securely forwards it to the built-in Copilot Language Model.
+
+#### Slash Commands for Granular Control
+- `@lc /all` (Default): Strips everything (comments, JSDoc, dead code).
+- `@lc /comments`: Strips ONLY inline and block comments.
+- `@lc /docs`: Strips ONLY JSDoc and docstrings.
+- `@lc /deadcode`: Strips ONLY disabled/commented-out code.
+
+#### Visual Proof
+Every response ends with a token savings report:
+> *⚡ LeanContext: Saved 28.5% (~452 tokens) on this request.* **`[View Minified Code]`**
+
+Clicking the button opens a native **Split Diff Window** so you can visually verify exactly which lines were removed before the prompt was sent to the LLM.
+
+---
+
 ## ⚙️ Quickstart CLI
 
 ### Installation
@@ -143,21 +172,21 @@ We initially attempted to create a custom, dense shorthand language (CGE) to com
 We shifted focus to extracting structural maps from codebases (Routes, Entity Relations, Middleware chains) to augment LLM reasoning.
 * **Learning:** Supplying an LLM with an explicit Architecture Map alongside the source code consistently improves task success rates by 10-15%. This remains an active research track in the `src/architecture_map_generator` modules.
 
-### Idea 3: AI Minify [Product Candidate]
+### Idea 3: LeanContext (Product Candidate)
 We realized the safest, most immediate way to optimize LLM performance was to leave the syntax completely alone, but strip the human-centric noise. 
-* **Result:** AI Minify is our primary product focus, delivering 10-46% token savings instantly.
+* **Result:** LeanContext is our primary product focus, delivering 10-46% token savings instantly via the VS Code Extension and CLI.
 
 ---
 
 ## 📁 Repository Structure
-```text
 cge-compiler/
 ├── src/
-│   ├── minify/             # Core AI Minify engine
+│   ├── minify/             # Core LeanContext engine
 │   ├── cli/                # CLI implementation
 │   └── architecture/       # Idea 2 (Repository Cognition) research code
+├── vscode-extension/       # The Native Copilot Chat Participant Extension
 ├── scripts/                # Evaluation & benchmark runners
 ├── benchmarks_real/        # Benchmark output reports
-├── index.html              # AI Minify Web UI
+├── index.html              # LeanContext Web UI
 └── cge.html                # Legacy CGE Research UI
 ```
