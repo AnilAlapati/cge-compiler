@@ -3199,7 +3199,7 @@ ${textContent}`;
     if (auditCostSaved) auditCostSaved.textContent = `Saved: ${savingsPercent}% of total bill!`;
 
     if (auditBreakdownSummary) {
-      auditBreakdownSummary.textContent = `${processedCount} compiled / ${totalExcluded} bypassed`;
+      auditBreakdownSummary.textContent = `${processedCount} files compiled / ${totalExcluded} files bypassed`;
     }
 
     // Also populate the single file text view so they can copy the massive XML blob!
