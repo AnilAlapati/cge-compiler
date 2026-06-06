@@ -2027,6 +2027,8 @@ document.addEventListener("DOMContentLoaded", () => {
   const tabBtns       = document.querySelectorAll(".segment-tab");
   const extLabel      = document.getElementById("ext-label");
   const lineNumbers   = document.getElementById("gutter-lines");
+  const outputGutterLines = document.getElementById("output-gutter-lines");
+  const outputScroller = document.getElementById("output-scroller");
   const toast         = document.getElementById("toast-bar");
 
   // Mode Swapping DOM nodes
@@ -2103,6 +2105,18 @@ document.addEventListener("DOMContentLoaded", () => {
     const lines = codeInput.value.split("\n");
     lineNumbers.innerHTML = lines.map((_, i) => `<span>${i + 1}</span>`).join("");
     lineNumbers.scrollTop = codeInput.scrollTop;
+    
+    if (outputGutterLines && cgeOutput) {
+      const outText = cgeOutput.textContent || "";
+      const outLines = outText.split("\n");
+      if (outLines.length > 0 && outLines[outLines.length - 1] === "") {
+        outLines.pop(); // Remove trailing empty split
+      }
+      outputGutterLines.innerHTML = outLines.map((_, i) => `<span>${i + 1}</span>`).join("");
+      if (outputScroller) {
+        outputGutterLines.scrollTop = outputScroller.scrollTop;
+      }
+    }
   }
 
   // --- Subtle Syntax-colored CGE output ---
@@ -2578,6 +2592,11 @@ document.addEventListener("DOMContentLoaded", () => {
   codeInput.addEventListener("scroll", () => {
     lineNumbers.scrollTop = codeInput.scrollTop;
   });
+  if (outputScroller && outputGutterLines) {
+    outputScroller.addEventListener("scroll", () => {
+      outputGutterLines.scrollTop = outputScroller.scrollTop;
+    });
+  }
 
   // --- Copy with toast ---
   function showToast(message, duration = 2000) {

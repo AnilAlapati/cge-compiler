@@ -384,8 +384,11 @@
           <div class="editor-body">
             <!-- Mode 1: Code Text View -->
             <div class="mode-container active" id="container-code" style="flex-direction: column;">
-              <div class="output-scroller" style="flex-grow: 1;">
-                <pre><code id="cge-output" class="output-code"></code></pre>
+              <div style="display: flex; flex-grow: 1; position: relative; overflow: hidden; height: 100%;">
+                <div class="gutter" id="output-gutter-lines" style="border-right: 1px solid rgba(255,255,255,0.05); background: rgba(0,0,0,0.15);"></div>
+                <div class="output-scroller" id="output-scroller" style="flex-grow: 1;">
+                  <pre style="margin: 0;"><code id="cge-output" class="output-code"></code></pre>
+                </div>
               </div>
               
               <!-- Verify Live in LLM Bridge -->
