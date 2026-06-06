@@ -2421,8 +2421,8 @@ document.addEventListener("DOMContentLoaded", () => {
   
   let activeFreq = 50;  // default: 50 prompts/day
   let activeTeam = 1;   // default: 1 developer
-  let activeModelCost = 2.50;
-  let activeModelName = "GPT-4o";
+  let activeModelCost = 5.00;
+  let activeModelName = "GPT-5.5";
   let lastTokensSaved = 0;
 
   // GPT-4o average: ~$2.50 per 1M input tokens
@@ -3212,8 +3212,8 @@ ${textContent}`;
   // ROI Logic
   let currentQueriesPerDay = 1000;
   let currentTeamSize = 1;
-  let currentModelCost = 2.50;
-  let currentModelName = "GPT-4o";
+  let currentModelCost = 5.00;
+  let currentModelName = "GPT-5.5";
   const roiFreqBtns = document.querySelectorAll('#roi-frequency .estimator-pill');
   const roiTeamBtns = document.querySelectorAll('#roi-team-size .estimator-pill');
   const roiModelBtns = document.querySelectorAll('#roi-model-select .estimator-pill');

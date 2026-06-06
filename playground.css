@@ -1218,10 +1218,11 @@ body {
   font-family: var(--font-code);
   font-size: 0.72rem;
   font-weight: 600;
-  padding: 6px 0;
+  padding: 6px 12px;
   cursor: pointer;
   transition: all var(--transition-speed) var(--transition-easing);
   text-align: center;
+  white-space: nowrap;
 }
 
 .estimator-pill:first-of-type {
