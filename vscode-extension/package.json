@@ -40,6 +40,14 @@
           {
             "name": "deadcode",
             "description": "Strip ONLY commented-out dead code"
+          },
+          {
+            "name": "workspace",
+            "description": "Package the entire workspace and send to Copilot"
+          },
+          {
+            "name": "folder",
+            "description": "Package a specific folder. Usage: @lc /folder [path] [question]"
           }
         ]
       }
@@ -48,8 +56,40 @@
       {
         "command": "leancontext.previewOptimized",
         "title": "LeanContext: Preview Optimized Code"
+      },
+      {
+        "command": "leancontext.copyCurrentFile",
+        "title": "LeanContext: Copy Current File"
+      },
+      {
+        "command": "leancontext.copyFolder",
+        "title": "LeanContext: Copy Folder"
+      },
+      {
+        "command": "leancontext.copyWorkspace",
+        "title": "LeanContext: Copy Workspace"
       }
-    ]
+    ],
+    "menus": {
+      "explorer/context": [
+        {
+          "command": "leancontext.copyFolder",
+          "when": "explorerResourceIsFolder",
+          "group": "1_modification"
+        },
+        {
+          "command": "leancontext.copyCurrentFile",
+          "when": "!explorerResourceIsFolder",
+          "group": "1_modification"
+        }
+      ],
+      "editor/context": [
+        {
+          "command": "leancontext.copyCurrentFile",
+          "group": "1_modification"
+        }
+      ]
+    }
   },
   "extensionDependencies": [
     "github.copilot-chat"
