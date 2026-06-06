@@ -237,6 +237,18 @@ export class CommentStripper {
       return true;
     }
     
+    if (comment.startsWith('//') && !this.options.stripLineComments) {
+      return true;
+    }
+    
+    if (comment.startsWith('/*') && !comment.startsWith('/**') && !this.options.stripBlockComments) {
+      return true;
+    }
+
+    if (comment.startsWith('#') && !this.options.stripLineComments) {
+      return true;
+    }
+    
     if (this.options.preserveTodos) {
       const upper = comment.toUpperCase();
       if (upper.includes('TODO:') || upper.includes('FIXME:') || upper.includes('HACK:')) {
