@@ -73,7 +73,7 @@ async function buildContextString(uris: vscode.Uri[], options: any, progressCall
       xmlOutput += `<file path="${relativePath}">\n${minCode}\n</file>\n\n`;
       processedCount++;
       
-      if (progressCallback) progressCallback(`Minifying ${processedCount} files...`);
+      if (progressCallback) progressCallback(`Minifying file ${processedCount} of ${uris.length}...`);
     } catch (e) {
       // Skip unreadable files
     }
@@ -213,7 +213,7 @@ export function activate(context: vscode.ExtensionContext) {
       return;
     }
 
-    response.progress(`Minifying ${uris.length} files...`);
+    response.progress(`Minifying ${uris.length} file${uris.length === 1 ? '' : 's'}...`);
     
     const result = await buildContextString(uris, options, (msg) => response.progress(msg));
 
