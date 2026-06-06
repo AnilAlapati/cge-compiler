@@ -2417,14 +2417,15 @@ document.addEventListener("DOMContentLoaded", () => {
   const estCostEl   = document.getElementById("est-cost");
   const freqPills = document.querySelectorAll("#single-roi-freq .estimator-pill");
   const teamPills = document.querySelectorAll("#single-roi-team .estimator-pill");
-  const singleRoiModel = document.getElementById("single-roi-model");
+  const modelPills = document.querySelectorAll("#single-roi-model .estimator-pill");
   
   let activeFreq = 50;  // default: 50 prompts/day
   let activeTeam = 1;   // default: 1 developer
+  let activeModelCost = 2.50;
+  let activeModelName = "GPT-4o";
   let lastTokensSaved = 0;
 
   // GPT-4o average: ~$2.50 per 1M input tokens
-  const COST_PER_TOKEN = 2.50 / 1_000_000;
   const DAYS_PER_MONTH = 30;
 
   function formatTokenCount(n) {
@@ -2440,11 +2441,7 @@ document.addEventListener("DOMContentLoaded", () => {
       return;
     }
 
-    let modelCostPer1M = 2.50;
-    if (singleRoiModel) {
-      modelCostPer1M = parseFloat(singleRoiModel.value);
-    }
-    const costPerToken = modelCostPer1M / 1_000_000;
+    const costPerToken = activeModelCost / 1_000_000;
 
     const monthlyTokensSaved = Math.round(lastTokensSaved * activeFreq * activeTeam * DAYS_PER_MONTH);
     const monthlyCostSaved = monthlyTokensSaved * costPerToken;
@@ -2462,15 +2459,20 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     const disclaimer = document.getElementById("single-math-disclaimer");
-    if (disclaimer && singleRoiModel) {
-      const selectedOpt = singleRoiModel.options[singleRoiModel.selectedIndex];
-      disclaimer.textContent = `*Monthly calculation: Tokens Saved × Agent Queries × Team Size × 30 Days × $${modelCostPer1M.toFixed(2)} per 1M Input Tokens (${selectedOpt.dataset.name})`;
+    if (disclaimer) {
+      disclaimer.textContent = `*Monthly calculation: Tokens Saved × Agent Queries × Team Size × 30 Days × $${activeModelCost.toFixed(2)} per 1M Input Tokens (${activeModelName})`;
     }
   }
 
-  if (singleRoiModel) {
-    singleRoiModel.addEventListener("change", updateEstimator);
-  }
+  modelPills.forEach(pill => {
+    pill.addEventListener("click", () => {
+      modelPills.forEach(p => p.classList.remove("active"));
+      pill.classList.add("active");
+      activeModelCost = parseFloat(pill.dataset.cost);
+      activeModelName = pill.dataset.name;
+      updateEstimator();
+    });
+  });
 
   freqPills.forEach(pill => {
     pill.addEventListener("click", () => {
@@ -3160,26 +3162,17 @@ ${textContent}`;
     const totalCompTokens = Math.ceil(totalCompChars / 4) + (processedCount * 12);
     const savingsPercent = Math.round((1 - (totalCompTokens / totalOrigTokens)) * 100) || 0;
 
-    // Model Rate Logic
-    let modelCostPer1M = 2.50;
-    let modelName = "GPT-4o";
-    const zipModelSelect = document.getElementById('roi-model-select');
-    if (zipModelSelect) {
-      modelCostPer1M = parseFloat(zipModelSelect.value);
-      modelName = zipModelSelect.options[zipModelSelect.selectedIndex].dataset.name;
-    }
-
     // Estimate monthly cost:
     const totalMultiplier = currentQueriesPerDay * currentTeamSize * 30;
-    const origCost = (totalOrigTokens * totalMultiplier * modelCostPer1M) / 1_000_000;
-    const compCost = (totalCompTokens * totalMultiplier * modelCostPer1M) / 1_000_000;
+    const origCost = (totalOrigTokens * totalMultiplier * currentModelCost) / 1_000_000;
+    const compCost = (totalCompTokens * totalMultiplier * currentModelCost) / 1_000_000;
     const moneySaved = origCost - compCost;
     
     const descOrig = document.getElementById("audit-cost-desc-orig");
     if (descOrig) descOrig.textContent = `Monthly cost to process uncompressed codebase over ${currentQueriesPerDay} queries/day across ${currentTeamSize} developers:`;
 
     const costSubtitle = document.getElementById("audit-cost-subtitle");
-    if (costSubtitle) costSubtitle.textContent = `${modelName} input rates ($${modelCostPer1M.toFixed(2)} / 1M tokens)`;
+    if (costSubtitle) costSubtitle.textContent = `${currentModelName} input rates ($${currentModelCost.toFixed(2)} / 1M tokens)`;
 
     // Populate dashboard
     const auditTotalFiles = document.getElementById("audit-total-files");
@@ -3219,19 +3212,24 @@ ${textContent}`;
   // ROI Logic
   let currentQueriesPerDay = 1000;
   let currentTeamSize = 1;
+  let currentModelCost = 2.50;
+  let currentModelName = "GPT-4o";
   const roiFreqBtns = document.querySelectorAll('#roi-frequency .estimator-pill');
   const roiTeamBtns = document.querySelectorAll('#roi-team-size .estimator-pill');
-  const zipModelSelect = document.getElementById('roi-model-select');
+  const roiModelBtns = document.querySelectorAll('#roi-model-select .estimator-pill');
 
-  if (zipModelSelect) {
-    zipModelSelect.addEventListener('change', () => {
-      // If we are already on the dashboard, dynamically update the cost
+  roiModelBtns.forEach(pill => {
+    pill.addEventListener("click", () => {
+      roiModelBtns.forEach(p => p.classList.remove("active"));
+      pill.classList.add("active");
+      currentModelCost = parseFloat(pill.dataset.cost);
+      currentModelName = pill.dataset.name;
       const containerAudit = document.getElementById("container-audit");
       if (containerAudit && containerAudit.style.display !== "none") {
         recalculateZip();
       }
     });
-  }
+  });
 
   const recalculateZip = () => {
     // If they are on the dashboard, just recalculate in place
