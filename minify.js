@@ -3474,9 +3474,28 @@ export function processBatch${i}(data) {
     return mock;
   }
 
-  // Load the 500-line sample file on boot
+  // Start empty by default on boot
   if (!codeInput.value) {
-    codeInput.value = generateMockCode();
+    codeInput.value = "";
+  }
+
+  // Load sample button listener
+  const btnLoadSample = document.getElementById("btn-load-sample");
+  if (btnLoadSample) {
+    btnLoadSample.addEventListener("mouseenter", () => {
+      btnLoadSample.style.background = "rgba(59, 130, 246, 0.25)";
+      btnLoadSample.style.borderColor = "rgba(59, 130, 246, 0.5)";
+      btnLoadSample.style.color = "#93c5fd";
+    });
+    btnLoadSample.addEventListener("mouseleave", () => {
+      btnLoadSample.style.background = "rgba(59, 130, 246, 0.15)";
+      btnLoadSample.style.borderColor = "rgba(59, 130, 246, 0.3)";
+      btnLoadSample.style.color = "#60a5fa";
+    });
+    btnLoadSample.addEventListener("click", () => {
+      codeInput.value = generateMockCode();
+      handleCompile();
+    });
   }
 
   // Initialize
