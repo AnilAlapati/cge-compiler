@@ -2017,10 +2017,12 @@ document.addEventListener("DOMContentLoaded", () => {
   const optComments = document.getElementById("opt-comments");
   const optJsdoc = document.getElementById("opt-jsdoc");
   const optDeadCode = document.getElementById("opt-dead-code");
+  const optWhitespace = document.getElementById("opt-whitespace");
   
   if (optComments) optComments.addEventListener("change", handleCompile);
   if (optJsdoc) optJsdoc.addEventListener("change", handleCompile);
   if (optDeadCode) optDeadCode.addEventListener("change", handleCompile);
+  if (optWhitespace) optWhitespace.addEventListener("change", handleCompile);
   const llmPromptBtn  = document.getElementById("llm-prompt-btn");
   const tabBtns       = document.querySelectorAll(".segment-tab");
   const extLabel      = document.getElementById("ext-label");
@@ -2500,8 +2502,8 @@ document.addEventListener("DOMContentLoaded", () => {
       stripBlockComments: optComments ? optComments.checked : true,
       stripDocComments: optJsdoc ? optJsdoc.checked : true,
       stripDeadCode: optDeadCode ? optDeadCode.checked : true,
-      normalizeNewlines: true, 
-      stripTrailingWhitespace: true, 
+      normalizeNewlines: optWhitespace ? optWhitespace.checked : true,
+      stripTrailingWhitespace: optWhitespace ? optWhitespace.checked : true,
       preserveTodos: false
     });
     const res = engine.minify(code, currentLang);
@@ -3030,6 +3032,7 @@ ${textContent}`;
     const zipOptComments = document.getElementById("zip-opt-comments");
     const zipOptJsdoc = document.getElementById("zip-opt-jsdoc");
     const zipOptDeadCode = document.getElementById("zip-opt-dead-code");
+    const zipOptWhitespace = document.getElementById("zip-opt-whitespace");
 
     // Update UI state to "Calculating..." so the user knows it hasn't frozen
     const zipSubmitBtn = document.getElementById("zip-submit-btn");
@@ -3065,8 +3068,8 @@ ${textContent}`;
       stripBlockComments: zipOptComments ? zipOptComments.checked : true,
       stripDocComments: zipOptJsdoc ? zipOptJsdoc.checked : true,
       stripDeadCode: zipOptDeadCode ? zipOptDeadCode.checked : true,
-      normalizeNewlines: true,
-      stripTrailingWhitespace: true,
+      normalizeNewlines: zipOptWhitespace ? zipOptWhitespace.checked : true,
+      stripTrailingWhitespace: zipOptWhitespace ? zipOptWhitespace.checked : true,
       preserveTodos: false
     });
     
