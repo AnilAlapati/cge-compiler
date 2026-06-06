@@ -391,7 +391,7 @@ class TypeScriptClientParser {
             name: `${name}()`,
             type: "Single-line Operator",
             rule: "Block Collapsing",
-            desc: "Compacts single-line arrow functions cleanly, keeping implementation details intact.",
+            desc: "Compacts single-line arrow functions losslessly, keeping implementation details intact.",
             before: line,
             after: signature
           });
@@ -2399,12 +2399,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
     savingsSummary.textContent = `${savingsPercent}% reduction · ${tokensSaved.toLocaleString()} tokens freed`;
 
-    // Toggle short-file overhead explanation if compression is low (e.g. < 25%)
-    const overheadEl = document.getElementById("overhead-explanation");
-    if (overheadEl) {
-      overheadEl.style.display = (savingsPercent < 25 && original.trim().length > 0) ? "block" : "none";
-    }
-
     // Drive estimator
     lastTokensSaved = tokensSaved;
     updateEstimator();
@@ -2606,7 +2600,7 @@ ${textContent}`;
           <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
           <polyline points="22 4 12 14.01 9 11.01"></polyline>
         </svg>
-        Complete Structural Logic Match
+        100% Structural Fidelity Match
       `;
       patchAction.style.display = "none";
     } else {
@@ -2617,7 +2611,7 @@ ${textContent}`;
           <line x1="15" y1="9" x2="9" y2="15"></line>
           <line x1="9" y1="9" x2="15" y2="15"></line>
         </svg>
-        Structural Logic Mismatch Detected
+        Fidelity Mismatch Detected
       `;
       
       missing.forEach(m => {
@@ -2720,7 +2714,7 @@ ${textContent}`;
                 <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
                 <polyline points="22 4 12 14.01 9 11.01"></polyline>
               </svg>
-              Complete Structural Logic Match achieved in 2 loops!
+              100% Structural Fidelity Match achieved in 2 loops!
             `;
             showToast("✅ Reconstruction Loop completed successfully!");
 
