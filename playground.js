@@ -1994,14 +1994,6 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   });
 
-  const zipLangs = document.getElementById("zip-supported-langs");
-  if (zipLangs) {
-    const formattedLangs = SUPPORTED_LANGUAGES.map(lang => 
-      `<span style="color: ${lang.color}; font-weight: 600;">${lang.name}</span>`
-    );
-    const last = formattedLangs.pop();
-    zipLangs.innerHTML = `Supports ${formattedLangs.join(', ')}, and ${last} codebase archives.`;
-  }
 
   const codeInput     = document.getElementById("code-input");
   const cgeOutput     = document.getElementById("cge-output");

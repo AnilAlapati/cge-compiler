@@ -2818,12 +2818,7 @@ ${textContent}`;
   }
 
   if (auditDropzone && auditFileInput) {
-    auditDropzone.addEventListener("click", (e) => {
-      // Only trigger if click wasn't on the input/button directly
-      if (e.target !== auditFileInput && e.target !== auditUploadTrigger) {
-        auditFileInput.click();
-      }
-    });
+
 
     // Drag-over styling
     auditDropzone.addEventListener("dragover", (e) => {
