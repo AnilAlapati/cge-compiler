@@ -32,7 +32,7 @@ async function gatherFiles(uri: vscode.Uri, filePaths: vscode.Uri[]) {
   }
 }
 
-async function buildContextString(uris: vscode.Uri[], options: any, progressCallback?: (msg: string) => void): Promise<{ xmlOutput: string, rawXmlOutput: string, processedCount: number, savingsPercent: string, savings: number, totalOrigTokens: number, totalMinTokens: number, folderStats: Map<string, number> }> {
+async function buildContextString(uris: vscode.Uri[], options: any, progressCallback?: (msg: string) => void): Promise<{ xmlOutput: string, rawXmlOutput: string, auditSummary: string, processedCount: number, savingsPercent: string, savings: number, totalOrigTokens: number, totalMinTokens: number, folderStats: Map<string, number> }> {
   const engine = new MinifyEngine(options);
   let xmlOutput = "";
   let rawXmlOutput = "";
@@ -84,22 +84,50 @@ async function buildContextString(uris: vscode.Uri[], options: any, progressCall
   const savings = totalOrigTokens - totalMinTokens;
   const savingsPercent = totalOrigTokens > 0 ? ((savings / totalOrigTokens) * 100).toFixed(1) : "0.0";
 
-  const header = `<!--
-Workspace Context Audit
-Files: ${processedCount}
-Original Tokens: ~${totalOrigTokens.toLocaleString()}
-Minified Tokens: ~${totalMinTokens.toLocaleString()}
-Savings: ~${savings.toLocaleString()} (${savingsPercent}%)
+  const origUsage = ((totalOrigTokens / 128000) * 100).toFixed(1);
+  const minUsage = ((totalMinTokens / 128000) * 100).toFixed(1);
 
-Removed:
-✓ Comments
-✓ Blank lines
-✓ Dead code
--->
+  let topFolders = '';
+  const sortedFolders = Array.from(folderStats.entries())
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 5);
+  sortedFolders.forEach(f => {
+    topFolders += `- \`${f[0]}\` (~${f[1].toLocaleString()} tokens)\n`;
+  });
 
+  const auditSummary = `# LeanContext Audit Summary
+
+**Files Processed:** ${processedCount}
+
+## ⚡ Context Window Usage (128k Model)
+- **Before:** ${origUsage}%
+- **After:** ${minUsage}%
+
+## 📊 Token Statistics
+- **Original Tokens:** ${totalOrigTokens.toLocaleString()}
+- **Sent Tokens:** ${totalMinTokens.toLocaleString()}
+- **Saved Tokens:** ${savings.toLocaleString()} (${savingsPercent}%)
+
+## 📁 Largest Folders Sent
+${topFolders || "N/A"}
+
+## 🧹 Automatically Removed
+- ✓ Comments & Docstrings
+- ✓ Blank lines & formatting
+- ✓ Dead code
 `;
 
-  return { xmlOutput: header + xmlOutput.trim(), rawXmlOutput: header + rawXmlOutput.trim(), processedCount, savingsPercent, savings, totalOrigTokens, totalMinTokens, folderStats };
+  return { 
+    xmlOutput: xmlOutput.trim(), 
+    rawXmlOutput: rawXmlOutput.trim(), 
+    auditSummary,
+    processedCount, 
+    savingsPercent, 
+    savings, 
+    totalOrigTokens, 
+    totalMinTokens, 
+    folderStats 
+  };
 }
 
 async function packageContext(uris: vscode.Uri[], title: string) {
@@ -138,6 +166,7 @@ async function packageContext(uris: vscode.Uri[], title: string) {
 export function activate(context: vscode.ExtensionContext) {
   let lastGeneratedPackage_original = "";
   let lastGeneratedPackage_minified = "";
+  let lastGeneratedPackage_summary = "";
   const participant = vscode.chat.createChatParticipant('leancontext.participant', async (request, context, response, token) => {
     const options = { stripLineComments: true, stripBlockComments: true, stripDocComments: true, stripDeadCode: true, normalizeNewlines: true, stripTrailingWhitespace: true, preserveTodos: false };
 
@@ -229,6 +258,7 @@ export function activate(context: vscode.ExtensionContext) {
     const result = await buildContextString(uris, options, (msg) => response.progress(msg));
     lastGeneratedPackage_original = result.rawXmlOutput;
     lastGeneratedPackage_minified = result.xmlOutput;
+    lastGeneratedPackage_summary = result.auditSummary;
 
     const copilotPrompt = `You are a helpful coding assistant. The user has asked the following question about their code.
 The code provided below has been automatically minified (comments and dead code removed) to save tokens.
@@ -304,11 +334,18 @@ Please answer their question based on this minified code.`;
       vscode.window.showInformationMessage("No context package found in memory.");
       return;
     }
+    
+    // Open Audit Summary
+    const summaryUri = vscode.Uri.parse(`leancontext:Audit-Summary.md`);
+    previewProvider.setContent(summaryUri, lastGeneratedPackage_summary);
+    await vscode.commands.executeCommand('markdown.showPreview', summaryUri);
+
+    // Open Diff beside it
     const origUri = vscode.Uri.parse(`leancontext:Raw-Context.xml`);
     const minUri = vscode.Uri.parse(`leancontext:LLM-Context.xml`);
     previewProvider.setContent(origUri, lastGeneratedPackage_original);
     previewProvider.setContent(minUri, lastGeneratedPackage_minified);
-    await vscode.commands.executeCommand('vscode.diff', origUri, minUri, `Raw Context ↔ LLM Context`);
+    await vscode.commands.executeCommand('vscode.diff', origUri, minUri, `Raw Context ↔ LLM Context`, { viewColumn: vscode.ViewColumn.Beside });
   });
 
   const copyCurrentFileCmd = vscode.commands.registerCommand('leancontext.copyCurrentFile', async (uri?: vscode.Uri) => {
