@@ -127,6 +127,7 @@ Saved: ${result.savingsPercent}%
 }
 
 export function activate(context: vscode.ExtensionContext) {
+  let lastGeneratedPackage = "";
   const participant = vscode.chat.createChatParticipant('leancontext.participant', async (request, context, response, token) => {
     const options = { stripLineComments: true, stripBlockComments: true, stripDocComments: true, stripDeadCode: true, normalizeNewlines: true, stripTrailingWhitespace: true, preserveTodos: false };
 
@@ -216,6 +217,7 @@ export function activate(context: vscode.ExtensionContext) {
     response.progress(`Minifying ${uris.length} file${uris.length === 1 ? '' : 's'}...`);
     
     const result = await buildContextString(uris, options, (msg) => response.progress(msg));
+    lastGeneratedPackage = result.xmlOutput;
 
     const copilotPrompt = `You are a helpful coding assistant. The user has asked the following question about their code.
 The code provided below has been automatically minified (comments and dead code removed) to save tokens.
@@ -249,12 +251,14 @@ Please answer their question based on this minified code.`;
 
       response.markdown(`\n\n---\n*⚡ LeanContext: Saved ${result.savingsPercent}% (~${result.savings.toLocaleString()} tokens) across ${result.processedCount} files on this request.*`);
       
-      if (request.command !== 'workspace' && request.command !== 'folder') {
-        response.button({
-          command: 'leancontext.previewOptimized',
-          title: 'View Minified Code'
-        });
-      }
+      response.button({
+        command: request.command === 'workspace' || request.command === 'folder' 
+          ? 'leancontext.previewPackage' 
+          : 'leancontext.previewOptimized',
+        title: request.command === 'workspace' || request.command === 'folder' 
+          ? 'Audit Minified Context' 
+          : 'View Minified Code'
+      });
     } catch (err: any) {
       response.markdown(`\n\n❌ Error communicating with Copilot: ${err.message}`);
     }
@@ -284,6 +288,17 @@ Please answer their question based on this minified code.`;
     await vscode.commands.executeCommand('vscode.diff', originalUri, minifiedUri, `Original ↔ Minified Context`);
   });
 
+  const previewPackageCmd = vscode.commands.registerCommand('leancontext.previewPackage', async () => {
+    if (!lastGeneratedPackage) {
+      vscode.window.showInformationMessage("No context package found in memory.");
+      return;
+    }
+    const uri = vscode.Uri.parse(`leancontext:LeanContext-Audit.xml`);
+    previewProvider.setContent(uri, lastGeneratedPackage);
+    const doc = await vscode.workspace.openTextDocument(uri);
+    await vscode.window.showTextDocument(doc, { preview: true });
+  });
+
   const copyCurrentFileCmd = vscode.commands.registerCommand('leancontext.copyCurrentFile', async (uri?: vscode.Uri) => {
     let targetUri = uri || vscode.window.activeTextEditor?.document.uri;
     if (!targetUri) { vscode.window.showErrorMessage("No file selected."); return; }
@@ -307,7 +322,7 @@ Please answer their question based on this minified code.`;
     await packageContext(filePaths, "Workspace");
   });
 
-  context.subscriptions.push(participant, providerReg, previewCommand, copyCurrentFileCmd, copyFolderCmd, copyWorkspaceCmd);
+  context.subscriptions.push(participant, providerReg, previewCommand, previewPackageCmd, copyCurrentFileCmd, copyFolderCmd, copyWorkspaceCmd);
 }
 
 export function deactivate() {}

@@ -58,6 +58,10 @@
         "title": "LeanContext: Preview Optimized Code"
       },
       {
+        "command": "leancontext.previewPackage",
+        "title": "LeanContext: Audit Minified Package"
+      },
+      {
         "command": "leancontext.copyCurrentFile",
         "title": "LeanContext: Copy Current File"
       },
