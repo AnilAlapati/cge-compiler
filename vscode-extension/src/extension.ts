@@ -32,9 +32,10 @@ async function gatherFiles(uri: vscode.Uri, filePaths: vscode.Uri[]) {
   }
 }
 
-async function buildContextString(uris: vscode.Uri[], options: any, progressCallback?: (msg: string) => void): Promise<{ xmlOutput: string, processedCount: number, savingsPercent: string, savings: number, totalOrigTokens: number, totalMinTokens: number, folderStats: Map<string, number> }> {
+async function buildContextString(uris: vscode.Uri[], options: any, progressCallback?: (msg: string) => void): Promise<{ xmlOutput: string, rawXmlOutput: string, processedCount: number, savingsPercent: string, savings: number, totalOrigTokens: number, totalMinTokens: number, folderStats: Map<string, number> }> {
   const engine = new MinifyEngine(options);
   let xmlOutput = "";
+  let rawXmlOutput = "";
   let totalOrigTokens = 0;
   let totalMinTokens = 0;
   let processedCount = 0;
@@ -71,6 +72,7 @@ async function buildContextString(uris: vscode.Uri[], options: any, progressCall
       folderStats.set(dirPath, (folderStats.get(dirPath) || 0) + minTokens);
       
       xmlOutput += `<file path="${relativePath}">\n${minCode}\n</file>\n\n`;
+      rawXmlOutput += `<file path="${relativePath}">\n${origCode}\n</file>\n\n`;
       processedCount++;
       
       if (progressCallback) progressCallback(`Minifying file ${processedCount} of ${uris.length}...`);
@@ -82,7 +84,22 @@ async function buildContextString(uris: vscode.Uri[], options: any, progressCall
   const savings = totalOrigTokens - totalMinTokens;
   const savingsPercent = totalOrigTokens > 0 ? ((savings / totalOrigTokens) * 100).toFixed(1) : "0.0";
 
-  return { xmlOutput: xmlOutput.trim(), processedCount, savingsPercent, savings, totalOrigTokens, totalMinTokens, folderStats };
+  const header = `<!--
+Workspace Context Audit
+Files: ${processedCount}
+Original Tokens: ~${totalOrigTokens.toLocaleString()}
+Minified Tokens: ~${totalMinTokens.toLocaleString()}
+Savings: ~${savings.toLocaleString()} (${savingsPercent}%)
+
+Removed:
+✓ Comments
+✓ Blank lines
+✓ Dead code
+-->
+
+`;
+
+  return { xmlOutput: header + xmlOutput.trim(), rawXmlOutput: header + rawXmlOutput.trim(), processedCount, savingsPercent, savings, totalOrigTokens, totalMinTokens, folderStats };
 }
 
 async function packageContext(uris: vscode.Uri[], title: string) {
@@ -102,15 +119,7 @@ async function packageContext(uris: vscode.Uri[], title: string) {
     result = await buildContextString(uris, options, (msg) => progress.report({ message: msg }));
   });
 
-  const header = `<!--
-LeanContext Package
-Files: ${result.processedCount}
-Original Tokens: ${result.totalOrigTokens.toLocaleString()}
-Minified Tokens: ${result.totalMinTokens.toLocaleString()}
-Saved: ${result.savingsPercent}%
--->\n\n`;
-
-  const finalPayload = header + result.xmlOutput;
+  const finalPayload = result.xmlOutput;
 
   const previewMessage = `Files Found: ${result.processedCount}\n\nOriginal Tokens: ${result.totalOrigTokens.toLocaleString()}\nMinified Tokens: ${result.totalMinTokens.toLocaleString()}\n\nSavings: ${result.savingsPercent}%`;
 
@@ -127,7 +136,8 @@ Saved: ${result.savingsPercent}%
 }
 
 export function activate(context: vscode.ExtensionContext) {
-  let lastGeneratedPackage = "";
+  let lastGeneratedPackage_original = "";
+  let lastGeneratedPackage_minified = "";
   const participant = vscode.chat.createChatParticipant('leancontext.participant', async (request, context, response, token) => {
     const options = { stripLineComments: true, stripBlockComments: true, stripDocComments: true, stripDeadCode: true, normalizeNewlines: true, stripTrailingWhitespace: true, preserveTodos: false };
 
@@ -217,7 +227,8 @@ export function activate(context: vscode.ExtensionContext) {
     response.progress(`Minifying ${uris.length} file${uris.length === 1 ? '' : 's'}...`);
     
     const result = await buildContextString(uris, options, (msg) => response.progress(msg));
-    lastGeneratedPackage = result.xmlOutput;
+    lastGeneratedPackage_original = result.rawXmlOutput;
+    lastGeneratedPackage_minified = result.xmlOutput;
 
     const copilotPrompt = `You are a helpful coding assistant. The user has asked the following question about their code.
 The code provided below has been automatically minified (comments and dead code removed) to save tokens.
@@ -289,14 +300,15 @@ Please answer their question based on this minified code.`;
   });
 
   const previewPackageCmd = vscode.commands.registerCommand('leancontext.previewPackage', async () => {
-    if (!lastGeneratedPackage) {
+    if (!lastGeneratedPackage_minified || !lastGeneratedPackage_original) {
       vscode.window.showInformationMessage("No context package found in memory.");
       return;
     }
-    const uri = vscode.Uri.parse(`leancontext:LeanContext-Audit.xml`);
-    previewProvider.setContent(uri, lastGeneratedPackage);
-    const doc = await vscode.workspace.openTextDocument(uri);
-    await vscode.window.showTextDocument(doc, { preview: true });
+    const origUri = vscode.Uri.parse(`leancontext:Raw-Context.xml`);
+    const minUri = vscode.Uri.parse(`leancontext:LLM-Context.xml`);
+    previewProvider.setContent(origUri, lastGeneratedPackage_original);
+    previewProvider.setContent(minUri, lastGeneratedPackage_minified);
+    await vscode.commands.executeCommand('vscode.diff', origUri, minUri, `Raw Context ↔ LLM Context`);
   });
 
   const copyCurrentFileCmd = vscode.commands.registerCommand('leancontext.copyCurrentFile', async (uri?: vscode.Uri) => {
