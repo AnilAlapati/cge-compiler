@@ -3172,6 +3172,9 @@ ${textContent}`;
 
     const costSubtitle = document.getElementById("audit-cost-subtitle");
     if (costSubtitle) costSubtitle.textContent = `${currentModelName} input rates ($${currentModelCost.toFixed(2)} / 1M tokens)`;
+    
+    const betaDisclaimerModel = document.getElementById("beta-disclaimer-model");
+    if (betaDisclaimerModel) betaDisclaimerModel.textContent = currentModelName;
 
     // Populate dashboard
     const auditTotalFiles = document.getElementById("audit-total-files");
@@ -3209,7 +3212,7 @@ ${textContent}`;
   }
 
   // ROI Logic
-  let currentQueriesPerDay = 1000;
+  let currentQueriesPerDay = 50;
   let currentTeamSize = 1;
   let currentModelCost = 5.00;
   let currentModelName = "GPT-5.5";
