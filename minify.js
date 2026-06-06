@@ -2977,7 +2977,6 @@ ${textContent}`;
         chip.style.background = "rgba(0,0,0,0.3)";
         chip.style.borderColor = "rgba(255,255,255,0.1)";
         chip.style.color = "#6b7280";
-        chip.style.textDecoration = "line-through";
       }
 
       chip.innerHTML = `
