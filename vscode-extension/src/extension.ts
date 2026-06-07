@@ -130,39 +130,6 @@ ${topFolders || "N/A"}
   };
 }
 
-async function packageContext(uris: vscode.Uri[], title: string) {
-  if (uris.length === 0) {
-    vscode.window.showWarningMessage(`No supported files found to package for ${title}.`);
-    return;
-  }
-
-  const options = { stripLineComments: true, stripBlockComments: true, stripDocComments: true, stripDeadCode: true, normalizeNewlines: true, stripTrailingWhitespace: true, preserveTodos: false };
-  
-  let result: any = null;
-  await vscode.window.withProgress({
-    location: vscode.ProgressLocation.Notification,
-    title: `Packaging ${title}...`,
-    cancellable: false
-  }, async (progress) => {
-    result = await buildContextString(uris, options, (msg) => progress.report({ message: msg }));
-  });
-
-  const finalPayload = result.xmlOutput;
-
-  const previewMessage = `Files Found: ${result.processedCount}\n\nOriginal Tokens: ${result.totalOrigTokens.toLocaleString()}\nMinified Tokens: ${result.totalMinTokens.toLocaleString()}\n\nSavings: ${result.savingsPercent}%`;
-
-  const selection = await vscode.window.showInformationMessage(
-    previewMessage,
-    { modal: true },
-    'Copy Package'
-  );
-
-  if (selection === 'Copy Package') {
-    await vscode.env.clipboard.writeText(finalPayload);
-    vscode.window.showInformationMessage(`✅ Copied Context Package (${result.processedCount} files)`);
-  }
-}
-
 export function activate(context: vscode.ExtensionContext) {
   let lastGeneratedPackage_original = "";
   let lastGeneratedPackage_minified = "";
@@ -348,30 +315,7 @@ Please answer their question based on this minified code.`;
     await vscode.commands.executeCommand('vscode.diff', origUri, minUri, `Raw Context ↔ LLM Context`, { viewColumn: vscode.ViewColumn.Beside });
   });
 
-  const copyCurrentFileCmd = vscode.commands.registerCommand('leancontext.copyCurrentFile', async (uri?: vscode.Uri) => {
-    let targetUri = uri || vscode.window.activeTextEditor?.document.uri;
-    if (!targetUri) { vscode.window.showErrorMessage("No file selected."); return; }
-    const filePaths: vscode.Uri[] = [];
-    await gatherFiles(targetUri, filePaths);
-    await packageContext(filePaths, "Current File");
-  });
-
-  const copyFolderCmd = vscode.commands.registerCommand('leancontext.copyFolder', async (uri?: vscode.Uri) => {
-    if (!uri) { vscode.window.showErrorMessage("Please right-click a folder in the Explorer to use this command."); return; }
-    const filePaths: vscode.Uri[] = [];
-    await gatherFiles(uri, filePaths);
-    await packageContext(filePaths, "Folder");
-  });
-
-  const copyWorkspaceCmd = vscode.commands.registerCommand('leancontext.copyWorkspace', async () => {
-    const folders = vscode.workspace.workspaceFolders;
-    if (!folders || folders.length === 0) { vscode.window.showErrorMessage("No workspace open."); return; }
-    const filePaths: vscode.Uri[] = [];
-    for (const folder of folders) await gatherFiles(folder.uri, filePaths);
-    await packageContext(filePaths, "Workspace");
-  });
-
-  context.subscriptions.push(participant, providerReg, previewCommand, previewPackageCmd, copyCurrentFileCmd, copyFolderCmd, copyWorkspaceCmd);
+  context.subscriptions.push(participant, providerReg, previewCommand, previewPackageCmd);
 }
 
 export function deactivate() {}
