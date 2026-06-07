@@ -217,6 +217,30 @@
                 </label>
               </div>
             </div>
+            <div style="padding: 12px 16px; border-bottom: 1px solid rgba(255,255,255,0.1); display: flex; gap: 12px; align-items: center; background: rgba(0,0,0,0.2); flex-wrap: wrap;">
+              <div style="display: flex; gap: 16px; flex-wrap: wrap; margin: 0;">
+                <label class="checkbox-container">
+                  <input type="checkbox" id="opt-comments">
+                  <span class="checkmark"></span>
+                  Exclude Comments
+                </label>
+                <label class="checkbox-container">
+                  <input type="checkbox" id="opt-jsdoc">
+                  <span class="checkmark"></span>
+                  Exclude JSDocs
+                </label>
+                <label class="checkbox-container">
+                  <input type="checkbox" id="opt-dead-code">
+                  <span class="checkmark"></span>
+                  Exclude Dead Code
+                </label>
+                <label class="checkbox-container">
+                  <input type="checkbox" id="opt-whitespace">
+                  <span class="checkmark"></span>
+                  Trim Whitespace
+                </label>
+              </div>
+            </div>
             <div style="display: flex; flex-grow: 1; position: relative; overflow: hidden; height: 100%;">
               <div class="gutter" id="gutter-lines"></div>
               <textarea
