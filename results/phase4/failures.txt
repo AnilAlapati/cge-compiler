@@ -1,0 +1,631 @@
+Task ID: gf_2
+Q: How is authentication handled across the Ghostfolio API? What strategies are supported?
+Expected: Authentication is handled in AuthModule using Passport strategies: JwtStrategy for JWT token validation, GoogleStrategy for Google OAuth, OidcStrategy for generic OpenID Connect, and ApiKeyStrategy for API key authentication. AuthService validates logins by looking up or creating users via UserService and issuing JWT tokens via JwtService. The OidcStrategy is dynamically constructed at module initialization based on OIDC configuration settings. JWT tokens are signed with JWT_SECRET_KEY and expire after 180 days.
+Actual: Authentication in the Ghostfolio API is handled through a combination of strategies, primarily focusing on JWT (JSON Web Tokens), OAuth, and WebAuthn. Here’s a detailed breakdown of the authentication mechanisms supported:
+
+### 1. **JWT Authentication**
+- **Strategy**: The API uses JWT for authenticating users. The `JwtStrategy` is implemented to validate tokens.
+- **Implementation**: 
+  - The `AuthGuard('jwt')` is applied to various controllers to protect routes, ensuring that only authenticated users can access certain endpoints.
+  - The JWT secret key is configured via environment variables, and tokens are set to expire after a specified duration (e.g., 30 days for user tokens and 180 days for access tokens).
+
+### 2. **OAuth Authentication**
+- **Strategy**: The API supports OAuth authentication through Google and OpenID Connect (OIDC).
+- **Implementation**:
+  - The `GoogleStrategy` is used for Google login, and the `OidcStrategy` is implemented for OIDC.
+  - The `AuthController` has endpoints for initiating Google login and handling the callback after authentication.
+  - The OIDC strategy includes fetching configuration from the OIDC provider and handling user authentication based on the received tokens.
+
+### 3. **WebAuthn Authentication**
+- **Strategy**: WebAuthn is supported for device-based authentication.
+- **Implementation**:
+  - The `WebAuthService` provides methods to generate authentication options and verify authentication responses.
+  - The `AuthController` has endpoints for generating WebAuthn options and verifying user credentials.
+
+### 4. **Anonymous Access**
+- **Strategy**: The API allows for anonymous access using access tokens.
+- **Implementation**:
+  - The `AuthController` has endpoints for logging in anonymously using an access token, which is validated to provide a JWT for further authenticated requests.
+
+### 5. **API Key Authentication**
+- **Strategy**: API key authentication is also supported for certain endpoints.
+- **Implementation**:
+  - The `ApiKeyStrategy` is used to validate API keys for accessing specific resources, particularly in the `GhostfolioController`.
+
+### 6. **Guarding Routes**
+- Various routes across different controllers are protected using guards like `AuthGuard` and `HasPermissionGuard`, ensuring that only users with the appropriate permissions can access sensitive operations.
+
+### Summary
+The Ghostfolio API employs a multi-faceted authentication approach, utilizing JWT for standard user sessions, OAuth for third-party logins, WebAuthn for secure device-based authentication, and API keys for programmatic access. This layered strategy enhances security and provides flexibility for different user scenarios.
+
+Task ID: gf_4
+Q: What are the different performance calculation types supported, and how does the system select which one to use?
+Expected: The system supports four performance calculation types: TWR (Time-Weighted Return), MWR (Money-Weighted Return), ROI (Return on Investment), and ROAI (Return on Average Investment). PortfolioCalculatorFactory creates the appropriate calculator subclass based on the calculationType parameter. The user's preferred calculation type is stored in their settings (defaulting to ROAI) and retrieved via UserService.user() which sets the default in user.settings.settings.performanceCalculationType.
+Actual: The codebase context does not explicitly list the different performance calculation types supported. However, based on the directory structure and the naming conventions of the files, we can infer that there are multiple performance calculation types implemented in the portfolio calculator files. The relevant files are located in the following paths:
+
+- **apps/api/src/app/portfolio/calculator/mwr/portfolio-calculator.ts**: Exports `MwrPortfolioCalculator`
+- **apps/api/src/app/portfolio/calculator/portfolio-calculator.ts**: Exports `PortfolioCalculator`
+- **apps/api/src/app/portfolio/calculator/roai/portfolio-calculator.ts**: Exports `RoaiPortfolioCalculator`
+- **apps/api/src/app/portfolio/calculator/roi/portfolio-calculator.ts**: Exports `RoiPortfolioCalculator`
+- **apps/api/src/app/portfolio/calculator/twr/portfolio-calculator.ts**: Exports `TwrPortfolioCalculator`
+
+From the above, we can identify the following performance calculation types:
+
+1. **Mwr (Money-Weighted Return)**
+2. **Roai (Return on Average Investment)**
+3. **Roi (Return on Investment)**
+4. **Twr (Time-Weighted Return)**
+
+### Selection of Performance Calculation Type
+
+The system likely selects which performance calculation type to use based on the context in which the calculation is being performed. This could be determined by:
+
+- **User Input**: The user may specify which type of calculation they want to perform through a user interface or API request.
+- **Business Logic**: The application may have specific business rules that dictate which calculation type to use based on the type of portfolio or the data available.
+- **Configuration Settings**: There may be configuration settings that allow administrators to set a default calculation type for certain operations.
+
+The actual selection mechanism would typically be implemented in the `PortfolioCalculator` class or factory, which would instantiate the appropriate calculator based on the criteria mentioned above. The factory pattern is often used in such scenarios to encapsulate the logic for creating instances of different classes based on input parameters or configuration. 
+
+To get the exact implementation details, one would need to look into the `PortfolioCalculatorFactory` and the `PortfolioCalculator` class to see how they manage the selection of the appropriate performance calculation type.
+
+Task ID: gf_5
+Q: How are scheduled/cron jobs organized in Ghostfolio, and what does each job do?
+Expected: Cron jobs are centralized in CronService (services/cron/cron.service.ts) using NestJS @Cron decorators. Jobs include: (1) EVERY_HOUR - adds statistics gathering jobs if enabled, (2) EVERY_HOUR_AT_RANDOM_MINUTE - gathers 7 days of market data via DataGatheringService.gather7Days(), (3) EVERY_12_HOURS - reloads currency exchange rates via ExchangeRateDataService.loadCurrencies(), (4) EVERY_DAY_AT_5PM - tweets Fear and Greed Index via TwitterBotService, (5) EVERY_DAY_AT_MIDNIGHT - resets analytics counters via UserService.resetAnalytics(), (6) EVERY_SUNDAY_AT_LUNCH_TIME - refreshes stale asset profiles (>60 days old) via DataGatheringService.
+Actual: In the Ghostfolio codebase, scheduled or cron jobs are organized within the `CronModule`, which is part of the application architecture. The `CronService` is responsible for managing these jobs. Here’s a breakdown of how they are organized and what each job does:
+
+### Organization of Scheduled/Cron Jobs
+
+1. **CronModule**: This module imports the necessary services and sets up the cron jobs.
+2. **CronService**: This service is where the actual scheduling logic is implemented. It injects various services that are needed for the jobs to function.
+
+### Jobs and Their Functions
+
+While the specific implementation details of each job are not provided in the context, the following are typical functions that cron jobs might perform in a financial application like Ghostfolio:
+
+1. **Data Gathering Jobs**: These jobs are likely responsible for periodically fetching data from external data providers or APIs. This could include:
+   - Gathering market data.
+   - Fetching asset profiles.
+   - Collecting historical data for analysis.
+
+2. **Statistics Gathering Jobs**: These jobs might aggregate and compute statistics related to user portfolios, market trends, or other relevant metrics. This could involve:
+   - Calculating performance metrics for user portfolios.
+   - Updating statistics for benchmarks.
+
+3. **Portfolio Snapshot Jobs**: These jobs could take periodic snapshots of user portfolios to track changes over time. This might include:
+   - Saving the current state of a user's portfolio.
+   - Generating reports based on the snapshot data.
+
+4. **Data Cleanup Jobs**: These jobs might be responsible for cleaning up old or unnecessary data from the database to maintain performance and storage efficiency.
+
+5. **Notification Jobs**: These jobs could send notifications to users based on certain triggers, such as:
+   - Alerts for significant market changes.
+   - Reminders for subscription renewals or account updates.
+
+### Summary
+
+The cron jobs in Ghostfolio are organized within the `CronModule` and managed by the `CronService`. They perform various functions related to data gathering, statistics computation, portfolio management, data cleanup, and user notifications. The exact details of each job would typically be found in the implementation of the `CronService`, which would define the specific schedules and actions for each job.
+
+Task ID: gf_8
+Q: How does the import flow work from receiving a file to creating activities in the database?
+Expected: ImportService.import() receives DTOs for accounts, activities, asset profiles, and tags. It: (1) creates new accounts if needed, mapping old to new IDs, (2) creates new asset profiles and maps symbols, (3) creates tags with permission checks, (4) remaps activity references to new IDs, (5) validates activities via DataProviderService.validateActivities() which checks data source validity and subscription permissions, (6) checks for duplicates via extendActivitiesWithErrors(), (7) creates activities via ActivitiesService.createActivity(), (8) triggers background data gathering via DataGatheringService.gatherSymbols() at high priority.
+Actual: To understand the import flow from receiving a file to creating activities in the database in the provided codebase context, we can break down the process into several key steps based on the architecture and components outlined in the `GENERATED_ARCHITECTURE.md` file.
+
+### 1. **Receiving the File**
+The import process typically starts with a user uploading a file through a frontend component. This is likely handled by a component in the client application, such as a dialog or a form that allows users to select and upload a file.
+
+### 2. **Sending the File to the API**
+Once the file is selected, the frontend component will send the file to the backend API. This is usually done via an HTTP POST request to an endpoint designed to handle file uploads. In the context of the provided architecture, this would likely be handled by the `ImportController` in the `apps/api/src/app/import/import.controller.ts` file.
+
+- **Endpoint**: `@Post()` in `ImportController` is responsible for handling the file upload.
+- **Method**: The method in `ImportController` that handles the file upload will likely process the incoming file, which may involve parsing the file contents.
+
+### 3. **Processing the File**
+After the file is received, the `ImportController` will call the `ImportService` to process the file. This service is responsible for the business logic related to importing data.
+
+- **Service Call**: The `ImportService` will have methods to read the contents of the file, validate the data, and transform it into a format suitable for database insertion.
+
+### 4. **Creating Activities**
+Once the data is processed and validated, the `ImportService` will create activities in the database. This is typically done by calling the appropriate methods in the `ActivitiesService`, which is responsible for managing activities.
+
+- **ActivitiesService**: The `ActivitiesService` will have methods to create new activity records in the database. This may involve using an ORM (like Prisma) to interact with the database.
+
+### 5. **Database Interaction**
+The `ActivitiesService` will use the Prisma service to perform the actual database operations. This involves creating new records in the `activities` table based on the data extracted from the uploaded file.
+
+- **Database Operations**: The `ActivitiesService` will call methods from the `PrismaService` to insert the new activity records into the database.
+
+### 6. **Response to the Client**
+After the activities are successfully created in the database, the `ImportController` will send a response back to the client, indicating the success or failure of the import operation. This response may include details about the imported activities or any errors encountered during the process.
+
+### Summary of the Flow
+1. **File Upload**: User uploads a file via a frontend component.
+2. **API Call**: The file is sent to the backend API (ImportController).
+3. **File Processing**: The ImportService processes the file, validates the data, and prepares it for database insertion.
+4. **Database Insertion**: The ActivitiesService creates new activity records in the database using the PrismaService.
+5. **Response**: The ImportController sends a response back to the client with the result of the import operation.
+
+This flow ensures that the import process is handled efficiently, with clear separation of concerns between the frontend, API, and database layers.
+
+Task ID: gf_10
+Q: What is the role of the Redis cache in Ghostfolio, and what data is cached?
+Expected: RedisCacheService provides caching for: (1) portfolio snapshots per user (invalidated when portfolio changes via PortfolioChangedEvent), (2) market data quotes from data providers (cached with configurable TTL via CACHE_QUOTES_TTL), (3) statistics information (active users, GitHub stars, etc.), and (4) various other computed results. The cache is used by DataProviderService.getQuotes() to avoid redundant API calls, by InfoService for statistics, and by the portfolio calculation pipeline to cache expensive portfolio snapshot computations.
+Actual: In the Ghostfolio project, the Redis cache serves as a high-performance in-memory data store that is utilized to enhance the efficiency and speed of data retrieval operations. The primary role of the Redis cache is to reduce the load on the database by storing frequently accessed data in memory, thereby improving response times for users and reducing latency in data access.
+
+### Role of Redis Cache:
+1. **Performance Improvement**: By caching data, Redis helps in speeding up the application by allowing quick access to frequently requested information without the need to query the database every time.
+2. **Load Reduction**: It alleviates the load on the primary database, which can be beneficial during peak usage times or when handling large volumes of requests.
+3. **Data Expiration and Management**: Redis can be configured to manage data expiration, ensuring that stale data is removed and that the cache remains relevant.
+
+### Data Cached:
+While the specific details of what data is cached are not explicitly outlined in the provided context, we can infer from the architecture and typical use cases in applications like Ghostfolio that the following types of data are likely candidates for caching:
+
+1. **Market Data**: Information related to market prices, trends, and other financial metrics that are frequently accessed by users.
+2. **User Sessions**: Cached user session data to quickly authenticate and authorize users without hitting the database for every request.
+3. **Portfolio Data**: Cached portfolio summaries or details that users frequently access, allowing for quick retrieval of their investment information.
+4. **API Responses**: Responses from external data providers (like market data APIs) that are accessed frequently, reducing the need to make repeated calls to these external services.
+5. **Configuration Settings**: Application configuration data that does not change often but is needed for various operations.
+
+### Conclusion:
+The Redis cache in Ghostfolio plays a crucial role in enhancing application performance and scalability by caching frequently accessed data, thereby improving user experience and reducing database load. The specific data types cached would typically include market data, user sessions, portfolio information, and API responses, among others.
+
+Task ID: gf_11
+Q: How does the impersonation system work, and who can impersonate whom?
+Expected: ImpersonationService.validateImpersonationId() checks if a user can view another user's data. For authenticated users, it queries the Access table to see if the current user (granteeUserId) has been granted access by the target user. If no explicit access exists but the user has the 'impersonateAllUsers' permission (only ADMIN role in non-production), they can impersonate anyone. For public (unauthenticated) access, it checks for Access records with null granteeUserId. PortfolioService uses impersonation IDs to load another user's portfolio data.
+Actual: The impersonation system in the provided codebase context appears to be designed to allow certain users to act on behalf of other users, typically for administrative or support purposes. Here’s a breakdown of how it works and the permissions involved:
+
+### Impersonation System Overview
+
+1. **Impersonation Service**: 
+   - The `ImpersonationService` is injected into various controllers and services, indicating that it is a central component for managing impersonation logic.
+   - It likely contains methods to initiate and manage impersonation sessions.
+
+2. **User Roles and Permissions**:
+   - The ability to impersonate another user is typically restricted to users with specific roles, such as administrators. The codebase suggests that permissions are checked using guards, such as `@UseGuards(AuthGuard('jwt'), HasPermissionGuard)`, which means that only authenticated users with the appropriate permissions can perform impersonation actions.
+   - The `HasPermissionGuard` is used to enforce permission checks on various endpoints, including those related to user management.
+
+3. **Impersonation Logic**:
+   - The impersonation process likely involves a user (e.g., an admin) requesting to impersonate another user. This could be done through a specific endpoint that the `ImpersonationService` manages.
+   - The service would validate whether the requesting user has the necessary permissions to impersonate the target user. If they do, the service would allow the action, possibly by modifying the request context to reflect the impersonated user's identity.
+
+4. **Endpoints and Guards**:
+   - Various endpoints in the `UserController` and other controllers check for impersonation permissions. For example, actions like updating a user's access token or deleting a user require the user to have the appropriate permissions, which are enforced by guards.
+   - The impersonation functionality is likely tied to specific user actions, such as viewing or modifying user data, which are protected by these guards.
+
+### Who Can Impersonate Whom?
+
+- **Admin Users**: Typically, only users with administrative roles (e.g., those with the `ADMIN` role) can impersonate other users. This is a common practice to ensure that sensitive actions are logged and controlled.
+- **Permission Checks**: The impersonation system checks if the user attempting to impersonate another user has the necessary permissions. This is done through the `HasPermissionGuard`, which verifies if the user has the required permissions to perform impersonation actions.
+
+### Summary
+
+In summary, the impersonation system allows certain users (likely administrators) to act on behalf of other users, with strict permission checks in place to ensure that only authorized personnel can perform such actions. The system is designed to maintain security and accountability by requiring appropriate permissions and using guards to enforce these rules.
+
+Task ID: gf_12
+Q: What is the database schema structure, and what are the key entity relationships?
+Expected: The Prisma schema defines 15 models. User is the central entity with relations to Account (1:N), Order/activities (1:N), Analytics (1:1), Settings (1:1), Subscription (1:N), ApiKey (1:N), AuthDevice (1:N), Tag (1:N), Access (1:N as both grantor and grantee), and SymbolProfile (1:N for owned profiles, M:N for watchlist). Account has AccountBalance (1:N) and Order (1:N). Order references SymbolProfile (N:1) and Tag (M:N). SymbolProfile has SymbolProfileOverrides (1:1) and MarketData entries. Platform has Account (1:N).
+Actual: The database schema structure is defined by various entities and their relationships, as outlined in the provided context. Below is a summary of the key entities and their relationships:
+
+### Key Entities and Relationships
+
+1. **Access**
+   - **Relationships**:
+     - Many-to-One with **User** (granteeUser)
+     - One-to-Many with **AccessPermission** (permissions)
+     - Many-to-One with **User** (user)
+
+2. **Account**
+   - **Relationships**:
+     - One-to-Many with **Order** (activities)
+     - One-to-Many with **AccountBalance** (balances)
+     - Many-to-One with **Platform** (platform)
+     - Many-to-One with **User** (user)
+
+3. **AccountBalance**
+   - **Relationships**:
+     - Many-to-One with **Account** (account)
+
+4. **Analytics**
+   - **Relationships**:
+     - Many-to-One with **User** (user)
+
+5. **ApiKey**
+   - **Relationships**:
+     - Many-to-One with **User** (user)
+
+6. **AssetProfileResolution**
+   - **Relationships**:
+     - One-to-One with **DataSource** (dataSourceOrigin)
+     - One-to-One with **DataSource** (dataSourceTarget)
+
+7. **AuthDevice**
+   - **Relationships**:
+     - Many-to-One with **User** (user)
+
+8. **MarketData**
+   - **Relationships**:
+     - One-to-One with **DataSource** (dataSource)
+     - One-to-One with **MarketDataState** (state)
+
+9. **Order**
+   - **Relationships**:
+     - Many-to-One with **Account** (account)
+     - One-to-Many with **Tag** (tags)
+     - One-to-One with **Type** (type)
+     - Many-to-One with **User** (user)
+     - Many-to-One with **SymbolProfile** (symbolProfile)
+
+10. **Platform**
+    - **Relationships**:
+      - One-to-Many with **Account** (accounts)
+
+11. **Settings**
+    - **Relationships**:
+      - Many-to-One with **User** (user)
+
+12. **SymbolProfile**
+    - **Relationships**:
+      - One-to-Many with **Order** (activities)
+      - One-to-One with **AssetClass** (assetClass)
+      - One-to-One with **AssetSubClass** (assetSubClass)
+      - One-to-One with **DataSource** (dataSource)
+      - Many-to-One with **User** (user)
+      - One-to-Many with **User** (watchedBy)
+      - One-to-One with **SymbolProfileOverrides** (symbolProfileOverrides)
+
+13. **SymbolProfileOverrides**
+    - **Relationships**:
+      - One-to-One with **AssetClass** (assetClass)
+      - One-to-One with **AssetSubClass** (assetSubClass)
+      - Many-to-One with **SymbolProfile** (symbolProfile)
+
+14. **Subscription**
+    - **Relationships**:
+      - Many-to-One with **User** (user)
+
+15. **Tag**
+    - **Relationships**:
+      - One-to-Many with **Order** (activities)
+      - Many-to-One with **User** (user)
+
+16. **User**
+    - **Relationships**:
+      - One-to-Many with **Access** (accessesGet)
+      - One-to-Many with **Access** (accessesGive)
+      - One-to-Many with **Account** (accounts)
+      - One-to-Many with **Order** (activities)
+      - One-to-One with **Analytics** (analytics)
+      - One-to-Many with **ApiKey** (apiKeys)
+      - One-to-Many with **AuthDevice** (authDevices)
+      - One-to-One with **Provider** (provider)
+      - One-to-One with **Role** (role)
+      - One-to-One with **Settings** (settings)
+      - One-to-Many with **Subscription** (subscriptions)
+      - One-to-Many with **Tag** (tags)
+      - One-to-Many with **SymbolProfile** (watchlist)
+      - One-to-Many with **SymbolProfile** (symbolProfile)
+
+### Summary of Relationships
+- **One-to-Many**: A single entity can be associated with multiple instances of another entity (e.g., a User can have multiple Accounts).
+- **Many-to-One**: Multiple instances of one entity can be associated with a single instance of another entity (e.g., multiple Access records can be associated with a single User).
+- **One-to-One**: Each instance of one entity is associated with exactly one instance of another entity (e.g., each User has exactly one Settings record).
+
+This structure allows for complex relationships and interactions between different entities, facilitating a robust data model for the application.
+
+Task ID: gf_16
+Q: How does the admin module manage asset profiles and market data?
+Expected: AdminService provides admin-level operations: addAssetProfile() creates symbol profiles by fetching data from the data provider, patchAssetProfileData() updates profiles using SymbolProfileOverrides for non-MANUAL sources (preserving original data), deleteProfileData() removes market data and optionally the profile. getMarketData() supports filtered/sorted queries with presets (BENCHMARKS, CURRENCIES, ETF_WITHOUT_COUNTRIES, ETF_WITHOUT_SECTORS, NO_ACTIVITIES). getMarketDataBySymbol() returns detailed market data with data provider info. Admin can also manage system settings via putSetting(), which triggers side effects like reinitializing exchange rates.
+Actual: The Admin Module in the provided codebase manages asset profiles and market data through a combination of controllers, services, and dependencies that facilitate various operations related to these entities. Here's a detailed breakdown of how it accomplishes this:
+
+### 1. **Controllers**
+The Admin Module includes the `AdminController`, which provides several endpoints for managing asset profiles and market data. Key functionalities include:
+
+- **Gathering Data**: The controller has endpoints for gathering market data and profile data for assets. For example:
+  - `@Post('gather')` allows the admin to initiate data gathering for a specified period.
+  - `@Post('gather/profile-data')` and `@Post('gather/profile-data/:dataSource/:symbol')` are used to gather profile data for specific assets.
+
+- **Market Data Management**: The controller also has endpoints for managing market data:
+  - `@Get('market-data')` retrieves market data.
+  - `@Post('market-data/:dataSource/:symbol/test')` tests the market data for a specific data source and symbol.
+
+### 2. **Services**
+The Admin Module relies on various services to perform the actual business logic behind the operations defined in the controller. Key services include:
+
+- **AdminService**: This service is injected into the `AdminController` and is responsible for handling the logic related to asset profiles and market data. It interacts with other services to gather, update, and manage data.
+
+- **DataGatheringService**: This service is likely responsible for orchestrating the data gathering processes, including fetching data from external sources and processing it for storage.
+
+- **MarketDataService**: This service handles operations related to market data, such as fetching, updating, and deleting market data entries.
+
+- **BenchmarkService**: This service may be involved in managing benchmarks related to asset performance, which can be crucial for market data analysis.
+
+### 3. **Dependencies**
+The Admin Module imports several other modules that provide additional functionality:
+
+- **ActivitiesModule**: This module may provide functionality related to tracking activities associated with asset profiles and market data.
+
+- **DataProviderModule**: This module likely contains services that interact with external data providers to fetch asset and market data.
+
+- **ExchangeRateDataModule**: This module may be used to manage and convert currency data, which is often necessary when dealing with market data.
+
+- **PrismaModule**: This module is used for database interactions, allowing the Admin Module to perform CRUD operations on asset profiles and market data stored in the database.
+
+### 4. **Middleware and Guards**
+The Admin Module also employs guards, such as `AuthGuard` and `HasPermissionGuard`, to ensure that only authorized users can access the endpoints related to asset profiles and market data management. This adds a layer of security to the operations.
+
+### Summary
+In summary, the Admin Module manages asset profiles and market data through a structured approach involving controllers for handling requests, services for business logic, and dependencies for data access and external interactions. This modular design allows for clear separation of concerns and facilitates maintainability and scalability of the application.
+
+Task ID: gf_17
+Q: How does the data enhancer system work to enrich asset profiles?
+Expected: DataGatheringService uses a plugin-based data enhancement pipeline. It injects an array of DataEnhancerInterface implementations via @Inject('DataEnhancers'). When gathering asset profiles via gatherAssetProfiles(), after fetching base data from the data provider, it iterates through each data enhancer (OpenFIGI, Trackinsight, YahooFinance) calling enhance() on the response. Each enhancer can add additional data (FIGI identifiers, country/sector breakdowns, etc.). Symbol mapping from SymbolProfile allows enhancers to look up symbols under different identifiers.
+Actual: The data enhancer system in the provided codebase context is designed to enrich asset profiles by integrating various data sources and applying enhancements to the data retrieved from these sources. Here’s a breakdown of how this system operates:
+
+### 1. **Data Provider Integration**
+The system utilizes multiple data providers to fetch asset-related data. These providers include:
+- **AlphaVantageService**
+- **CoinGeckoService**
+- **EodHistoricalDataService**
+- **FinancialModelingPrepService**
+- **GoogleSheetsService**
+- **ManualService**
+- **RapidApiService**
+- **YahooFinanceService**
+
+Each of these services is responsible for fetching specific types of data related to assets, such as historical prices, dividends, and other financial metrics.
+
+### 2. **Data Enhancer Service**
+The `DataEnhancerService` is a central component that orchestrates the data enhancement process. It is designed to:
+- **Inject Data Enhancers**: The service is initialized with an array of data enhancers, which are interfaces that define how to enhance the data.
+- **Fetch and Enhance Data**: When a request for asset profile data is made, the `DataEnhancerService` calls the appropriate data providers to retrieve the raw data. It then applies the defined enhancements to this data.
+
+### 3. **Enhancement Logic**
+The enhancement logic is likely implemented in the individual data enhancer services (e.g., `OpenFigiDataEnhancerService`, `TrackinsightDataEnhancerService`, etc.). Each of these services would contain specific methods to transform or enrich the data fetched from the primary data providers. This could involve:
+- **Merging Data**: Combining data from multiple sources to create a more comprehensive asset profile.
+- **Calculating Metrics**: Deriving additional metrics or insights from the raw data, such as performance indicators or risk assessments.
+- **Formatting Data**: Ensuring that the data is presented in a consistent format that aligns with the application's requirements.
+
+### 4. **Usage in Controllers**
+The enriched asset profiles are typically accessed through various controllers, such as `GhostfolioController`, which provides endpoints for fetching asset profiles. When a request is made to these endpoints, the controller will:
+- Call the `DataEnhancerService` to retrieve the enriched data.
+- Return the enhanced asset profile to the client.
+
+### 5. **Caching and Performance**
+To improve performance and reduce the load on external data providers, the system likely employs caching mechanisms (e.g., `RedisCacheService`). This allows frequently accessed data to be stored temporarily, reducing the need for repeated calls to external APIs.
+
+### 6. **Error Handling**
+The system includes error handling mechanisms to manage issues that may arise during data fetching or enhancement. For instance, if a data provider fails to return data, the system can log the error and potentially fall back to alternative data sources or return a default response.
+
+### Conclusion
+In summary, the data enhancer system works by integrating multiple data providers, utilizing a dedicated service to orchestrate data fetching and enhancement, and providing enriched asset profiles through well-defined API endpoints. This architecture allows for flexibility, scalability, and improved data quality in asset management applications.
+
+Task ID: gf_18
+Q: What is the data flow from when a user creates a new buy activity to when it appears in portfolio performance?
+Expected: 1. Client sends POST to ActivitiesController, 2. ActivitiesService.createActivity() validates and creates an Order record in the database, 3. EventEmitter emits PortfolioChangedEvent, 4. PortfolioChangedListener invalidates Redis portfolio snapshot cache for the user, 5. DataGatheringService.gatherSymbols() is triggered to fetch historical market data for the symbol, 6. When portfolio is viewed, PortfolioService.getDetails() calls ActivitiesService.getActivitiesForPortfolioCalculator(), 7. PortfolioCalculatorFactory creates appropriate calculator, 8. Calculator fetches current rates via CurrentRateService, exchange rates via ExchangeRateDataService, 9. Calculator computes snapshot with positions, performance metrics, and returns holdings/summary.
+Actual: To understand the data flow from when a user creates a new buy activity to when it appears in portfolio performance, we can break down the process into several key steps based on the provided architecture.
+
+### 1. User Action: Create Buy Activity
+- **Component**: `GfActivitiesPageComponent` (or a similar component where the user initiates the buy activity).
+- **Action**: The user fills out a form to create a new buy activity and submits it.
+
+### 2. Service Call to Create Activity
+- **Service**: `DataService` (or a similar service).
+- **Method**: The component calls a method in the `DataService` to create the activity, which likely sends an HTTP POST request to the backend API.
+- **Endpoint**: This would typically hit an endpoint like `POST /api/v1/activities`.
+
+### 3. API Controller Handling
+- **Controller**: `ActivitiesController`.
+- **Method**: The `createActivity` method in the `ActivitiesController` handles the incoming request.
+- **Logic**: This method validates the input data and then calls the `ActivitiesService` to process the creation of the activity.
+
+### 4. Business Logic in Service
+- **Service**: `ActivitiesService`.
+- **Method**: The `createActivity` method in the `ActivitiesService` is responsible for the business logic.
+- **Database Interaction**: This service interacts with the database (via Prisma) to create a new activity record in the `Order` table (or a similar table that tracks activities).
+
+### 5. Event Emission (if applicable)
+- **Event**: If the application is designed to handle events, the `ActivitiesService` might emit an event (e.g., `ActivityCreatedEvent`) after successfully creating the activity.
+- **Listener**: Any relevant listeners (like `PortfolioSnapshotProcessor`) can react to this event to update the portfolio snapshot.
+
+### 6. Portfolio Update
+- **Service**: `PortfolioService`.
+- **Method**: The `PortfolioService` may have methods that aggregate activities to calculate performance metrics.
+- **Data Aggregation**: The service retrieves all activities related to the user's portfolio, including the newly created buy activity.
+
+### 7. Performance Calculation
+- **Service**: `PortfolioCalculatorFactory` or similar.
+- **Method**: The factory or service responsible for calculating portfolio performance will use the updated list of activities to compute metrics like total return, current value, etc.
+- **Data Flow**: The performance metrics are updated based on the new activity data.
+
+### 8. Update Portfolio Performance
+- **Controller**: `PortfolioController`.
+- **Method**: The `getPerformance` method in the `PortfolioController` retrieves the updated performance metrics.
+- **Response**: The updated performance data is sent back to the frontend, where it can be displayed to the user.
+
+### 9. User Interface Update
+- **Component**: `GfPortfolioPerformanceComponent` (or similar).
+- **Action**: The component that displays portfolio performance will receive the updated data and re-render to show the new performance metrics, reflecting the impact of the newly created buy activity.
+
+### Summary of Data Flow
+1. User creates a buy activity in the UI.
+2. The UI component calls the `DataService` to create the activity.
+3. The `ActivitiesController` processes the request and calls the `ActivitiesService`.
+4. The `ActivitiesService` creates a new activity record in the database.
+5. (Optional) An event is emitted to notify other parts of the system.
+6. The `PortfolioService` aggregates activities to update performance metrics.
+7. The updated performance metrics are retrieved by the `PortfolioController`.
+8. The UI component displaying portfolio performance is updated with the new data.
+
+This flow ensures that the user's action of creating a buy activity is seamlessly integrated into the overall portfolio performance calculations, providing real-time feedback and updates to the user.
+
+Task ID: gf_20
+Q: What middleware is applied globally, and what does each middleware do?
+Expected: Two middlewares exist: (1) HtmlTemplateMiddleware - applied to all routes ('*wildcard') via AppModule.configure(). It intercepts responses for language-specific routes, reading HTML template files and injecting dynamic metadata (title, description, image, language) for SEO and social media sharing. (2) BullBoardAuthMiddleware - applied specifically to the Bull Board route, protecting the job queue dashboard by requiring admin authentication (checking for valid JWT and ADMIN role).
+Actual: In the provided codebase context, the only middleware that is applied globally is the **HtmlTemplateMiddleware**. 
+
+### HtmlTemplateMiddleware
+- **Purpose**: This middleware is designed to handle HTML template rendering for all incoming requests that match the specified route pattern (`'*wildcard'`). It is likely used to serve HTML pages or templates for the application, ensuring that the appropriate HTML content is returned to the client.
+
+### Summary
+- **Middleware Applied Globally**: 
+  - **HtmlTemplateMiddleware**: Handles HTML template rendering for all routes.
+
+No other middleware is mentioned as being applied globally in the provided context.
+
+Task ID: gf_22
+Q: How does Ghostfolio handle multi-currency portfolio calculations?
+Expected: ExchangeRateDataService maintains exchange rate pairs relative to USD (DEFAULT_CURRENCY). During portfolio calculation, PortfolioCalculator fetches exchange rates via ExchangeRateDataService.getExchangeRatesByCurrency() for all currencies used in the portfolio over the calculation period. Values are converted using toCurrency() for current rates and toCurrencyAtDate() for historical rates (querying MarketData table). The system supports derived currencies (e.g., GBX = GBP * 100) via factor-based conversion. If direct rates aren't available, indirect conversion through USD is attempted.
+Actual: Ghostfolio handles multi-currency portfolio calculations through a combination of services and modules that interact with various data providers and perform necessary conversions and calculations. Here’s a breakdown of how this is achieved based on the provided architecture:
+
+1. **Data Providers**: Ghostfolio integrates with multiple data providers (e.g., Alpha Vantage, CoinGecko, Yahoo Finance) to fetch market data, including exchange rates and asset prices in different currencies. This is facilitated by services like `DataProviderService`, which abstracts the interaction with these external APIs.
+
+2. **Exchange Rate Management**: The `ExchangeRateService` is responsible for managing exchange rates. It likely fetches and stores current exchange rates from the data providers, allowing the application to convert asset values from one currency to another as needed.
+
+3. **Portfolio Calculations**: The `PortfolioService` and its associated calculators (like `PortfolioCalculatorFactory`) are responsible for performing calculations on the portfolio. These services would take into account the currency of each asset and use the exchange rates to convert values into a common currency for accurate performance calculations.
+
+4. **User Preferences**: The application likely allows users to set their preferred currency for reporting and calculations. This preference would be used to determine how to display portfolio values and performance metrics.
+
+5. **Multi-Currency Support in Models**: The architecture indicates that various models (like `Account`, `AccountBalance`, and `SymbolProfile`) are designed to handle multiple currencies. This means that each account or asset can have values in different currencies, and the application can perform calculations accordingly.
+
+6. **Real-Time Updates**: The architecture includes services that handle real-time data updates (like `DataGatheringService`), ensuring that the portfolio calculations reflect the most current market conditions and exchange rates.
+
+7. **User Interface Components**: The UI components (like `GfPortfolioPerformanceComponent` and `GfPortfolioSummaryComponent`) are designed to present the calculated values to users, likely allowing them to view their portfolio performance in their selected currency.
+
+In summary, Ghostfolio's approach to multi-currency portfolio calculations involves a robust architecture that integrates various data sources, manages exchange rates, and provides users with the ability to view their portfolio in their preferred currency, all while ensuring accurate and up-to-date calculations.
+
+Task ID: gf_25
+Q: How does the InfoService aggregate system information and what data does it expose?
+Expected: InfoService.get() assembles an InfoItem containing: global permissions (based on feature flags like ENABLE_FEATURE_AUTH_GOOGLE, ENABLE_FEATURE_SUBSCRIPTION, etc.), benchmark asset profiles from BenchmarkService, a demo auth token from PropertyService, user signup status, statistics (active users 1d/30d, new users 30d, Docker Hub pulls, GitHub contributors/stargazers, Slack users, uptime from PropertyService), subscription offers, base currency (USD), available currencies from ExchangeRateDataService, and read-only mode status. Statistics are cached in Redis.
+Actual: The `InfoService` in the provided codebase is designed to aggregate and expose system information related to the application. Here's a detailed analysis of how it operates and the data it exposes:
+
+### Aggregation of System Information
+
+1. **Dependencies**: The `InfoService` relies on several injected services to gather information:
+   - **BenchmarkService**: Likely used to retrieve performance metrics or benchmarks related to the application.
+   - **ConfigurationService**: Provides access to configuration settings, which may include environment variables or application settings.
+   - **ExchangeRateDataService**: Used to fetch current exchange rates, which can be crucial for financial applications.
+   - **JwtService**: Used for handling JSON Web Tokens, which may be relevant for authentication and authorization.
+   - **PropertyService**: This service might be used to access various properties or settings related to the application.
+   - **RedisCacheService**: Utilized for caching purposes, which can improve performance by reducing the need to repeatedly fetch the same data.
+
+2. **Methods**: The `InfoService` likely contains methods that utilize these dependencies to gather and compile relevant information. While the exact methods are not detailed in the provided context, typical methods might include:
+   - Fetching application health status.
+   - Retrieving configuration settings.
+   - Aggregating performance metrics from the `BenchmarkService`.
+   - Collecting data from the `ExchangeRateDataService` to provide current exchange rates.
+
+### Data Exposed by InfoService
+
+The `InfoService` is expected to expose various types of data, which may include:
+
+1. **Application Health**: Information about the health of different components of the application, such as:
+   - Status of external services (e.g., data providers, APIs).
+   - Performance metrics (e.g., response times, error rates).
+
+2. **Configuration Settings**: Exposing key configuration settings that might be useful for debugging or monitoring, such as:
+   - Environment variables (e.g., API keys, database connection strings).
+   - Feature flags that control the availability of certain functionalities.
+
+3. **Exchange Rates**: If the service interacts with the `ExchangeRateDataService`, it may expose current exchange rates for various currencies, which is particularly relevant for financial applications.
+
+4. **User and System Metrics**: Depending on the implementation, it might also expose metrics related to user activity, system load, or other performance indicators.
+
+### Conclusion
+
+In summary, the `InfoService` aggregates system information by leveraging various injected services to gather data about application health, configuration settings, and possibly exchange rates. The data it exposes is crucial for monitoring the application's performance and ensuring that it operates smoothly, especially in a financial context where real-time data is essential.
+
+Task ID: gf_26
+Q: Which services depend on the PropertyService, and what key-value properties does it manage?
+Expected: PropertyService is used by AdminService, AuthService, ConfigurationService, CronService, DataGatheringService, DataProviderService, ExchangeRateDataService, InfoService, SubscriptionService, and UserService. It manages Property key-value pairs including: PROPERTY_BENCHMARKS (benchmark configs), PROPERTY_CURRENCIES (custom currencies), PROPERTY_DATA_SOURCE_MAPPING (data source overrides), PROPERTY_DEMO_USER_ID, PROPERTY_IS_DATA_GATHERING_ENABLED, PROPERTY_IS_READ_ONLY_MODE, PROPERTY_IS_USER_SIGNUP_ENABLED, PROPERTY_STRIPE_CONFIG, PROPERTY_SYSTEM_MESSAGE, PROPERTY_API_KEY_GHOSTFOLIO, and various statistics properties (Docker Hub, GitHub, Slack, uptime).
+Actual: Based on the provided codebase context, the following services depend on the `PropertyService`:
+
+1. **AdminService**
+2. **BenchmarkService**
+3. **ConfigurationService**
+4. **DataProviderService**
+5. **DemoService**
+6. **ExchangeRateDataService**
+7. **GhostfolioService**
+8. **ImportService**
+9. **InfoService**
+10. **LogoService**
+11. **MarketDataService**
+12. **PortfolioService**
+13. **SubscriptionService**
+14. **UserService**
+
+### Key-Value Properties Managed by PropertyService
+
+The `PropertyService` manages various key-value properties, which include but are not limited to:
+
+- `PROPERTY_API_KEY_GHOSTFOLIO`
+- `PROPERTY_API_KEY_OPENROUTER`
+- `PROPERTY_BENCHMARKS`
+- `PROPERTY_BETTER_UPTIME_MONITOR_ID`
+- `PROPERTY_DOCKER_HUB_PULLS`
+- `PROPERTY_GITHUB_CONTRIBUTORS`
+- `PROPERTY_GITHUB_STARGAZERS`
+- `PROPERTY_COUNTRIES_OF_SUBSCRIBERS`
+- `PROPERTY_COUPONS`
+- `PROPERTY_CURRENCIES`
+- `PROPERTY_CUSTOM_CRYPTOCURRENCIES`
+- `PROPERTY_DATA_SOURCE_MAPPING`
+- `PROPERTY_DATA_SOURCES_GHOSTFOLIO_DATA_PROVIDER_MAX_REQUESTS`
+- `PROPERTY_DEMO_ACCOUNT_ID`
+- `PROPERTY_DEMO_USER_ID`
+- `PROPERTY_IS_DATA_GATHERING_ENABLED`
+- `PROPERTY_IS_READ_ONLY_MODE`
+- `PROPERTY_IS_USER_SIGNUP_ENABLED`
+- `PROPERTY_OPENROUTER_MODEL`
+- `PROPERTY_SLACK_COMMUNITY_USERS`
+- `PROPERTY_STRIPE_CONFIG`
+- `PROPERTY_SYSTEM_MESSAGE`
+- `PROPERTY_UPTIME`
+- `PROPERTY_WEB_FETCH_ROUTES`
+
+These properties are likely used throughout the application to configure various aspects of its behavior, such as API keys for external services, feature toggles, and other application settings.
+
+Task ID: gf_28
+Q: How does user creation work, and what default resources are set up for a new user?
+Expected: UserService.createUser() creates a user with: (1) Provider defaults to ANONYMOUS if not specified, (2) Role defaults to ADMIN for the first user, USER for subsequent users (checked via hasAdmin()), (3) A default account is auto-created with DEFAULT_CURRENCY (USD) and localized name 'My Account', (4) Default settings are created with base currency USD, (5) If ENABLE_FEATURE_SUBSCRIPTION is enabled, an Analytics record is created, (6) For ANONYMOUS providers, an access token is generated using HMAC-SHA512 with a random salt. The access token is hashed and stored, while the unhashed version is returned to the user.
+Actual: In the provided codebase context, user creation is handled primarily through the `UserController` and the `UserService`. Here’s a detailed breakdown of how user creation works and what default resources are set up for a new user:
+
+### User Creation Process
+
+1. **Endpoint for User Creation**:
+   - The `UserController` has a method `signupUser` that handles the creation of a new user. This method is mapped to the `POST` request on the `/user` route.
+
+2. **Request Handling**:
+   - When a request is made to create a new user, the `signupUser` method is invoked. This method likely accepts user details (such as username, password, email, etc.) in the request body.
+
+3. **Service Layer**:
+   - The `UserService` is responsible for the actual logic of creating a user. The `signupUser` method in the `UserController` will call a corresponding method in the `UserService` to handle the creation.
+
+4. **User Creation Logic**:
+   - Inside the `UserService`, the user creation logic typically involves:
+     - Validating the input data.
+     - Hashing the password (if applicable).
+     - Creating a new user record in the database using the Prisma ORM (as indicated by the use of `prismaService`).
+
+### Default Resources Set Up for a New User
+
+When a new user is created, several default resources and settings are typically established. While the exact details are not explicitly outlined in the provided context, we can infer the following based on common practices and the structure of the codebase:
+
+1. **Default User Settings**:
+   - A new user may have default settings created, which could include preferences for language, notification settings, and other user-specific configurations. This is often handled in the `UserService` where a new `Settings` record is created and linked to the user.
+
+2. **Default Access Permissions**:
+   - The user might be assigned default access permissions, which are managed through the `Access` model. This could involve creating default access records that define what the user can do within the application.
+
+3. **Default Accounts**:
+   - If the application involves financial or portfolio management, a default account may be created for the user. This could be an empty account that the user can later populate with assets or transactions.
+
+4. **Default Tags or Watchlists**:
+   - The user might also have default tags or watchlists created to help them organize their assets or interests from the start.
+
+5. **Default Notifications**:
+   - The user may be subscribed to default notifications or alerts related to their account or activities within the application.
+
+### Summary
+
+In summary, user creation in this codebase involves a controller method that processes the request, delegates the logic to a service, and utilizes the Prisma ORM to create a new user in the database. Default resources such as user settings, access permissions, accounts, and possibly tags or watchlists are typically set up to provide a seamless experience for the new user. The exact implementation details would be found in the `UserService` and related models.
+

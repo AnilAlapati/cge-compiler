@@ -1,0 +1,38 @@
+CGE/1.0 auth_manager (Cpp)
+
+IMPORTS:
+  string
+  vector
+  map
+  stdexcept
+
+TYPES:
+  EXPORT AuthSession{token:S, expiry:N, scopes:S[]}
+  EXPORT AuthManager{activeAttempts:N}
+
+STATE:
+  EXPORT AuthSession.token:S
+  EXPORT AuthSession.expiry:N
+  EXPORT AuthSession.scopes:S[]
+  AuthManager.secretKey:S
+  EXPORT AuthManager.activeAttempts:N
+  EXPORT CONST MAX_LOGIN_ATTEMPTS:N = 5
+
+OPS:
+  EXPORT AuthManager.login(email:S, password:S)->B:
+    GUARD email.empty() || password.empty() THROW std::invalid_argument("missing_credentials")
+    auto it = activeSessions.find(email)
+    GUARD it != activeSessions.end() RETURN true
+    RETURN false
+
+  EXPORT AuthManager.verifySession(token:S)->B:
+    GUARD token.empty() RETURN false
+    for (auto const& [key, session] : activeSessions) {
+    if (session.token == token) {
+    GUARD session.expiry > 1000 RETURN true
+    RETURN false
+
+PRIVATE:
+  AuthManager.logEvent(msg:S)->void: void
+
+EXPORTS: AuthSession, login, verifySession, AuthManager, MAX_LOGIN_ATTEMPTS

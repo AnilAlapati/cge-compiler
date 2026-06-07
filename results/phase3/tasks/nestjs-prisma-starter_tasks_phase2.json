@@ -1,0 +1,52 @@
+[
+  {
+    "id": "task_1",
+    "question": "What are the GraphQL queries defined in the AppResolver?",
+    "expected": "helloWorld, hello"
+  },
+  {
+    "id": "task_2",
+    "question": "What are the main modules imported in the AppModule?",
+    "expected": "ConfigModule, PrismaModule, GraphQLModule, AuthModule, UsersModule, PostsModule"
+  },
+  {
+    "id": "task_3",
+    "question": "What are the authentication-related classes provided in the AuthModule?",
+    "expected": "AuthService, AuthResolver, JwtStrategy, GqlAuthGuard, PasswordService"
+  },
+  {
+    "id": "task_4",
+    "question": "What are the input types defined for user authentication in the Auth module?",
+    "expected": "LoginInput, SignupInput, RefreshTokenInput"
+  },
+  {
+    "id": "task_5",
+    "question": "What are the main entities related to the User model in the Users module?",
+    "expected": "Post"
+  },
+  {
+    "id": "task_6",
+    "question": "What are the routes defined in the AppController?",
+    "expected": "GET /, GET /hello/:name"
+  },
+  {
+    "id": "task_7",
+    "question": "What are the methods defined in the PostsResolver?",
+    "expected": "postCreated, createPost, publishedPosts, userPosts, post"
+  },
+  {
+    "id": "task_8",
+    "question": "What are the decorators used for user authentication in the UsersResolver?",
+    "expected": "UseGuards(GqlAuthGuard)"
+  },
+  {
+    "id": "task_9",
+    "question": "What are the fields defined in the Token model?",
+    "expected": "accessToken, refreshToken"
+  },
+  {
+    "id": "task_10",
+    "question": "What are the pagination arguments defined in the PaginationArgs class?",
+    "expected": "skip, after, before, first, last"
+  }
+]

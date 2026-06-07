@@ -23,6 +23,7 @@
     };
   </script>
   <script defer src="/_vercel/insights/script.js"></script>
+  <script src="dist/leancontext_engine.js"></script>
 </head>
 <body>
 
@@ -31,68 +32,57 @@
     <!-- ================================================================
          HERO SECTION
          ================================================================ -->
-    <section class="hero" id="hero">
-      <div class="hero-spec-tag">CGE/1.0 Specification</div>
+    <section class="hero reveal-element" id="hero">
+      <div class="hero-spec-tag">LeanContext 1.0</div>
 
       <h1>
         Compact Code. Expand Context.
       </h1>
 
-      <div style="margin: 2rem auto; max-width: 800px; padding: 1.5rem; background: rgba(255, 60, 60, 0.1); border-left: 4px solid #ff3c3c; text-align: left; border-radius: 4px;">
-        <h3 style="margin-top: 0; color: #fff;">🔬 Phase 1 Research Concluded (June 2026)</h3>
-        <p style="margin-bottom: 0; color: #ccc;">We recently concluded our first major empirical study on whether structural code compression improves LLM reasoning. The short answer: <em>It doesn't.</em> By stripping out syntactical metadata, we inadvertently removed the exact clues LLMs use to infer architecture. You can read our full findings in our <a href="https://github.com/AnilAlapati/cge-compiler/blob/main/docs/interim_research_conclusion.md" style="color: #64ffda; text-decoration: underline;">Phase 1 Research Conclusion</a>. We are currently pivoting to Phase 2: Architectural Augmentation.</p>
-      </div>
-
       <p class="hero-subtitle">
-        An experimental research project exploring how AI agents navigate complex codebases.
+        An advanced, browser-native prompt packager that minifies entire repositories for AI agents.
       </p>
 
       <div class="hero-stats">
         <div class="hero-stat">
-          <span class="stat-value" id="hero-langs" style="font-size: 1.5rem;">Language Agnostic Architecture</span>
-          <span class="stat-label">Multi-Language Parsers</span>
+          <span class="stat-value" id="hero-langs">Language Agnostic</span>
+          <span class="stat-label">Universal Support</span>
         </div>
         <div class="hero-stat">
-          <span class="stat-value">Semantic Fidelity</span>
-          <span class="stat-label">Logic-Preserving Compression</span>
+          <span class="stat-value">Zero Logic Loss</span>
+          <span class="stat-label">Strips noise, keeps code</span>
         </div>
         <div class="hero-stat">
-          <span class="stat-value">Deterministic</span>
-          <span class="stat-label">Zero AI Latency</span>
+          <span class="stat-value">100% Local</span>
+          <span class="stat-label">Zero API calls</span>
         </div>
         <div class="hero-stat">
-          <span class="stat-value">Closed-Loop Verified</span>
-          <span class="stat-label">CLNR Semantic Proof</span>
+          <span class="stat-value">Instant Packaging</span>
+          <span class="stat-label">Ready for Claude/GPT</span>
         </div>
       </div>
 
-      <div class="scroll-cta">
-        <a href="#why-cge">
-          Why CGE?
-          <span class="scroll-arrow">↓</span>
-        </a>
-      </div>
     </section>
 
     <!-- ================================================================
-         THE CORE INTENT — WHY CGE?
+         THE CORE INTENT — WHY LEANCONTEXT?
          ================================================================ -->
     <section class="why-section reveal-element" id="why-cge">
-      <h3 class="why-title">Why Cognitive Graph Encoding?</h3>
+      <h3 class="why-title">Why LeanContext?</h3>
       <p class="why-subtitle">
-        AI models process code structure, not syntax noise. CGE compiles raw files into optimized topological shorthands, solving critical constraints in high-frequency developer workflows.
+        AI models process code structure and logic, not syntax noise. LeanContext compiles raw files into optimized topological shorthands, solving critical constraints in high-frequency developer workflows.
       </p>
 
       <div class="why-grid">
         <div class="why-card">
           <span class="why-icon">🗜️</span>
           <h4 class="why-card-title">Bypass Context Windows</h4>
-          <p class="why-card-desc">Fit entire multi-file directories or bulky libraries into standard context limits without losing type declarations, state structures, or API contracts.</p>
+          <p class="why-card-desc">Fit massive multi-file directories or bulky libraries into standard context limits by instantly stripping up to 40% of unnecessary whitespace and comments.</p>
         </div>
         <div class="why-card">
           <span class="why-icon">💸</span>
           <h4 class="why-card-title">Slash Prompt Billing</h4>
-          <p class="why-card-desc">Reduce prompt token consumption by up to 55%. Prevent escalating API costs for high-frequency coding agents and repository indexing cycles.</p>
+          <p class="why-card-desc">Reduce prompt token consumption dramatically. Prevent escalating API costs for high-frequency coding agents and repository indexing cycles.</p>
         </div>
         <div class="why-card">
           <span class="why-icon">⚡</span>
@@ -101,8 +91,8 @@
         </div>
         <div class="why-card">
           <span class="why-icon">🎯</span>
-          <h4 class="why-card-title">High-Fidelity Logic Recovery</h4>
-          <p class="why-card-desc">Our Closed-Loop Neural Reconstruction (CLNR) protocol verifies logic preservation, ensuring the LLM recovers the complete AST structural intent.</p>
+          <h4 class="why-card-title">Curated Context Packages</h4>
+          <p class="why-card-desc">Surgically select which files are relevant to your task, exporting them into a clean, LLM-optimized XML repository package.</p>
         </div>
       </div>
     </section>
@@ -112,9 +102,6 @@
          ================================================================ -->
     <section class="workspace-section reveal-element" id="workspace">
       <div class="workspace-header">
-        <div class="segment-tabs" id="segment-tabs">
-          <!-- Dynamically populated by playground.js -->
-        </div>
       </div>
 
       <div class="editor-grid">
@@ -129,14 +116,33 @@
           </div>
           
           <!-- Mode 1: Code Input -->
-          <div class="editor-body mode-container active" id="input-container-code" style="display: flex;">
-            <div class="gutter" id="gutter-lines"></div>
-            <textarea
-              id="code-input"
-              class="textarea-editor"
-              spellcheck="false"
-              placeholder="Input code..."
-            ></textarea>
+          <div class="editor-body mode-container active" id="input-container-code" style="display: flex; flex-direction: column;">
+            <div style="padding: 12px 16px; border-bottom: 1px solid rgba(255,255,255,0.1); display: flex; gap: 20px; font-size: 0.85rem; color: #d1d5db; background: rgba(0,0,0,0.2);">
+              <label style="display: flex; align-items: center; gap: 6px; cursor: pointer;">
+                <input type="checkbox" id="opt-comments" checked> Exclude Comments
+              </label>
+              <label style="display: flex; align-items: center; gap: 6px; cursor: pointer;">
+                <input type="checkbox" id="opt-jsdoc" checked> Exclude JSDocs
+              </label>
+              <label style="display: flex; align-items: center; gap: 6px; cursor: pointer;">
+                <input type="checkbox" id="opt-dead-code" checked> Exclude Dead Code
+              </label>
+              <label style="display: flex; align-items: center; gap: 6px; cursor: pointer;">
+                <input type="checkbox" id="opt-whitespace" checked> Trim Whitespace
+              </label>
+              <button id="btn-load-sample" style="margin-left: auto; background: rgba(59, 130, 246, 0.15); border: 1px solid rgba(59, 130, 246, 0.3); color: #60a5fa; padding: 2px 10px; border-radius: 4px; font-size: 0.75rem; cursor: pointer; transition: all 0.2s; font-weight: 500;">
+                Load Sample
+              </button>
+            </div>
+            <div style="display: flex; flex-grow: 1; position: relative; overflow: hidden; height: 100%;">
+              <div class="gutter" id="gutter-lines"></div>
+              <textarea
+                id="code-input"
+                class="textarea-editor"
+                spellcheck="false"
+                placeholder="Input code..."
+              ></textarea>
+            </div>
           </div>
 
           <!-- Mode 2: Zip Input -->
@@ -145,16 +151,18 @@
               <p style="font-size: 0.875rem; color: #9ca3af; margin: 0; line-height: 1.5;">
                 Upload a codebase as a <strong>.zip</strong> archive. The compiler will recursively extract all files and compute your token & cost savings.
               </p>
+              <div style="margin-top: 16px; display: inline-flex; align-items: center; gap: 8px; background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.2); padding: 6px 12px; border-radius: 6px; color: #10b981; font-size: 0.8rem; font-weight: 500;">
+                <span style="font-size: 1rem;">🔒</span> 100% Local Browser Engine — No LLM APIs — 1,000 File Cap
+              </div>
             </div>
+
             <!-- Upload Area -->
             <div class="audit-dropzone" id="audit-dropzone" style="border: 2px dashed #4b5563; border-radius: 12px; padding: 40px 20px; text-align: center; background: rgba(31, 41, 55, 0.4); cursor: pointer; transition: all 0.3s ease; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; height: 100%;">
               <!-- Normal State -->
               <div id="dropzone-normal-state" style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px;">
                 <div style="font-size: 3rem; animation: float 3s ease-in-out infinite;">📦</div>
                 <div style="font-weight: 600; font-size: 1rem; color: #f3f4f6;">Drag & Drop Zip file here</div>
-                <div id="zip-supported-langs" style="color: #9ca3af; font-size: 0.8rem; line-height: 1.4; max-width: 320px; margin: 0 auto;">
-                  <!-- Dynamically populated by playground.js -->
-                </div>
+
                 <button class="utility-btn accent" id="audit-upload-trigger" style="background: #3b82f6; color: #fff; padding: 8px 16px; border: none; border-radius: 6px; cursor: pointer; font-weight: 500; outline: none; margin-top: 8px;">
                   Browse Zip File
                 </button>
@@ -181,6 +189,76 @@
 
               <input type="file" id="audit-file-input" accept=".zip" style="display: none;" />
             </div>
+
+            <!-- Configuration Step (Shows after Zip Extraction) -->
+            <div id="zip-config-step" style="display: none; flex-direction: column; gap: 20px; background: rgba(31, 41, 55, 0.4); border: 1px solid rgba(255,255,255,0.05); padding: 24px; border-radius: 12px; max-height: 80vh; overflow-y: auto;">
+              <div style="text-align: center;">
+                <h3 style="color: #fff; margin: 0 0 8px 0; font-size: 1.25rem;">Zip Extracted Successfully</h3>
+                <p style="color: #9ca3af; margin: 0; font-size: 0.9rem;">Configure minification settings and select file types before calculating the ROI.</p>
+              </div>
+
+              <div style="padding: 16px; border-radius: 8px; display: flex; flex-wrap: wrap; gap: 20px; font-size: 0.9rem; color: #d1d5db; background: rgba(0,0,0,0.3); justify-content: center;">
+                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                  <input type="checkbox" id="zip-opt-comments" checked> Exclude Comments
+                </label>
+                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                  <input type="checkbox" id="zip-opt-jsdoc" checked> Exclude JSDocs
+                </label>
+                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                  <input type="checkbox" id="zip-opt-dead-code" checked> Exclude Dead Code
+                </label>
+                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                  <input type="checkbox" id="zip-opt-whitespace" checked> Trim Whitespace
+                </label>
+              </div>
+
+              <div>
+                <span style="font-size: 0.85rem; color: #9ca3af; text-transform: uppercase; font-weight: 600; margin-bottom: 12px; display: block; text-align: center;">Select File Types to Include</span>
+                <div id="zip-config-chips" style="display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; max-height: 180px; overflow-y: auto; padding: 4px; border: 1px solid rgba(255,255,255,0.05); border-radius: 8px; background: rgba(0,0,0,0.2);">
+                  <!-- Dynamic chips go here -->
+                </div>
+              </div>
+
+              <!-- Frequency & Team Modifiers -->
+              <div style="padding: 16px; background: rgba(0,0,0,0.2); border-radius: 8px; border: 1px solid rgba(255,255,255,0.05);">
+                <div style="display: flex; gap: 40px; align-items: center; justify-content: center; flex-wrap: wrap;">
+                  <div>
+                    <span style="font-size: 0.75rem; color: #9ca3af; text-transform: uppercase; font-weight: 600; margin-bottom: 8px; display: block;">Simulate Agent Queries Per Day</span>
+                    <div class="estimator-track" id="roi-frequency">
+                      <button class="estimator-pill" data-freq="5">5</button>
+                      <button class="estimator-pill" data-freq="10">10</button>
+                      <button class="estimator-pill" data-freq="30">30</button>
+                      <button class="estimator-pill active" data-freq="50">50</button>
+                      <button class="estimator-pill" data-freq="100">100</button>
+                    </div>
+                  </div>
+                  <div>
+                    <span style="font-size: 0.75rem; color: #9ca3af; text-transform: uppercase; font-weight: 600; margin-bottom: 8px; display: block;">Team Size (Developers)</span>
+                    <div class="estimator-track" id="roi-team-size">
+                      <button class="estimator-pill active" data-team="1">1</button>
+                      <button class="estimator-pill" data-team="5">5</button>
+                      <button class="estimator-pill" data-team="25">25</button>
+                      <button class="estimator-pill" data-team="50">50</button>
+                      <button class="estimator-pill" data-team="75">75</button>
+                    </div>
+                  </div>
+                  <div>
+                    <span style="font-size: 0.75rem; color: #9ca3af; text-transform: uppercase; font-weight: 600; margin-bottom: 8px; display: block;">Target LLM Model</span>
+                    <div class="estimator-track" id="roi-model-select">
+                      <button class="estimator-pill active" data-cost="5.00" data-name="GPT-5.5">GPT-5.5</button>
+                      <button class="estimator-pill" data-cost="0.75" data-name="GPT-5.4 Mini">5.4 Mini</button>
+                      <button class="estimator-pill" data-cost="5.00" data-name="Claude Opus 4.8">Opus 4.8</button>
+                      <button class="estimator-pill" data-cost="3.00" data-name="Claude Sonnet 4.6">Sonnet 4.6</button>
+                      <button class="estimator-pill" data-cost="1.50" data-name="Gemini 3.5 Flash">Flash 3.5</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <button id="zip-submit-btn" class="utility-btn accent" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: #fff; font-size: 1rem; font-weight: 600; padding: 14px 24px; border: none; border-radius: 8px; cursor: pointer; align-self: center; margin-top: 8px; transition: all 0.2s ease; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);">
+                Calculate Context Savings
+              </button>
+            </div>
           </div>
 
           <!-- Mode 3: Project Audit & ROI Dashboard -->
@@ -197,6 +275,13 @@
             <!-- Results Dashboard -->
             <div class="audit-results-wrapper" id="audit-results">
               
+              <div style="display: flex; justify-content: flex-start; margin-bottom: 16px;">
+                <button id="btn-back-to-config" class="utility-btn" style="display: flex; align-items: center; gap: 8px; border: 1px solid rgba(255,255,255,0.1); background: rgba(0,0,0,0.2);">
+                  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+                  Back to Configuration
+                </button>
+              </div>
+
               <!-- Metrics Grid -->
               <div class="audit-metrics-grid">
                 <div class="audit-metric-card files">
@@ -208,8 +293,8 @@
                   <span id="audit-orig-tokens" class="audit-metric-value red">0</span>
                 </div>
                 <div class="audit-metric-card cge">
-                  <span class="audit-metric-label">CGE Tokens</span>
-                  <span id="audit-comp-tokens" class="audit-metric-value emerald">0</span>
+                  <span class="audit-metric-label">LeanContext Tokens</span>
+                  <span id="audit-comp-tokens" class="audit-metric-value purple">0</span>
                 </div>
                 <div class="audit-metric-card savings">
                   <span class="audit-metric-label">Compaction Savings</span>
@@ -234,29 +319,32 @@
                 </div>
               </div>
 
+              <!-- Cost Projections -->
               <!-- ROI Price Comparison Cards -->
               <div class="audit-cost-comparison">
                 <!-- Standard Cost Card -->
                 <div class="audit-cost-card legacy">
                   <span class="audit-cost-card-title legacy">🔴 Verbatim Source Cost</span>
-                  <p class="audit-cost-desc">Cost to process uncompressed codebase over 1,000 queries:</p>
+                  <p class="audit-cost-desc" id="audit-cost-desc-orig">Cost to process uncompressed codebase over 1,000 queries:</p>
                   <span id="audit-orig-cost" class="audit-cost-value red">$0.00</span>
-                  <span class="audit-cost-subtitle">GPT-4o input rates ($2.50 / 1M tokens)</span>
+                  <span id="audit-cost-subtitle" class="audit-cost-subtitle">GPT-5.5 input rates ($5.00 / 1M tokens)</span>
                 </div>
-                <!-- CGE Cost Card -->
+                <!-- LeanContext Cost Card -->
                 <div class="audit-cost-card cge">
-                  <span class="audit-cost-card-title cge">🟢 CGE Compacted Cost</span>
-                  <p class="audit-cost-desc">Cost using CGE AST Compaction overhead:</p>
+                  <span class="audit-cost-card-title cge">🟢 LeanContext Compacted Cost</span>
+                  <p class="audit-cost-desc">Cost using LeanContext minification:</p>
                   <span id="audit-comp-cost" class="audit-cost-value emerald">$0.00</span>
-                  <span id="audit-cost-saved" class="audit-cost-saved-tag">Saved: 0%</span>
+                  <span id="audit-cost-saved" class="audit-cost-saved-tag">Saved: 0% of total bill!</span>
                 </div>
               </div>
 
+                <!-- Frequency and Team modifiers moved to zip config step -->
+
               <!-- ROI Highlight Banner -->
-              <div class="audit-roi-banner">
+              <div class="audit-roi-banner" style="margin-top: 16px;">
                 <div class="audit-roi-left">
-                  <span class="audit-roi-banner-title">🎓 Academic & Financial Savings ROI</span>
-                  <p class="audit-roi-banner-desc">Recursive AST compaction proves massive dollar economies under real production prompt frequencies.</p>
+                  <span class="audit-roi-banner-title">🎓 Financial Savings ROI <span class="roi-tag">LEANCONTEXT ROI</span></span>
+                  <p class="audit-roi-banner-desc">Minification proves massive dollar economies under real production agent frequencies.</p>
                 </div>
                 <div id="audit-roi-saved" class="audit-roi-badge">
                   -$0.00
@@ -266,7 +354,7 @@
               <!-- Beta Disclaimer -->
               <div style="margin-top: 16px; padding: 12px; background: rgba(255, 170, 0, 0.05); border: 1px solid rgba(255, 170, 0, 0.2); border-radius: 8px; text-align: left;">
                 <p style="font-size: 0.75rem; color: #fbbf24; margin: 0; line-height: 1.4;">
-                  <strong>⚠️ Beta Disclaimer:</strong> This compiler is currently in active beta testing. All financial figures shown are strictly illustrative estimates based on standard GPT-4 input pricing and are intended to demonstrate potential architectural token-efficiency, rather than exact accounting.
+                  <strong>⚠️ Beta Disclaimer:</strong> This compiler is currently in active beta testing. All financial figures shown are strictly illustrative estimates based on <span id="beta-disclaimer-model">GPT-5.5</span> input pricing and are intended to demonstrate potential architectural token-efficiency, rather than exact accounting.
                 </p>
               </div>
 
@@ -283,9 +371,9 @@
         <div class="editor-card" id="output-card">
           <div class="card-header">
             <div class="panel-header-switcher">
-              <button class="switcher-btn active" id="btn-mode-code">CGE Code</button>
-              <button class="switcher-btn" id="btn-mode-visual">Visual AST</button>
-              <button class="switcher-btn" id="btn-mode-verify">CLNR Verify</button>
+              <button class="switcher-btn active" id="btn-mode-code">AI Prompt Package</button>
+              <button class="switcher-btn" id="btn-mode-visual" style="display: none;">Visual AST</button>
+              <button class="switcher-btn" id="btn-mode-verify" style="display: none;">CLNR Verify</button>
             </div>
             <button class="utility-btn" id="copy-btn">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -299,12 +387,15 @@
           <div class="editor-body">
             <!-- Mode 1: Code Text View -->
             <div class="mode-container active" id="container-code" style="flex-direction: column;">
-              <div class="output-scroller" style="flex-grow: 1;">
-                <pre><code id="cge-output" class="output-code"></code></pre>
+              <div style="display: flex; flex-grow: 1; position: relative; overflow: hidden; height: 100%;">
+                <div class="gutter" id="output-gutter-lines" style="border-right: 1px solid rgba(255,255,255,0.05); background: rgba(0,0,0,0.15);"></div>
+                <div class="output-scroller" id="output-scroller" style="flex-grow: 1;">
+                  <pre style="margin: 0;"><code id="cge-output" class="output-code"></code></pre>
+                </div>
               </div>
               
               <!-- Verify Live in LLM Bridge -->
-              <div class="llm-bridge-panel">
+              <div class="llm-bridge-panel" style="display: none;">
                 <div class="llm-bridge-info">
                   <span class="llm-bridge-title">Verify AST Comprehension</span>
                   <span class="llm-bridge-subtitle">Test compressed code directly in real models</span>
@@ -451,7 +542,7 @@
               <span class="proportion-inner-label">Original</span>
             </div>
             <div class="proportion-compressed" id="proportion-compressed" style="width: 0%;">
-              <span class="proportion-inner-label">CGE</span>
+              <span class="proportion-inner-label">LeanContext</span>
             </div>
           </div>
           <div class="proportion-legend">
@@ -462,7 +553,7 @@
             </div>
             <div class="legend-item">
               <span class="legend-dot dot-compressed"></span>
-              <span class="legend-label">CGE Output</span>
+              <span class="legend-label">LeanContext Output</span>
               <span class="legend-val highlight" id="comp-tokens">—</span>
             </div>
           </div>
@@ -494,22 +585,45 @@
       </div>
 
       <!-- Projected Savings Estimator -->
-      <div class="estimator-strip" id="estimator-strip">
+      <!-- Projected Savings Estimator -->
+      <div class="estimator-strip" id="estimator-strip" style="flex-wrap: wrap;">
         <div class="estimator-left">
           <span class="estimator-title">Projected Savings</span>
           <span class="estimator-badge">beta</span>
         </div>
-        <div class="estimator-center">
-          <span class="estimator-hint">Prompts per day</span>
-          <div class="estimator-track">
-            <div class="estimator-line"></div>
-            <button class="estimator-pill" data-mult="10">10</button>
-            <button class="estimator-pill active" data-mult="50">50</button>
-            <button class="estimator-pill" data-mult="200">200</button>
-            <button class="estimator-pill" data-mult="1000">1K</button>
+        <div class="estimator-center" style="display: flex; gap: 40px; flex-wrap: wrap;">
+          <div>
+            <span class="estimator-hint" style="font-size: 0.75rem; color: #9ca3af; text-transform: uppercase; font-weight: 600; margin-bottom: 8px; display: block;">Agent Queries Per Day</span>
+            <div class="estimator-track" id="single-roi-freq">
+              <button class="estimator-pill" data-mult="5">5</button>
+              <button class="estimator-pill" data-mult="10">10</button>
+              <button class="estimator-pill" data-mult="30">30</button>
+              <button class="estimator-pill active" data-mult="50">50</button>
+              <button class="estimator-pill" data-mult="100">100</button>
+            </div>
+          </div>
+          <div>
+            <span class="estimator-hint" style="font-size: 0.75rem; color: #9ca3af; text-transform: uppercase; font-weight: 600; margin-bottom: 8px; display: block;">Team Size (Developers)</span>
+            <div class="estimator-track" id="single-roi-team">
+              <button class="estimator-pill active" data-team="1">1</button>
+              <button class="estimator-pill" data-team="5">5</button>
+              <button class="estimator-pill" data-team="25">25</button>
+              <button class="estimator-pill" data-team="50">50</button>
+              <button class="estimator-pill" data-team="75">75</button>
+            </div>
+          </div>
+          <div>
+            <span class="estimator-hint" style="font-size: 0.75rem; color: #9ca3af; text-transform: uppercase; font-weight: 600; margin-bottom: 8px; display: block;">Target LLM Model</span>
+            <div class="estimator-track" id="single-roi-model">
+              <button class="estimator-pill active" data-cost="5.00" data-name="GPT-5.5">GPT-5.5</button>
+              <button class="estimator-pill" data-cost="0.75" data-name="GPT-5.4 Mini">5.4 Mini</button>
+              <button class="estimator-pill" data-cost="5.00" data-name="Claude Opus 4.8">Opus 4.8</button>
+              <button class="estimator-pill" data-cost="3.00" data-name="Claude Sonnet 4.6">Sonnet 4.6</button>
+              <button class="estimator-pill" data-cost="1.50" data-name="Gemini 3.5 Flash">Flash 3.5</button>
+            </div>
           </div>
         </div>
-        <div class="estimator-right">
+        <div class="estimator-right" style="flex-grow: 1; justify-content: flex-end;">
           <div class="estimator-result">
             <span class="estimator-result-num" id="est-tokens">—</span>
             <span class="estimator-result-lbl">tokens saved / month</span>
@@ -520,23 +634,24 @@
           </div>
         </div>
       </div>
+      <div id="single-math-disclaimer" style="text-align: right; margin-top: 8px; font-size: 0.75rem; color: #6b7280; padding-right: 8px;">
+        *Monthly calculation: Tokens Saved × Agent Queries × Team Size × 30 Days × $5.00 per 1M Input Tokens (GPT-5.5)
+      </div>
     </section>
 
     <!-- ================================================================
          HOW IT WORKS SECTION
          ================================================================ -->
     <section class="spec-section reveal-element" id="how-it-works">
-      <span class="section-label">Transformation specification</span>
-
       <div class="spec-grid">
-        <!-- Structural Extraction -->
+        <!-- Comments -->
         <div class="spec-card">
           <div class="spec-card-header">
             <div class="spec-card-dot blue"></div>
-            <h3 class="spec-card-title">Structural Extraction</h3>
+            <h3 class="spec-card-title">Comment Removal</h3>
           </div>
           <p class="spec-card-desc">
-            Extracts core types and interfaces while discarding comments, JSDoc, and layout boilerplate.
+            Strips out inline and block comments that provide no functional value to the architecture.
           </p>
           <div class="transform-grid">
             <div class="transform-box">
@@ -545,74 +660,74 @@
             </div>
             <span class="transform-separator">→</span>
             <div class="transform-box after">
-              <span class="transform-box-tag">CGE</span>
-              type User { id: string; }
+              <span class="transform-box-tag">Output</span>
+              export interface User {<br>&nbsp;&nbsp;id: string;<br>}
             </div>
           </div>
         </div>
 
-        <!-- State Isolation -->
+        <!-- JSDoc -->
         <div class="spec-card">
           <div class="spec-card-header">
             <div class="spec-card-dot guard"></div>
-            <h3 class="spec-card-title">State Isolation</h3>
+            <h3 class="spec-card-title">JSDoc Stripping</h3>
           </div>
           <p class="spec-card-desc">
-            Isolates module-level constants and state variables, detaching them from structural logic.
+            Optionally removes heavy JSDoc blocks and docstrings to maximize token savings.
           </p>
           <div class="transform-grid">
             <div class="transform-box">
               <span class="transform-box-tag">Input</span>
-              export const COL = "users";<br>let isReady = false;
+              /**<br> * Configures the app<br> */<br>export const cfg = {};
             </div>
             <span class="transform-separator">→</span>
             <div class="transform-box after">
-              <span class="transform-box-tag">CGE</span>
-              state const COL<br>state let isReady
+              <span class="transform-box-tag">Output</span>
+              export const cfg = {};
             </div>
           </div>
         </div>
 
-        <!-- Dependency Mapping -->
+        <!-- Dead Code -->
         <div class="spec-card">
           <div class="spec-card-header">
             <div class="spec-card-dot scan"></div>
-            <h3 class="spec-card-title">Dependency Mapping</h3>
+            <h3 class="spec-card-title">Dead Code Pruning</h3>
           </div>
           <p class="spec-card-desc">
-            Maps external dependencies and module imports into a clean, flat list for context resolution.
+            Locates and eliminates commented-out blocks of code left behind during development.
           </p>
           <div class="transform-grid">
             <div class="transform-box">
               <span class="transform-box-tag">Input</span>
-              import { <br>&nbsp;&nbsp;getDoc, <br>&nbsp;&nbsp;setDoc <br>} from "firebase";
+              import { a } from "b";<br>/* import { c } from "c"; */<br>export const d = a;
             </div>
             <span class="transform-separator">→</span>
             <div class="transform-box after">
-              <span class="transform-box-tag">CGE</span>
-              import { getDoc, setDoc }
+              <span class="transform-box-tag">Output</span>
+              import { a } from "b";<br>export const d = a;
             </div>
           </div>
         </div>
 
-        <!-- Logic Preservation -->
+        <!-- XML Formatting -->
         <div class="spec-card">
           <div class="spec-card-header">
             <div class="spec-card-dot block"></div>
-            <h3 class="spec-card-title">Logic Preservation</h3>
+            <h3 class="spec-card-title">Context Packaging</h3>
           </div>
           <p class="spec-card-desc">
-            Retains business logic constraints within deterministic operation blocks, preserving semantic integrity.
+            Automatically concatenates all selected files into an LLM-friendly XML structured repository.
           </p>
           <div class="transform-grid">
             <div class="transform-box">
               <span class="transform-box-tag">Input</span>
-              export const check = async (<br>&nbsp;&nbsp;id: string<br>): Promise&lt;boolean&gt; =&gt; {
+              (Multiple zip files processed)
             </div>
             <span class="transform-separator">→</span>
             <div class="transform-box after">
-              <span class="transform-box-tag">CGE</span>
-              check(id:S)->Promise&lt;B&gt;
+              <span class="transform-box-tag">Output</span>
+              &lt;repo&gt;<br>&nbsp;&nbsp;&lt;file path="a.ts"&gt;...&lt;/file&gt;<br>&lt;/repo&gt;
             </div>
           </div>
         </div>
@@ -621,7 +736,7 @@
 
     <!-- Footer -->
     <footer class="footer">
-      <p class="footer-text">🧬 Cognitive Graph Encoding · Developed by <a href="https://www.linkedin.com/in/anilalapati/" target="_blank">Anil Alapati</a> · Fully Client-Side</p>
+      <p class="footer-text">🧬 LeanContext AI Context Builder · Developed by <a href="https://www.linkedin.com/in/anilalapati/" target="_blank">Anil Alapati</a> · Fully Client-Side</p>
     </footer>
 
   </div>
@@ -658,6 +773,6 @@
   <!-- Apple Slick Toast Notification -->
   <div class="toast-bar" id="toast-bar"></div>
 
-  <script src="playground.js"></script>
+  <script src="leancontext.js"></script>
 </body>
 </html>

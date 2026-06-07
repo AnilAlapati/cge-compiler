@@ -1982,33 +1982,18 @@ function autoDetectLanguage(code) {
 // 3. DOM Initialization & Event Binding
 // =========================================================================
 
-const SUPPORTED_LANGUAGES = [
-  { id: "typescript", name: "TypeScript", icon: "⚡", color: "#3b82f6" },
-  { id: "python", name: "Python", icon: "🐍", color: "#10b981" },
-  { id: "rust", name: "Rust", icon: "🦀", color: "#f59e0b" },
-  { id: "go", name: "Go", icon: "🐹", color: "#06b6d4" },
-  { id: "cpp", name: "C++", icon: "🥽", color: "#8b5cf6" }
-];
+const SUPPORTED_LANGUAGES = [];
 
 document.addEventListener("DOMContentLoaded", () => {
-  // Populate UI with single source of truth for languages
-  const segmentTabsContainer = document.getElementById("segment-tabs");
-  if (segmentTabsContainer) {
-    segmentTabsContainer.innerHTML = SUPPORTED_LANGUAGES.map((lang, idx) => `
-      <button class="segment-tab ${idx === 0 ? 'active' : ''}" data-lang="${lang.id}">
-        ${lang.icon} ${lang.name}
-      </button>
-    `).join('');
-  }
+  // Navigation scrolling
+  const scrollLinks = document.querySelectorAll('.scroll-cta a');
+  scrollLinks.forEach(link => {
+    link.addEventListener('click', (e) => {
+      e.preventDefault();
+      document.querySelector(link.getAttribute('href')).scrollIntoView({ behavior: 'smooth' });
+    });
+  });
 
-  const zipLangs = document.getElementById("zip-supported-langs");
-  if (zipLangs) {
-    const formattedLangs = SUPPORTED_LANGUAGES.map(lang => 
-      `<span style="color: ${lang.color}; font-weight: 600;">${lang.name}</span>`
-    );
-    const last = formattedLangs.pop();
-    zipLangs.innerHTML = `Supports ${formattedLangs.join(', ')}, and ${last} codebase archives.`;
-  }
 
   const codeInput     = document.getElementById("code-input");
   const cgeOutput     = document.getElementById("cge-output");

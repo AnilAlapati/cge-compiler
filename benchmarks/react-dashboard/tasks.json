@@ -1,0 +1,27 @@
+[
+  {
+    "id": "react-1",
+    "question": "What does the Dashboard component render while loading?",
+    "expectedAnswer": "It renders a div containing 'Loading dashboard...'."
+  },
+  {
+    "id": "react-2",
+    "question": "Where does the Revenue stat come from?",
+    "expectedAnswer": "From stats.revenue, which is fetched using fetchDashboardStats()."
+  },
+  {
+    "id": "react-3",
+    "question": "What happens when the onEdit callback is triggered in the UserTable?",
+    "expectedAnswer": "It logs 'Edit' followed by the user id to the console."
+  },
+  {
+    "id": "react-4",
+    "question": "How are errors handled during data fetching?",
+    "expectedAnswer": "The error message is stored in the error state and displayed in a div with className='error'."
+  },
+  {
+    "id": "react-5",
+    "question": "Which child components are imported and used by Dashboard?",
+    "expectedAnswer": "StatCard and UserTable."
+  }
+]

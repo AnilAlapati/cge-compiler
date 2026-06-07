@@ -1,0 +1,72 @@
+// --- File: benchmarks/go-microservice/source/main.go ---
+CGE/1.0 main (Go)
+
+IMPORTS:
+  encoding/json
+  fmt
+  log
+  net/http
+  sync
+
+TYPES:
+  EXPORT Product{ID:S, Name:S, Price:N}
+
+STATE:
+  inventory:any = make(map[string]Product)
+
+OPS:
+  EXPORT AuthMiddleware(next:http.Handler)->http.Handler:
+    RETURN http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+    token := r.Header.Get("Authorization")
+    if token != "Bearer secret-go-token" {
+    http.Error(w, "Forbidden", http.StatusForbidden)
+    RETURN void
+    next.ServeHTTP(w, r)
+    })
+
+PRIVATE:
+  handleGetProduct(w:http.ResponseWriter, r:http.Request)->void:
+    id := r.URL.Query().Get("id")
+    if id == "" {
+    http.Error(w, "Missing id", http.StatusBadRequest)
+    RETURN void
+    mu.RLock()
+    product, exists := inventory[id]
+    mu.RUnlock()
+    if !exists {
+    http.Error(w, "Not found", http.StatusNotFound)
+    RETURN void
+    json.NewEncoder(w).Encode(product)
+  handleCreateProduct(w:http.ResponseWriter, r:http.Request)->void:
+    var p Product
+    if err := json.NewDecoder(r.Body).Decode(&p); err != nil {
+    http.Error(w, err.Error(), http.StatusBadRequest)
+    RETURN void
+    if p.ID == "" || p.Name == "" {
+    http.Error(w, "Invalid product", http.StatusBadRequest)
+    RETURN void
+    mu.Lock()
+    inventory[p.ID] = p
+    mu.Unlock()
+    w.WriteHeader(http.StatusCreated)
+    json.NewEncoder(w).Encode(p)
+  main()->void:
+    mux := http.NewServeMux()
+    mux.HandleFunc("/api/product", func(w http.ResponseWriter, r *http.Request) {
+    if r.Method == http.MethodGet {
+    handleGetProduct(w, r)
+    } else {
+    http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+    })
+    mux.Handle("/api/admin/product", AuthMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+    if r.Method == http.MethodPost {
+    handleCreateProduct(w, r)
+    } else {
+    http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+    })))
+    fmt.Println("Starting server on :8080")
+    log.Fatal(http.ListenAndServe(":8080", mux))
+
+EXPORTS: Product, AuthMiddleware
+
+

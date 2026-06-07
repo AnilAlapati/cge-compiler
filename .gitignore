@@ -147,3 +147,5 @@ vite.config.ts.timestamp-*
 .env.local
 .cge/
 benchmarks_real/*/source
+benchmarks_massive/
+scratch/

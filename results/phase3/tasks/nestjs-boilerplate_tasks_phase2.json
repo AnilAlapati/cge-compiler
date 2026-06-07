@@ -1,0 +1,107 @@
+[
+  {
+    "id": "task_1",
+    "question": "What are all the authentication providers supported in the system?",
+    "expected": [
+      "email",
+      "facebook",
+      "google",
+      "apple"
+    ]
+  },
+  {
+    "id": "task_2",
+    "question": "What are the main modules imported in the AppModule?",
+    "expected": [
+      "ConfigModule",
+      "TypeOrmModule",
+      "I18nModule",
+      "UsersModule",
+      "FilesModule",
+      "AuthModule",
+      "AuthFacebookModule",
+      "AuthGoogleModule",
+      "AuthAppleModule",
+      "SessionModule",
+      "MailModule",
+      "MailerModule",
+      "HomeModule"
+    ]
+  },
+  {
+    "id": "task_3",
+    "question": "What are the routes defined in the AuthController?",
+    "expected": [
+      "POST /auth/email/login",
+      "POST /auth/email/register",
+      "POST /auth/email/confirm",
+      "POST /auth/email/confirm/new",
+      "POST /auth/forgot/password",
+      "POST /auth/reset/password",
+      "GET /auth/me",
+      "POST /auth/refresh",
+      "POST /auth/logout",
+      "PATCH /auth/me",
+      "DELETE /auth/me"
+    ]
+  },
+  {
+    "id": "task_4",
+    "question": "What are the entities related to the User entity?",
+    "expected": [
+      "Role",
+      "Status",
+      "File"
+    ]
+  },
+  {
+    "id": "task_5",
+    "question": "What are the strategies used for authentication in the AuthModule?",
+    "expected": [
+      "JwtStrategy",
+      "JwtRefreshStrategy",
+      "AnonymousStrategy"
+    ]
+  },
+  {
+    "id": "task_6",
+    "question": "What are the different types of databases supported by the application?",
+    "expected": [
+      "Document Database (MongoDB)",
+      "Relational Database (PostgreSQL)"
+    ]
+  },
+  {
+    "id": "task_7",
+    "question": "What are the different file upload methods supported in the FilesModule?",
+    "expected": [
+      "Local",
+      "S3",
+      "S3 Presigned"
+    ]
+  },
+  {
+    "id": "task_8",
+    "question": "What are the roles defined in the system?",
+    "expected": [
+      "admin",
+      "user"
+    ]
+  },
+  {
+    "id": "task_9",
+    "question": "What are the main services provided by the MailModule?",
+    "expected": [
+      "userSignUp",
+      "forgotPassword",
+      "confirmNewEmail"
+    ]
+  },
+  {
+    "id": "task_10",
+    "question": "What are the main types of sessions managed in the system?",
+    "expected": [
+      "User Session"
+    ]
+  }
+]

@@ -1,0 +1,72 @@
+[
+  {
+    "taskId": "task_1",
+    "question": "What are the API routes defined in the application?",
+    "expected": "POST /v1/users, DELETE /v1/users/:id, GET /v1/wallets, DELETE /v1/wallets/:id",
+    "actual": "The API routes defined in the application, as per the provided context, are as follows:\n\n1. **Create User**\n   - **Route**: `POST /api/v1/user`\n   - **Controller**: `CreateUserHttpController.create`\n\n2. **Delete User**\n   - **Route**: `DELETE /api/v1/user/:id`\n   - **Controller**: `DeleteUserHttpController.deleteUser`\n\n3. **Find Users**\n   - **Route**: `GET /api/v1/user`\n   - **Controller**: `FindUsersHttpController.findUsers`\n\nThese routes are part of the versioned API defined in `routesV1`, which is referenced in the controllers.",
+    "passed": false
+  },
+  {
+    "taskId": "task_2",
+    "question": "What are the command handlers registered in the UserModule?",
+    "expected": "CreateUserService, DeleteUserService, FindUsersQueryHandler",
+    "actual": "In the `UserModule`, the registered command handlers are as follows:\n\n1. **CreateUserService** - This service handles the creation of a user.\n2. **DeleteUserService** - This service handles the deletion of a user.\n\nThese services are responsible for executing the respective commands related to user creation and deletion within the application.",
+    "passed": false
+  },
+  {
+    "taskId": "task_3",
+    "question": "What are the entities related to the User entity?",
+    "expected": "WalletEntity",
+    "actual": "Based on the provided context, the entities related to the User entity are primarily found within the user module and its interactions with other modules. Here are the key entities and their relationships:\n\n1. **UserEntity**: This is the main entity representing a user in the system. It includes properties and methods related to user data, such as creating a user, updating user addresses, and changing user roles.\n\n2. **UserCreatedDomainEvent**: This domain event is emitted when a user is created. It contains properties related to the user, such as email, country, postal code, and street.\n\n3. **UserRoleChangedDomainEvent**: This domain event is emitted when a user's role is changed. It includes properties for the old and new roles of the user.\n\n4. **UserAddressUpdatedDomainEvent**: This domain event is emitted when a user's address is updated. It contains properties for the new address details.\n\n5. **UserRepository**: This is the repository responsible for data access related to the User entity. It includes methods for finding users by email, updating user addresses, and other CRUD operations.\n\n6. **CreateUserCommand**: This command is used to encapsulate the data required to create a new user, including email, country, postal code, and street.\n\n7. **DeleteUserCommand**: This command is used to encapsulate the data required to delete a user, specifically the user ID.\n\n8. **UserResponseDto**: This Data Transfer Object (DTO) is used to represent the user data in responses, including properties like email, country, postal code, and street.\n\n9. **UserPaginatedResponseDto**: This DTO is used for paginated responses of users, containing an array of UserResponseDto objects.\n\n10. **UserMapper**: This is a mapper class that converts between UserEntity and UserModel (the database representation), as well as between UserEntity and UserResponseDto.\n\n11. **WalletEntity**: While not directly related, the WalletEntity is associated with the UserEntity through the event handler `CreateWalletWhenUserIsCreatedDomainEventHandler`, which creates a wallet for a user when they are created.\n\nIn summary, the User entity is primarily related to various domain events, commands, repositories, and DTOs that facilitate its creation, modification, and retrieval within the application. The WalletEntity also has an indirect relationship through the creation of wallets for users.",
+    "passed": true
+  },
+  {
+    "taskId": "task_4",
+    "question": "What are the interceptors applied globally in the application?",
+    "expected": "ContextInterceptor, ExceptionInterceptor",
+    "actual": "The interceptors applied globally in the application are:\n\n1. **ContextInterceptor**: This interceptor is registered as a global interceptor via `APP_INTERCEPTOR` in the `AppModule`.\n\n2. **ExceptionInterceptor**: This interceptor is also registered as a global interceptor via `APP_INTERCEPTOR` in the `AppModule`. \n\nBoth interceptors are defined in the `src/libs/application/context/ContextInterceptor.ts` and `src/libs/application/interceptors/exception.interceptor.ts` files, respectively.",
+    "passed": true
+  },
+  {
+    "taskId": "task_5",
+    "question": "What are the validation rules applied to the CreateUserRequestDto?",
+    "expected": "email: IsEmail, MaxLength(320), MinLength(5), country: IsString, MaxLength(50), MinLength(4), Matches(/^[a-zA-Z ]*$/), postalCode: IsAlphanumeric, MaxLength(10), MinLength(4), street: IsString, MaxLength(50), MinLength(5), Matches(/^[a-zA-Z ]*$/)",
+    "actual": "The `CreateUserRequestDto` has the following validation rules applied to its properties:\n\n1. **email**:\n   - Type: String (`S`)\n   - Validation Decorators:\n     - `@ApiProperty({ example: 'john@gmail.com', description: 'User email address' })`: This decorator is used for API documentation.\n     - `@MaxLength(320)`: The maximum length of the email must not exceed 320 characters.\n     - `@MinLength(5)`: The minimum length of the email must be at least 5 characters.\n     - `@IsEmail()`: The value must be a valid email format.\n\n2. **country**:\n   - Type: String (`S`)\n   - Validation Decorators:\n     - `@ApiProperty({ example: 'France', description: 'Country of residence' })`: This decorator is used for API documentation.\n     - `@MaxLength(50)`: The maximum length of the country name must not exceed 50 characters.\n     - `@MinLength(4)`: The minimum length of the country name must be at least 4 characters.\n     - `@IsString()`: The value must be a string.\n     - `@Matches(/^[a-zA-Z ]*$/)`: The value must match the regular expression, allowing only alphabetic characters and spaces.\n\n3. **postalCode**:\n   - Type: String (`S`)\n   - Validation Decorators:\n     - `@ApiProperty({ example: '28566', description: 'Postal code' })`: This decorator is used for API documentation.\n     - `@MaxLength(10)`: The maximum length of the postal code must not exceed 10 characters.\n     - `@MinLength(4)`: The minimum length of the postal code must be at least 4 characters.\n     - `@IsAlphanumeric()`: The value must be alphanumeric (letters and numbers).\n\n4. **street**:\n   - Type: String (`S`)\n   - Validation Decorators:\n     - `@ApiProperty({ example: 'Grande Rue', description: 'Street' })`: This decorator is used for API documentation.\n     - `@MaxLength(50)`: The maximum length of the street name must not exceed 50 characters.\n     - `@MinLength(5)`: The minimum length of the street name must be at least 5 characters.\n     - `@Matches(/^[a-zA-Z ]*$/)`: The value must match the regular expression, allowing only alphabetic characters and spaces.\n\nThese validation rules ensure that the data provided for creating a user adheres to specific formats and constraints, enhancing data integrity and user input validation.",
+    "passed": true
+  },
+  {
+    "taskId": "task_6",
+    "question": "What are the types of responses returned by the CreateUserHttpController?",
+    "expected": "IdResponse, ApiErrorResponse",
+    "actual": "The `CreateUserHttpController` returns a response of type `Promise<IdResponse>`. The `IdResponse` is defined in the `src/libs/api/id.response.dto.ts` file, which typically contains an identifier for the created user. \n\nIn summary, the response type returned by the `CreateUserHttpController.create` method is:\n\n- **Response Type**: `Promise<IdResponse>` \n\nThis indicates that the method is asynchronous and will resolve to an object that conforms to the `IdResponse` structure, which likely includes an `id` property representing the unique identifier of the newly created user.",
+    "passed": false
+  },
+  {
+    "taskId": "task_7",
+    "question": "What are the database connection parameters defined in the database.config.ts?",
+    "expected": "DB_HOST, DB_PORT, DB_USERNAME, DB_PASSWORD, DB_NAME",
+    "actual": "The database connection parameters defined in the `database.config.ts` file are:\n\n- `databaseConfig`\n- `postgresConnectionUri`\n\nThese parameters are exported from the `src/configs/database.config.ts` file, as indicated in the provided context. However, the specific values or configurations for `databaseConfig` and `postgresConnectionUri` are not detailed in the context provided. To find the exact connection parameters, you would need to look directly at the `database.config.ts` file.",
+    "passed": false
+  },
+  {
+    "taskId": "task_8",
+    "question": "What are the domain events associated with the UserEntity?",
+    "expected": "UserCreatedDomainEvent, UserDeletedDomainEvent, UserRoleChangedDomainEvent, UserAddressUpdatedDomainEvent",
+    "actual": "The domain events associated with the `UserEntity` in the provided codebase context are as follows:\n\n1. **UserCreatedDomainEvent**: This event is triggered when a new user is created. It contains properties such as `email`, `country`, `postalCode`, and `street`.\n\n2. **UserAddressUpdatedDomainEvent**: This event is triggered when a user's address is updated. It includes properties like `country`, `street`, and `postalCode`.\n\n3. **UserRoleChangedDomainEvent**: This event is triggered when a user's role is changed. It contains properties for the `oldRole` and `newRole`.\n\n4. **UserDeletedDomainEvent**: This event is triggered when a user is deleted.\n\nThese events are part of the domain-driven design approach, allowing the system to react to changes in the state of the `UserEntity`.",
+    "passed": true
+  },
+  {
+    "taskId": "task_9",
+    "question": "What are the types of controllers defined in the UserModule?",
+    "expected": "CreateUserHttpController, DeleteUserHttpController, FindUsersHttpController, CreateUserCliController, CreateUserMessageController, CreateUserGraphqlResolver, FindUsersGraphqlResolver",
+    "actual": "In the `UserModule`, the following types of controllers are defined:\n\n1. **CreateUserHttpController**: This controller handles HTTP requests for creating a user.\n2. **DeleteUserHttpController**: This controller handles HTTP requests for deleting a user.\n3. **FindUsersHttpController**: This controller handles HTTP requests for finding users.\n4. **CreateUserMessageController**: This controller handles message-based requests for creating a user (likely for message queues or similar systems).\n5. **CreateUserCliController**: This controller handles command-line interface requests for creating a user.\n\nThese controllers are part of the `UserModule` and are responsible for managing user-related operations through different interfaces (HTTP, messaging, and CLI).",
+    "passed": false
+  },
+  {
+    "taskId": "task_10",
+    "question": "What are the properties of the ApiErrorResponse class?",
+    "expected": "statusCode, message, error, correlationId, subErrors",
+    "actual": "The properties of the `ApiErrorResponse` class are as follows:\n\n1. **statusCode**: \n   - Type: Number (N)\n   - Example: 400\n\n2. **message**: \n   - Type: String (S)\n   - Example: 'Validation Error'\n\n3. **error**: \n   - Type: String (S)\n   - Example: 'Bad Request'\n\n4. **correlationId**: \n   - Type: String (S)\n   - Example: 'YevPQs'\n\n5. **subErrors**: \n   - Type: Array of Strings (S[])\n   - Description: Optional list of sub-errors\n   - Example: ['incorrect email']\n   - Nullable: true\n   - Required: false\n\nThese properties are used to structure the error response returned by the API when an error occurs.",
+    "passed": true
+  }
+]
