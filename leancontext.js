@@ -2380,7 +2380,15 @@ document.addEventListener("DOMContentLoaded", () => {
     metricPercent.textContent = `${savingsPercent}%`;
 
     savingsSummary.textContent = `${savingsPercent}% reduction · ${tokensSaved.toLocaleString()} tokens freed`;
-
+    
+    const dynamicCta = document.getElementById("dynamic-install-cta");
+    const dynamicCtaText = document.getElementById("dynamic-cta-text");
+    if (dynamicCta && savingsPercent > 0) {
+      dynamicCtaText.innerHTML = `You just saved <strong>${savingsPercent}%</strong> of your context.<br>Get these savings automatically inside GitHub Copilot.`;
+      dynamicCta.style.display = "block";
+    } else if (dynamicCta) {
+      dynamicCta.style.display = "none";
+    }
     // Drive estimator
     lastTokensSaved = tokensSaved;
     updateEstimator();
@@ -2491,9 +2499,6 @@ document.addEventListener("DOMContentLoaded", () => {
     if (currentOutputMode === "visual") {
       renderVisualAST();
     }
-    
-    // Check if we should prompt the user for feedback
-    if (window.triggerFeedbackAutoPrompt) window.triggerFeedbackAutoPrompt();
   }
 
   // --- Debounced compile handler ---
@@ -3162,6 +3167,15 @@ ${textContent}`;
     const auditCostSaved = document.getElementById("audit-cost-saved");
     if (auditCostSaved) auditCostSaved.textContent = `Saved: ${savingsPercent}% of total bill!`;
 
+    const dynamicZipCta = document.getElementById("dynamic-zip-cta");
+    const dynamicZipCtaText = document.getElementById("dynamic-zip-cta-text");
+    if (dynamicZipCta && savingsPercent > 0) {
+      dynamicZipCtaText.innerHTML = `You just saved <strong>${savingsPercent}%</strong> of your context.<br>Get these savings automatically inside GitHub Copilot.`;
+      dynamicZipCta.style.display = "block";
+    } else if (dynamicZipCta) {
+      dynamicZipCta.style.display = "none";
+    }
+
     if (auditBreakdownSummary) {
       auditBreakdownSummary.textContent = `${processedCount} files compiled / ${totalExcluded} files bypassed`;
     }
@@ -3317,22 +3331,7 @@ ${textContent}`;
     });
   }
 
-  // --- Auto-Prompt Feedback Logic ---
-  let hasAutoPrompted = false;
-  window.triggerFeedbackAutoPrompt = () => {
-    if (hasAutoPrompted) return;
-    
-    const lastPrompt = localStorage.getItem("cge_last_feedback_prompt");
-    const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
-    
-    // Auto-prompt if they've never been prompted, or it's been > 7 days
-    if (!lastPrompt || (Date.now() - parseInt(lastPrompt)) > SEVEN_DAYS_MS) {
-      hasAutoPrompted = true;
-      setTimeout(() => {
-        openFeedbackModal();
-      }, 5000);
-    }
-  };
+  // --- Auto-Prompt Feedback Logic Removed ---
 
   // Generate a large realistic mock file
   function generateMockCode() {
