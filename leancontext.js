@@ -2375,11 +2375,11 @@ document.addEventListener("DOMContentLoaded", () => {
     const origChars = original.length;
     const compChars = compressed.length;
     
-    const origTokens = Math.ceil(origChars / 4) + 12;
-    const compTokens = Math.max(12, Math.ceil(compChars / 4));
+    const origTokens = Math.ceil(origChars / 4);
+    const compTokens = Math.ceil(compChars / 4);
     
-    const ratio = parseFloat((origTokens / compTokens).toFixed(1));
-    const savingsPercent = Math.round((1 - (compTokens / origTokens)) * 100);
+    const ratio = origTokens === compTokens ? 1.0 : parseFloat((origTokens / compTokens).toFixed(1));
+    const savingsPercent = origTokens === 0 ? 0 : Math.round((1 - (compTokens / origTokens)) * 100);
     const tokensSaved = origTokens - compTokens;
     const charsSaved = origChars - compChars;
 
