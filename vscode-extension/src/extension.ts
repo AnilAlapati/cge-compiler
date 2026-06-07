@@ -72,7 +72,7 @@ async function buildContextString(uris: vscode.Uri[], options: any, progressCall
       folderStats.set(dirPath, (folderStats.get(dirPath) || 0) + minTokens);
       
       xmlOutput += `<file path="${relativePath}">\n${minCode}\n</file>\n\n`;
-      rawXmlOutput += `<file path="${relativePath}">\n${origCode}\n</file>\n\n`;
+      rawXmlOutput += `<file path="${relativePath}">\n${rawCode}\n</file>\n\n`;
       processedCount++;
       
       if (progressCallback) progressCallback(`Minifying file ${processedCount} of ${uris.length}...`);
