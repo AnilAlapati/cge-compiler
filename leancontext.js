@@ -2491,9 +2491,6 @@ document.addEventListener("DOMContentLoaded", () => {
     if (currentOutputMode === "visual") {
       renderVisualAST();
     }
-    
-    // Check if we should prompt the user for feedback
-    if (window.triggerFeedbackAutoPrompt) window.triggerFeedbackAutoPrompt();
   }
 
   // --- Debounced compile handler ---
@@ -3317,22 +3314,7 @@ ${textContent}`;
     });
   }
 
-  // --- Auto-Prompt Feedback Logic ---
-  let hasAutoPrompted = false;
-  window.triggerFeedbackAutoPrompt = () => {
-    if (hasAutoPrompted) return;
-    
-    const lastPrompt = localStorage.getItem("cge_last_feedback_prompt");
-    const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
-    
-    // Auto-prompt if they've never been prompted, or it's been > 7 days
-    if (!lastPrompt || (Date.now() - parseInt(lastPrompt)) > SEVEN_DAYS_MS) {
-      hasAutoPrompted = true;
-      setTimeout(() => {
-        openFeedbackModal();
-      }, 5000);
-    }
-  };
+  // --- Auto-Prompt Feedback Logic Removed ---
 
   // Generate a large realistic mock file
   function generateMockCode() {
