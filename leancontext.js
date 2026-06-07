@@ -2380,7 +2380,15 @@ document.addEventListener("DOMContentLoaded", () => {
     metricPercent.textContent = `${savingsPercent}%`;
 
     savingsSummary.textContent = `${savingsPercent}% reduction · ${tokensSaved.toLocaleString()} tokens freed`;
-
+    
+    const dynamicCta = document.getElementById("dynamic-install-cta");
+    const dynamicCtaText = document.getElementById("dynamic-cta-text");
+    if (dynamicCta && savingsPercent > 0) {
+      dynamicCtaText.innerHTML = `You just saved <strong>${savingsPercent}%</strong> of your context.<br>Get these savings automatically inside GitHub Copilot.`;
+      dynamicCta.style.display = "block";
+    } else if (dynamicCta) {
+      dynamicCta.style.display = "none";
+    }
     // Drive estimator
     lastTokensSaved = tokensSaved;
     updateEstimator();
@@ -3158,6 +3166,15 @@ ${textContent}`;
     
     const auditCostSaved = document.getElementById("audit-cost-saved");
     if (auditCostSaved) auditCostSaved.textContent = `Saved: ${savingsPercent}% of total bill!`;
+
+    const dynamicZipCta = document.getElementById("dynamic-zip-cta");
+    const dynamicZipCtaText = document.getElementById("dynamic-zip-cta-text");
+    if (dynamicZipCta && savingsPercent > 0) {
+      dynamicZipCtaText.innerHTML = `You just saved <strong>${savingsPercent}%</strong> of your context.<br>Get these savings automatically inside GitHub Copilot.`;
+      dynamicZipCta.style.display = "block";
+    } else if (dynamicZipCta) {
+      dynamicZipCta.style.display = "none";
+    }
 
     if (auditBreakdownSummary) {
       auditBreakdownSummary.textContent = `${processedCount} files compiled / ${totalExcluded} files bypassed`;

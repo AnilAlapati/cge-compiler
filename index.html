@@ -27,79 +27,146 @@
 </head>
 <body>
 
-  <div class="app-shell">
+    <div class="app-shell">
 
-    <!-- ================================================================
-         HERO SECTION
-         ================================================================ -->
-    <section class="hero reveal-element" id="hero">
-      <div class="hero-spec-tag">LeanContext 1.0</div>
+    <!-- NAVBAR -->
+    <nav class="main-nav" style="display: flex; justify-content: space-between; align-items: center; padding: 20px 40px; border-bottom: 1px solid var(--border-subtle); background: rgba(0,0,0,0.5); backdrop-filter: blur(10px); position: sticky; top: 0; z-index: 100;">
+      <div class="nav-logo" style="font-weight: 700; font-size: 1.2rem; letter-spacing: -0.5px;">LeanContext</div>
+      <div class="nav-links" style="display: flex; gap: 32px;">
+        <a href="#how-it-works" style="color: var(--text-secondary); text-decoration: none; font-size: 0.95rem; transition: color 0.2s;">How It Works</a>
+        <a href="#extension" style="color: var(--text-secondary); text-decoration: none; font-size: 0.95rem; transition: color 0.2s;">Extension</a>
+        <a href="#benchmarks" style="color: var(--text-secondary); text-decoration: none; font-size: 0.95rem; transition: color 0.2s;">Benchmarks</a>
+        <a href="https://github.com/AnilAlapati/cge-compiler" target="_blank" style="color: var(--text-secondary); text-decoration: none; font-size: 0.95rem; transition: color 0.2s;">GitHub</a>
+        <a href="#playground" style="color: var(--text-secondary); text-decoration: none; font-size: 0.95rem; transition: color 0.2s;">Playground</a>
+      </div>
+      <a href="#install" class="utility-btn accent" style="padding: 8px 16px; text-decoration: none;">Install</a>
+    </nav>
 
-      <h1>
-        Compact Code. Expand Context.
+    <!-- HERO SECTION -->
+    <section class="hero reveal-element" id="hero" style="padding: 100px 20px 60px; max-width: 900px; margin: 0 auto; text-align: center;">
+      <h1 style="font-size: 4rem; line-height: 1.1; letter-spacing: -1.5px; margin-bottom: 24px;">
+        Reduce AI coding context by up to 46%<br>
+        <span style="color: var(--text-secondary); font-size: 3rem;">while preserving code understanding.</span>
       </h1>
 
-      <p class="hero-subtitle">
-        An advanced, browser-native prompt packager that minifies entire repositories for AI agents.
-      </p>
-
-      <div class="hero-stats">
-        <div class="hero-stat">
-          <span class="stat-value" id="hero-langs">Language Agnostic</span>
-          <span class="stat-label">Universal Support</span>
-        </div>
-        <div class="hero-stat">
-          <span class="stat-value">Zero Logic Loss</span>
-          <span class="stat-label">Strips noise, keeps code</span>
-        </div>
-        <div class="hero-stat">
-          <span class="stat-value">100% Local</span>
-          <span class="stat-label">Zero API calls</span>
-        </div>
-        <div class="hero-stat">
-          <span class="stat-value">Instant Packaging</span>
-          <span class="stat-label">Ready for Claude/GPT</span>
-        </div>
-      </div>
-
-    </section>
-
-    <!-- ================================================================
-         THE CORE INTENT — WHY LEANCONTEXT?
-         ================================================================ -->
-    <section class="why-section reveal-element" id="why-cge">
-      <h3 class="why-title">Why LeanContext?</h3>
-      <p class="why-subtitle">
-        AI models process code structure and logic, not syntax noise. LeanContext compiles raw files into optimized topological shorthands, solving critical constraints in high-frequency developer workflows.
-      </p>
-
-      <div class="why-grid">
-        <div class="why-card">
-          <span class="why-icon">🗜️</span>
-          <h4 class="why-card-title">Bypass Context Windows</h4>
-          <p class="why-card-desc">Fit massive multi-file directories or bulky libraries into standard context limits by instantly stripping up to 40% of unnecessary whitespace and comments.</p>
-        </div>
-        <div class="why-card">
-          <span class="why-icon">💸</span>
-          <h4 class="why-card-title">Slash Prompt Billing</h4>
-          <p class="why-card-desc">Reduce prompt token consumption dramatically. Prevent escalating API costs for high-frequency coding agents and repository indexing cycles.</p>
-        </div>
-        <div class="why-card">
-          <span class="why-icon">⚡</span>
-          <h4 class="why-card-title">Accelerate Agent Workflows</h4>
-          <p class="why-card-desc">Smaller prompt volumes directly decrease model pre-fill parsing times, returning agent code solutions up to 2x faster with zero additional AI latency.</p>
-        </div>
-        <div class="why-card">
-          <span class="why-icon">🎯</span>
-          <h4 class="why-card-title">Curated Context Packages</h4>
-          <p class="why-card-desc">Surgically select which files are relevant to your task, exporting them into a clean, LLM-optimized XML repository package.</p>
-        </div>
+      <div class="hero-cta-group" style="margin-top: 50px; display: flex; gap: 20px; justify-content: center;">
+        <a href="#playground" class="utility-btn accent" style="padding: 14px 28px; font-size: 1.1rem; text-decoration: none;">Try Playground</a>
+        <a href="#install" class="utility-btn" style="padding: 14px 28px; font-size: 1.1rem; text-decoration: none; background: rgba(255,255,255,0.05);">Install VS Code Extension</a>
       </div>
     </section>
 
-    <!-- ================================================================
-         WORKSPACE SECTION
-         ================================================================ -->
+    <!-- HOW IT WORKS SECTION -->
+    <section id="how-it-works" class="how-it-works-section reveal-element" style="margin-top: 80px; text-align: center; padding: 0 20px;">
+      <h3 style="margin-bottom: 50px; font-size: 2rem; font-weight: 600; letter-spacing: -0.5px;">How LeanContext Works</h3>
+      <div class="how-it-works-grid" style="display: grid; grid-template-columns: 1fr auto 1fr auto 1fr; gap: 20px; align-items: center; max-width: 1000px; margin: 0 auto;">
+        
+        <div class="hiw-card" style="background: rgba(255,255,255,0.02); padding: 32px 24px; border-radius: 16px; border: 1px solid var(--border-subtle);">
+          <div style="font-size: 2.5rem; margin-bottom: 16px;">📄</div>
+          <h4 style="margin-bottom: 12px; font-size: 1.2rem; font-weight: 600;">1. Select Code</h4>
+          <p style="color: var(--text-secondary); font-size: 0.95rem; line-height: 1.5;">Paste code or choose a repository</p>
+        </div>
+
+        <div class="hiw-arrow" style="color: var(--text-secondary); font-size: 2rem;">→</div>
+
+        <div class="hiw-card" style="background: rgba(255,255,255,0.02); padding: 32px 24px; border-radius: 16px; border: 1px solid var(--border-subtle);">
+          <div style="font-size: 2.5rem; margin-bottom: 16px;">✂️</div>
+          <h4 style="margin-bottom: 12px; font-size: 1.2rem; font-weight: 600;">2. Remove Noise</h4>
+          <p style="color: var(--text-secondary); font-size: 0.95rem; line-height: 1.5;">Comments, docs, whitespace, dead code</p>
+        </div>
+
+        <div class="hiw-arrow" style="color: var(--text-secondary); font-size: 2rem;">→</div>
+
+        <div class="hiw-card" style="background: rgba(255,255,255,0.02); padding: 32px 24px; border-radius: 16px; border: 1px solid var(--border-subtle);">
+          <div style="font-size: 2.5rem; margin-bottom: 16px;">🚀</div>
+          <h4 style="margin-bottom: 12px; font-size: 1.2rem; font-weight: 600;">3. Send More Signal</h4>
+          <p style="color: var(--text-secondary); font-size: 0.95rem; line-height: 1.5;">Same logic. Fewer tokens.</p>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- WORKS EVERYWHERE SECTION -->
+    <section class="works-everywhere-section reveal-element" style="margin-top: 120px; max-width: 1000px; margin-left: auto; margin-right: auto; text-align: center; padding: 0 20px;">
+      <h3 style="margin-bottom: 50px; font-size: 2rem; font-weight: 600; letter-spacing: -0.5px;">Use LeanContext wherever you work.</h3>
+      <div class="we-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 32px;">
+        <a href="#playground" class="we-card" style="text-decoration: none; background: rgba(255,255,255,0.02); padding: 48px 32px; border-radius: 20px; border: 1px solid var(--border-subtle); display: flex; flex-direction: column; align-items: center; transition: all 0.2s;">
+          <div style="font-size: 3rem; margin-bottom: 24px;">🌐</div>
+          <h4 style="color: var(--text-primary); font-size: 1.5rem; margin-bottom: 16px; font-weight: 600;">Web Playground</h4>
+          <p style="color: var(--text-secondary); line-height: 1.6; font-size: 1.05rem;">Analyze and optimize code instantly.</p>
+        </a>
+        <a href="#extension" class="we-card" style="text-decoration: none; background: rgba(255,255,255,0.02); padding: 48px 32px; border-radius: 20px; border: 1px solid var(--border-subtle); display: flex; flex-direction: column; align-items: center; transition: all 0.2s;">
+          <div style="font-size: 3rem; margin-bottom: 24px;">🧩</div>
+          <h4 style="color: var(--text-primary); font-size: 1.5rem; margin-bottom: 16px; font-weight: 600;">VS Code Extension</h4>
+          <p style="color: var(--text-secondary); line-height: 1.6; font-size: 1.05rem;">Optimize Copilot context without leaving your editor.</p>
+        </a>
+      </div>
+    </section>
+
+    <!-- VS CODE SHOWCASE -->
+    <section id="extension" class="vscode-showcase reveal-element" style="margin-top: 120px; max-width: 1100px; margin-left: auto; margin-right: auto; display: grid; grid-template-columns: 1.2fr 1fr; gap: 80px; align-items: center; background: rgba(255,255,255,0.01); border: 1px solid var(--border-subtle); border-radius: 24px; padding: 60px;">
+      <div class="showcase-left" style="background: #111; border: 1px solid #333; border-radius: 12px; aspect-ratio: 4/3; display: flex; align-items: center; justify-content: center; box-shadow: 0 20px 40px rgba(0,0,0,0.4);">
+        <div style="color: #666; font-size: 1rem; font-family: monospace;">[ VS Code Preview GIF ]</div>
+      </div>
+      <div class="showcase-right">
+        <h3 style="font-size: 2.2rem; margin-bottom: 16px; font-weight: 600; letter-spacing: -0.5px;">LeanContext for VS Code</h3>
+        <p style="color: var(--text-secondary); font-size: 1.15rem; margin-bottom: 24px; line-height: 1.6;">
+          Built directly into GitHub Copilot.
+        </p>
+        <div style="display: flex; gap: 12px; margin-bottom: 32px; flex-wrap: wrap;">
+          <span style="background: rgba(16, 185, 129, 0.1); color: #6ee7b7; padding: 6px 12px; border-radius: 6px; font-size: 0.9rem; font-weight: 600;">★★★★★</span>
+          <span style="background: rgba(255, 255, 255, 0.05); color: #ccc; padding: 6px 12px; border-radius: 6px; font-size: 0.9rem;">500+ installs</span>
+          <span style="background: rgba(255, 255, 255, 0.05); color: #ccc; padding: 6px 12px; border-radius: 6px; font-size: 0.9rem;">Published on VS Code Marketplace</span>
+        </div>
+        <ul style="list-style: none; padding: 0; margin-bottom: 40px; display: flex; flex-direction: column; gap: 16px;">
+          <li style="display: flex; align-items: center; gap: 12px; color: #ddd; font-size: 1.05rem;"><span style="color: #6ee7b7; font-size: 1.2rem;">✓</span> <code>@lc</code> participant</li>
+          <li style="display: flex; align-items: center; gap: 12px; color: #ddd; font-size: 1.05rem;"><span style="color: #6ee7b7; font-size: 1.2rem;">✓</span> Workspace optimization</li>
+          <li style="display: flex; align-items: center; gap: 12px; color: #ddd; font-size: 1.05rem;"><span style="color: #6ee7b7; font-size: 1.2rem;">✓</span> Folder optimization</li>
+          <li style="display: flex; align-items: center; gap: 12px; color: #ddd; font-size: 1.05rem;"><span style="color: #6ee7b7; font-size: 1.2rem;">✓</span> Audit viewer</li>
+          <li style="display: flex; align-items: center; gap: 12px; color: #ddd; font-size: 1.05rem;"><span style="color: #6ee7b7; font-size: 1.2rem;">✓</span> Fully local processing</li>
+          <li style="display: flex; align-items: center; gap: 12px; color: #ddd; font-size: 1.05rem;"><span style="color: #6ee7b7; font-size: 1.2rem;">✓</span> No API calls</li>
+        </ul>
+        <a href="https://marketplace.visualstudio.com/" target="_blank" class="utility-btn accent" style="padding: 16px 32px; font-size: 1.1rem; width: 100%; text-align: center; display: block; text-decoration: none;">Install Extension</a>
+      </div>
+    </section>
+
+    <!-- BENCHMARKS -->
+    <section id="benchmarks" class="metrics-section reveal-element" style="margin-top: 120px; padding: 80px 20px; border-top: 1px solid var(--border-subtle); border-bottom: 1px solid var(--border-subtle); background: rgba(0,0,0,0.2);">
+      <div style="max-width: 1100px; margin: 0 auto; display: grid; grid-template-columns: repeat(4, 1fr); gap: 24px; text-align: center;">
+        <div>
+          <div style="font-size: 3.5rem; font-weight: 700; color: var(--text-primary); margin-bottom: 12px; letter-spacing: -1px;">46%</div>
+          <div style="color: var(--text-secondary); font-size: 1.05rem;">Max Reduction</div>
+        </div>
+        <div>
+          <div style="font-size: 3.5rem; font-weight: 700; color: var(--text-primary); margin-bottom: 12px; letter-spacing: -1px;">10-46%</div>
+          <div style="color: var(--text-secondary); font-size: 1.05rem;">Average Range</div>
+        </div>
+        <div>
+          <div style="font-size: 3.5rem; font-weight: 700; color: var(--text-primary); margin-bottom: 12px; letter-spacing: -1px;">5</div>
+          <div style="color: var(--text-secondary); font-size: 1.05rem;">Repositories Tested</div>
+        </div>
+        <div>
+          <div style="font-size: 3.5rem; font-weight: 700; color: var(--text-primary); margin-bottom: 12px; letter-spacing: -1px;">100%</div>
+          <div style="color: var(--text-secondary); font-size: 1.05rem;">Accuracy Retained</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- INSTALLATION -->
+    <section id="install" class="installation-section reveal-element" style="margin-top: 120px; max-width: 600px; margin-left: auto; margin-right: auto; text-align: center; margin-bottom: 120px; padding: 0 20px;">
+      <h3 style="font-size: 2.2rem; margin-bottom: 40px; font-weight: 600; letter-spacing: -0.5px;">Install in under 30 seconds</h3>
+      <div style="background: rgba(255,255,255,0.02); border: 1px solid var(--border-subtle); border-radius: 16px; padding: 48px; text-align: left; margin-bottom: 40px; box-shadow: 0 10px 30px rgba(0,0,0,0.2);">
+        <ol style="color: var(--text-primary); font-size: 1.2rem; line-height: 2.2; margin: 0; padding-left: 24px; font-family: var(--font-mono);">
+          <li style="margin-bottom: 16px;">Open VS Code</li>
+          <li style="margin-bottom: 16px;">Install <span style="color: #6ee7b7; font-weight: 600;">LeanContext</span></li>
+          <li style="margin-bottom: 16px;">Open Copilot Chat</li>
+          <li>Type <span style="background: rgba(255,255,255,0.1); padding: 4px 8px; border-radius: 6px; font-weight: 600; color: #fff;">@lc</span></li>
+        </ol>
+      </div>
+      <a href="https://marketplace.visualstudio.com/" target="_blank" class="utility-btn accent" style="padding: 16px 36px; font-size: 1.15rem; text-decoration: none; border-radius: 8px;">Install from VS Code Marketplace</a>
+    </section>
+
+    <div style="text-align: center; margin-bottom: 40px; padding-top: 40px;"><h2 id="playground" style="font-size: 2.5rem; margin-bottom: 16px; letter-spacing: -0.5px;">Interactive Playground</h2><p style="color: var(--text-secondary); font-size: 1.1rem;">Test LeanContext live in your browser.</p></div>
+
     <section class="workspace-section reveal-element" id="workspace">
       <div class="workspace-header">
       </div>
@@ -352,6 +419,12 @@
                   -$0.00
                 </div>
               </div>
+              
+              <!-- Dynamic ZIP CTA -->
+              <div id="dynamic-zip-cta" style="display: none; margin-top: 16px; padding: 24px; background: rgba(16, 185, 129, 0.05); border: 1px solid rgba(16, 185, 129, 0.2); border-radius: 12px; text-align: center;">
+                <p id="dynamic-zip-cta-text" style="font-size: 1.1rem; color: #f3f4f6; margin-bottom: 16px; line-height: 1.5;"></p>
+                <a href="vscode:extension/AnilAlapati.leancontext" target="_blank" class="utility-btn accent" style="padding: 12px 24px; font-size: 1rem; text-decoration: none; border-radius: 8px;">Install LeanContext for VS Code</a>
+              </div>
 
               <!-- Beta Disclaimer -->
               <div style="margin-top: 16px; padding: 12px; background: rgba(255, 170, 0, 0.05); border: 1px solid rgba(255, 170, 0, 0.2); border-radius: 8px; text-align: left;">
@@ -576,6 +649,12 @@
             <span class="perf-stat-value saved" id="metric-percent">—</span>
           </div>
           <div class="perf-summary" id="savings-summary">Paste code to analyze</div>
+          
+          <!-- Dynamic Single File CTA -->
+          <div id="dynamic-install-cta" style="display: none; margin-top: 24px; padding: 24px; background: rgba(16, 185, 129, 0.05); border: 1px solid rgba(16, 185, 129, 0.2); border-radius: 12px; text-align: center;">
+             <p id="dynamic-cta-text" style="font-size: 1.1rem; color: #f3f4f6; margin-bottom: 16px; line-height: 1.5;"></p>
+             <a href="vscode:extension/AnilAlapati.leancontext" target="_blank" class="utility-btn accent" style="padding: 12px 24px; font-size: 1rem; text-decoration: none; border-radius: 8px;">Install LeanContext for VS Code</a>
+          </div>
         </div>
       </div>
 
@@ -642,97 +721,7 @@
     <!-- ================================================================
          HOW IT WORKS SECTION
          ================================================================ -->
-    <section class="spec-section reveal-element" id="how-it-works">
-      <div class="spec-grid">
-        <!-- Comments -->
-        <div class="spec-card">
-          <div class="spec-card-header">
-            <div class="spec-card-dot blue"></div>
-            <h3 class="spec-card-title">Comment Removal</h3>
-          </div>
-          <p class="spec-card-desc">
-            Strips out inline and block comments that provide no functional value to the architecture.
-          </p>
-          <div class="transform-grid">
-            <div class="transform-box">
-              <span class="transform-box-tag">Input</span>
-              export interface User {<br>&nbsp;&nbsp;// Unique ID<br>&nbsp;&nbsp;id: string;<br>}
-            </div>
-            <span class="transform-separator">→</span>
-            <div class="transform-box after">
-              <span class="transform-box-tag">Output</span>
-              export interface User {<br>&nbsp;&nbsp;id: string;<br>}
-            </div>
-          </div>
-        </div>
-
-        <!-- JSDoc -->
-        <div class="spec-card">
-          <div class="spec-card-header">
-            <div class="spec-card-dot guard"></div>
-            <h3 class="spec-card-title">JSDoc Stripping</h3>
-          </div>
-          <p class="spec-card-desc">
-            Optionally removes heavy JSDoc blocks and docstrings to maximize token savings.
-          </p>
-          <div class="transform-grid">
-            <div class="transform-box">
-              <span class="transform-box-tag">Input</span>
-              /**<br> * Configures the app<br> */<br>export const cfg = {};
-            </div>
-            <span class="transform-separator">→</span>
-            <div class="transform-box after">
-              <span class="transform-box-tag">Output</span>
-              export const cfg = {};
-            </div>
-          </div>
-        </div>
-
-        <!-- Dead Code -->
-        <div class="spec-card">
-          <div class="spec-card-header">
-            <div class="spec-card-dot scan"></div>
-            <h3 class="spec-card-title">Dead Code Pruning</h3>
-          </div>
-          <p class="spec-card-desc">
-            Locates and eliminates commented-out blocks of code left behind during development.
-          </p>
-          <div class="transform-grid">
-            <div class="transform-box">
-              <span class="transform-box-tag">Input</span>
-              import { a } from "b";<br>/* import { c } from "c"; */<br>export const d = a;
-            </div>
-            <span class="transform-separator">→</span>
-            <div class="transform-box after">
-              <span class="transform-box-tag">Output</span>
-              import { a } from "b";<br>export const d = a;
-            </div>
-          </div>
-        </div>
-
-        <!-- XML Formatting -->
-        <div class="spec-card">
-          <div class="spec-card-header">
-            <div class="spec-card-dot block"></div>
-            <h3 class="spec-card-title">Context Packaging</h3>
-          </div>
-          <p class="spec-card-desc">
-            Automatically concatenates all selected files into an LLM-friendly XML structured repository.
-          </p>
-          <div class="transform-grid">
-            <div class="transform-box">
-              <span class="transform-box-tag">Input</span>
-              (Multiple zip files processed)
-            </div>
-            <span class="transform-separator">→</span>
-            <div class="transform-box after">
-              <span class="transform-box-tag">Output</span>
-              &lt;repo&gt;<br>&nbsp;&nbsp;&lt;file path="a.ts"&gt;...&lt;/file&gt;<br>&lt;/repo&gt;
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
+    
 
     <!-- Footer -->
     <footer class="footer">
