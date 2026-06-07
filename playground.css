@@ -1248,40 +1248,32 @@ body {
   border-color: var(--text-primary);
 }
 
-.estimator-pill.active + .estimator-pill {
-  border-left-color: var(--text-primary);
-}
-
-.estimator-track.light {
-  background: #f1f5f9;
-  border-radius: 8px;
-  padding: 4px;
-  display: inline-flex;
-  gap: 4px;
-  border: none;
-}
-
-.estimator-track.light .estimator-pill {
-  background: transparent;
-  border: none;
-  border-radius: 6px;
-  color: #64748b;
+.mini-toggle-btn {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #9ca3af;
+  border-radius: 20px;
+  padding: 6px 14px;
+  font-size: 0.85rem;
   font-family: var(--font-code);
-  font-size: 0.8rem;
-  font-weight: 600;
-  padding: 8px 16px;
+  font-weight: 500;
   cursor: pointer;
   transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  user-select: none;
 }
 
-.estimator-track.light .estimator-pill:hover {
-  color: #0f172a;
+.mini-toggle-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: #d1d5db;
 }
 
-.estimator-track.light .estimator-pill.active {
-  background: #ffffff;
-  color: #0f172a;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.1), 0 1px 2px rgba(0,0,0,0.06);
+.mini-toggle-btn.active {
+  background: rgba(59, 130, 246, 0.15);
+  border-color: rgba(59, 130, 246, 0.4);
+  color: #60a5fa;
 }
 
 .estimator-right {
