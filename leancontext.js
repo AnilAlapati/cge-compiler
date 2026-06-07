@@ -1,5 +1,5 @@
 /* =========================================================================
-   CGE Playground — Core Compiler & UI Controller
+   LeanContext — Core Compiler & UI Controller
    ========================================================================= */
 
 // =========================================================================
@@ -2548,7 +2548,7 @@ document.addEventListener("DOMContentLoaded", () => {
   llmPromptBtn.addEventListener("click", () => {
     const textContent = cgeOutput.textContent || cgeOutput.innerText;
     const currentLangName = currentLang.charAt(0).toUpperCase() + currentLang.slice(1);
-    const systemPromptWrapper = `Act as an expert ${currentLangName} compiler. Below is a code block translated into Cognitive Graph Encoding (CGE) loss-less shorthand notation.
+    const systemPromptWrapper = `Act as an expert ${currentLangName} compiler. Below is a code block optimized by LeanContext to remove unnecessary tokens.
 
 Please read the encoded representation carefully, then:
 1. Provide a clear, 2-sentence summary of what this code does.
