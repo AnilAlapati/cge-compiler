@@ -2902,9 +2902,9 @@ ${textContent}`;
     const validExts = ['.ts', '.tsx', '.js', '.jsx', '.py', '.java', '.rs', '.go', '.cpp', '.h', '.hpp', '.cs', '.php', '.rb', '.md', '.json', '.css', '.html'];
     const sortedExts = Object.keys(extensionCounts).sort((a, b) => extensionCounts[b] - extensionCounts[a]);
 
-    if (!window.disabledZipExts) {
-      window.disabledZipExts = new Set();
-      // By default, include all files. The user can click a chip to exclude it.
+    if (!window.includedZipExts) {
+      window.includedZipExts = new Set();
+      // By default, NO files are included. The user must explicitly click to include them.
     }
     
     sortedExts.forEach(ext => {
@@ -2912,14 +2912,18 @@ ${textContent}`;
       if (!isCompiled) return;
 
       const chip = document.createElement("div");
-      const isDisabled = window.disabledZipExts.has('.' + ext);
+      const isIncluded = window.includedZipExts.has('.' + ext);
       
-      chip.style.cssText = "display: flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 6px; background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3); color: #6ee7b7; font-size: 0.85rem; cursor: pointer; user-select: none; transition: all 0.2s ease;";
-      if (isDisabled) {
+      chip.style.cssText = "display: flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 6px; font-size: 0.85rem; cursor: pointer; user-select: none; transition: all 0.2s ease;";
+      
+      if (isIncluded) {
+        chip.style.background = "rgba(16, 185, 129, 0.1)";
+        chip.style.border = "1px solid rgba(16, 185, 129, 0.3)";
+        chip.style.color = "#6ee7b7";
+      } else {
         chip.style.background = "rgba(0,0,0,0.3)";
-        chip.style.borderColor = "rgba(255,255,255,0.1)";
-        chip.style.color = "#6b7280";
-        chip.style.textDecoration = "line-through";
+        chip.style.border = "1px solid rgba(255,255,255,0.1)";
+        chip.style.color = "#9ca3af";
       }
 
       chip.innerHTML = `
@@ -2928,18 +2932,16 @@ ${textContent}`;
       `;
       
       chip.addEventListener('click', () => {
-        if (window.disabledZipExts.has('.' + ext)) {
-          window.disabledZipExts.delete('.' + ext);
-          chip.style.background = "rgba(16, 185, 129, 0.1)";
-          chip.style.borderColor = "rgba(16, 185, 129, 0.3)";
-          chip.style.color = "#6ee7b7";
-          chip.style.textDecoration = "none";
-        } else {
-          window.disabledZipExts.add('.' + ext);
+        if (window.includedZipExts.has('.' + ext)) {
+          window.includedZipExts.delete('.' + ext);
           chip.style.background = "rgba(0,0,0,0.3)";
-          chip.style.borderColor = "rgba(255,255,255,0.1)";
-          chip.style.color = "#6b7280";
-          chip.style.textDecoration = "line-through";
+          chip.style.border = "1px solid rgba(255,255,255,0.1)";
+          chip.style.color = "#9ca3af";
+        } else {
+          window.includedZipExts.add('.' + ext);
+          chip.style.background = "rgba(16, 185, 129, 0.1)";
+          chip.style.border = "1px solid rgba(16, 185, 129, 0.3)";
+          chip.style.color = "#6ee7b7";
         }
       });
 
@@ -3067,8 +3069,8 @@ ${textContent}`;
       const name = cachedZipFiles[i];
       const ext = name.split(".").pop().toLowerCase();
       
-      // Skip user-deselected extensions
-      if (window.disabledZipExts && window.disabledZipExts.has('.' + ext)) {
+      // Skip extensions that are NOT explicitly included by the user
+      if (!window.includedZipExts || !window.includedZipExts.has('.' + ext)) {
         totalExcluded++;
         continue;
       }
