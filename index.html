@@ -117,20 +117,14 @@
           
           <!-- Mode 1: Code Input -->
           <div class="editor-body mode-container active" id="input-container-code" style="display: flex; flex-direction: column;">
-            <div style="padding: 12px 16px; border-bottom: 1px solid rgba(255,255,255,0.1); display: flex; gap: 20px; font-size: 0.85rem; color: #d1d5db; background: rgba(0,0,0,0.2);">
-              <label style="display: flex; align-items: center; gap: 6px; cursor: pointer;">
-                <input type="checkbox" id="opt-comments" checked> Exclude Comments
-              </label>
-              <label style="display: flex; align-items: center; gap: 6px; cursor: pointer;">
-                <input type="checkbox" id="opt-jsdoc" checked> Exclude JSDocs
-              </label>
-              <label style="display: flex; align-items: center; gap: 6px; cursor: pointer;">
-                <input type="checkbox" id="opt-dead-code" checked> Exclude Dead Code
-              </label>
-              <label style="display: flex; align-items: center; gap: 6px; cursor: pointer;">
-                <input type="checkbox" id="opt-whitespace" checked> Trim Whitespace
-              </label>
-              <button id="btn-load-sample" style="margin-left: auto; background: rgba(59, 130, 246, 0.15); border: 1px solid rgba(59, 130, 246, 0.3); color: #60a5fa; padding: 2px 10px; border-radius: 4px; font-size: 0.75rem; cursor: pointer; transition: all 0.2s; font-weight: 500;">
+            <div style="padding: 12px 16px; border-bottom: 1px solid rgba(255,255,255,0.1); display: flex; gap: 12px; align-items: center; background: rgba(0,0,0,0.2); overflow-x: auto;">
+              <div class="estimator-track" style="margin: 0;">
+                <button class="estimator-pill active" id="opt-comments">Exclude Comments</button>
+                <button class="estimator-pill active" id="opt-jsdoc">Exclude JSDocs</button>
+                <button class="estimator-pill active" id="opt-dead-code">Exclude Dead Code</button>
+                <button class="estimator-pill active" id="opt-whitespace">Trim Whitespace</button>
+              </div>
+              <button id="btn-load-sample" class="utility-btn" style="margin-left: auto; background: rgba(59, 130, 246, 0.15); border: 1px solid rgba(59, 130, 246, 0.3); color: #60a5fa; padding: 6px 16px; border-radius: 6px; font-size: 0.8rem; cursor: pointer; font-weight: 500;">
                 Load Sample
               </button>
             </div>

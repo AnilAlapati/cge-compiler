@@ -2019,10 +2019,14 @@ document.addEventListener("DOMContentLoaded", () => {
   const optDeadCode = document.getElementById("opt-dead-code");
   const optWhitespace = document.getElementById("opt-whitespace");
   
-  if (optComments) optComments.addEventListener("change", handleCompile);
-  if (optJsdoc) optJsdoc.addEventListener("change", handleCompile);
-  if (optDeadCode) optDeadCode.addEventListener("change", handleCompile);
-  if (optWhitespace) optWhitespace.addEventListener("change", handleCompile);
+  [optComments, optJsdoc, optDeadCode, optWhitespace].forEach(btn => {
+    if (btn) {
+      btn.addEventListener("click", () => {
+        btn.classList.toggle("active");
+        handleCompile();
+      });
+    }
+  });
   const llmPromptBtn  = document.getElementById("llm-prompt-btn");
   const tabBtns       = document.querySelectorAll(".segment-tab");
   const extLabel      = document.getElementById("ext-label");
@@ -2117,7 +2121,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  // --- Subtle Syntax-colored CGE output ---
+  // --- Subtle Syntax-colored CGE/JS output ---
   function highlightCGE(raw) {
     const escaped = raw
       .replace(/&/g, "&amp;")
@@ -2125,18 +2129,16 @@ document.addEventListener("DOMContentLoaded", () => {
       .replace(/>/g, "&gt;");
 
     return escaped
-      // Header line
+      // Legacy CGE/1.0 headers
       .replace(/^(CGE\/1\.0\s.+)$/m, '<span class="kw-header">$1</span>')
-      // Section labels
       .replace(/^(IMPORTS:|TYPES:|STATE:|OPS:|PRIVATE:)/gm, '<span class="kw-section">$1</span>')
-      // EXPORTS line
       .replace(/^(EXPORTS:\s.+)$/gm, '<span class="kw-exports">$1</span>')
-      // GUARD keyword
-      .replace(/\b(GUARD)\b/g, '<span class="kw-guard">$1</span>')
-      // SCAN keyword
-      .replace(/\b(SCAN)\b/g, '<span class="kw-scan">$1</span>')
-      // Action keywords
-      .replace(/\b(THROW|RETURN|CONST)\b/g, '<span class="kw-action">$1</span>');
+      // Standard JS/TS Keywords
+      .replace(/\b(import|export|from|function|async|await|const|let|var|if|else|for|while|return|class|extends|new|true|false|null|undefined)\b/g, '<span class="kw-action">$1</span>')
+      // Strings (basic)
+      .replace(/(".*?"|'.*?'|`.*?`)/g, '<span class="kw-type">$1</span>')
+      // Types/Classes
+      .replace(/\b([A-Z][a-zA-Z0-9_]*)\b/g, '<span class="kw-guard">$1</span>');
   }
 
   // --- Snappy animated counters ---
@@ -2495,12 +2497,12 @@ document.addEventListener("DOMContentLoaded", () => {
   function handleCompile() {
     const code = codeInput.value;
     const fileName = `source_code.${getExt(currentLang)}`;    const engine = new window.LeanContextEngine({
-      stripLineComments: optComments ? optComments.checked : true,
-      stripBlockComments: optComments ? optComments.checked : true,
-      stripDocComments: optJsdoc ? optJsdoc.checked : true,
-      stripDeadCode: optDeadCode ? optDeadCode.checked : true,
-      normalizeNewlines: optWhitespace ? optWhitespace.checked : true,
-      stripTrailingWhitespace: optWhitespace ? optWhitespace.checked : true,
+      stripLineComments: optComments ? optComments.classList.contains("active") : true,
+      stripBlockComments: optComments ? optComments.classList.contains("active") : true,
+      stripDocComments: optJsdoc ? optJsdoc.classList.contains("active") : true,
+      stripDeadCode: optDeadCode ? optDeadCode.classList.contains("active") : true,
+      normalizeNewlines: optWhitespace ? optWhitespace.classList.contains("active") : true,
+      stripTrailingWhitespace: optWhitespace ? optWhitespace.classList.contains("active") : true,
       preserveTodos: false
     });
     const res = engine.optimize(code, currentLang);
@@ -3465,16 +3467,6 @@ export function processBatch${i}(data) {
   // Load sample button listener
   const btnLoadSample = document.getElementById("btn-load-sample");
   if (btnLoadSample) {
-    btnLoadSample.addEventListener("mouseenter", () => {
-      btnLoadSample.style.background = "rgba(59, 130, 246, 0.25)";
-      btnLoadSample.style.borderColor = "rgba(59, 130, 246, 0.5)";
-      btnLoadSample.style.color = "#93c5fd";
-    });
-    btnLoadSample.addEventListener("mouseleave", () => {
-      btnLoadSample.style.background = "rgba(59, 130, 246, 0.15)";
-      btnLoadSample.style.borderColor = "rgba(59, 130, 246, 0.3)";
-      btnLoadSample.style.color = "#60a5fa";
-    });
     btnLoadSample.addEventListener("click", () => {
       codeInput.value = generateMockCode();
       handleCompile();
