@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>CGE Playground — High-Fidelity Code Compactor for Large Language Models</title>
-  <meta name="description" content="Cognitive Graph Encoding (CGE) Compiles source code into business-logic preserving compressed shorthand notation, optimizing prompt token footprints up to 86% across multiple modern programming languages.">
+  <title>LeanContext — High-Fidelity Code Compactor for Large Language Models</title>
+  <meta name="description" content="LeanContext intelligently strips unnecessary whitespace, comments, and dead code to dramatically reduce your LLM prompt sizes without losing critical context.">
 
   <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -117,20 +117,30 @@
           
           <!-- Mode 1: Code Input -->
           <div class="editor-body mode-container active" id="input-container-code" style="display: flex; flex-direction: column;">
-            <div style="padding: 12px 16px; border-bottom: 1px solid rgba(255,255,255,0.1); display: flex; gap: 20px; font-size: 0.85rem; color: #d1d5db; background: rgba(0,0,0,0.2);">
-              <label style="display: flex; align-items: center; gap: 6px; cursor: pointer;">
-                <input type="checkbox" id="opt-comments" checked> Exclude Comments
-              </label>
-              <label style="display: flex; align-items: center; gap: 6px; cursor: pointer;">
-                <input type="checkbox" id="opt-jsdoc" checked> Exclude JSDocs
-              </label>
-              <label style="display: flex; align-items: center; gap: 6px; cursor: pointer;">
-                <input type="checkbox" id="opt-dead-code" checked> Exclude Dead Code
-              </label>
-              <label style="display: flex; align-items: center; gap: 6px; cursor: pointer;">
-                <input type="checkbox" id="opt-whitespace" checked> Trim Whitespace
-              </label>
-              <button id="btn-load-sample" style="margin-left: auto; background: rgba(59, 130, 246, 0.15); border: 1px solid rgba(59, 130, 246, 0.3); color: #60a5fa; padding: 2px 10px; border-radius: 4px; font-size: 0.75rem; cursor: pointer; transition: all 0.2s; font-weight: 500;">
+            <div style="padding: 12px 16px; border-bottom: 1px solid rgba(255,255,255,0.1); display: flex; gap: 12px; align-items: center; background: rgba(0,0,0,0.2); flex-wrap: wrap;">
+              <div style="display: flex; gap: 16px; flex-wrap: wrap; margin: 0;">
+                <label class="checkbox-container">
+                  <input type="checkbox" id="opt-comments">
+                  <span class="checkmark"></span>
+                  Exclude Comments
+                </label>
+                <label class="checkbox-container">
+                  <input type="checkbox" id="opt-jsdoc">
+                  <span class="checkmark"></span>
+                  Exclude JSDocs
+                </label>
+                <label class="checkbox-container">
+                  <input type="checkbox" id="opt-dead-code">
+                  <span class="checkmark"></span>
+                  Exclude Dead Code
+                </label>
+                <label class="checkbox-container">
+                  <input type="checkbox" id="opt-whitespace">
+                  <span class="checkmark"></span>
+                  Trim Whitespace
+                </label>
+              </div>
+              <button id="btn-load-sample" class="utility-btn" style="margin-left: auto; background: rgba(59, 130, 246, 0.15); border: 1px solid rgba(59, 130, 246, 0.3); color: #60a5fa; padding: 6px 16px; border-radius: 6px; font-size: 0.8rem; cursor: pointer; font-weight: 500;">
                 Load Sample
               </button>
             </div>
@@ -191,24 +201,32 @@
             </div>
 
             <!-- Configuration Step (Shows after Zip Extraction) -->
-            <div id="zip-config-step" style="display: none; flex-direction: column; gap: 20px; background: rgba(31, 41, 55, 0.4); border: 1px solid rgba(255,255,255,0.05); padding: 24px; border-radius: 12px; max-height: 80vh; overflow-y: auto;">
+            <div id="zip-config-step" style="display: none; flex-direction: column; gap: 20px; background: rgba(31, 41, 55, 0.4); border: 1px solid rgba(255,255,255,0.05); padding: 24px; border-radius: 12px; overflow-y: auto;">
               <div style="text-align: center;">
                 <h3 style="color: #fff; margin: 0 0 8px 0; font-size: 1.25rem;">Zip Extracted Successfully</h3>
                 <p style="color: #9ca3af; margin: 0; font-size: 0.9rem;">Configure minification settings and select file types before calculating the ROI.</p>
               </div>
 
               <div style="padding: 16px; border-radius: 8px; display: flex; flex-wrap: wrap; gap: 20px; font-size: 0.9rem; color: #d1d5db; background: rgba(0,0,0,0.3); justify-content: center;">
-                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
-                  <input type="checkbox" id="zip-opt-comments" checked> Exclude Comments
+                <label class="checkbox-container">
+                  <input type="checkbox" id="zip-opt-comments">
+                  <span class="checkmark"></span>
+                  Exclude Comments
                 </label>
-                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
-                  <input type="checkbox" id="zip-opt-jsdoc" checked> Exclude JSDocs
+                <label class="checkbox-container">
+                  <input type="checkbox" id="zip-opt-jsdoc">
+                  <span class="checkmark"></span>
+                  Exclude JSDocs
                 </label>
-                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
-                  <input type="checkbox" id="zip-opt-dead-code" checked> Exclude Dead Code
+                <label class="checkbox-container">
+                  <input type="checkbox" id="zip-opt-dead-code">
+                  <span class="checkmark"></span>
+                  Exclude Dead Code
                 </label>
-                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
-                  <input type="checkbox" id="zip-opt-whitespace" checked> Trim Whitespace
+                <label class="checkbox-container">
+                  <input type="checkbox" id="zip-opt-whitespace">
+                  <span class="checkmark"></span>
+                  Trim Whitespace
                 </label>
               </div>
 
@@ -302,22 +320,6 @@
                 </div>
               </div>
 
-              <!-- File Breakdown Section -->
-              <div id="audit-file-breakdown" class="audit-breakdown-card">
-                <div class="audit-breakdown-header">
-                  <span class="audit-breakdown-title">📂 File Type & Exclusions Breakdown</span>
-                  <span id="audit-breakdown-summary" class="audit-breakdown-summary">0 processed / 0 bypassed</span>
-                </div>
-                <!-- Breakdown progress visualization -->
-                <div id="audit-breakdown-bar-container" class="audit-breakdown-progress-container">
-                  <div id="audit-breakdown-bar-processed" class="audit-progress-bar compiled" style="width: 0%;"></div>
-                  <div id="audit-breakdown-bar-excluded" class="audit-progress-bar bypassed" style="width: 0%;"></div>
-                </div>
-                <!-- Breakdown list -->
-                <div id="audit-breakdown-list" class="audit-chips-grid">
-                  <!-- Dynamic extension cards will go here -->
-                </div>
-              </div>
 
               <!-- Cost Projections -->
               <!-- ROI Price Comparison Cards -->
@@ -371,9 +373,7 @@
         <div class="editor-card" id="output-card">
           <div class="card-header">
             <div class="panel-header-switcher">
-              <button class="switcher-btn active" id="btn-mode-code">AI Prompt Package</button>
-              <button class="switcher-btn" id="btn-mode-visual" style="display: none;">Visual AST</button>
-              <button class="switcher-btn" id="btn-mode-verify" style="display: none;">CLNR Verify</button>
+              <button class="switcher-btn active" id="btn-mode-code">LeanContext Package</button>
             </div>
             <button class="utility-btn" id="copy-btn">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">

@@ -1,5 +1,5 @@
 /* =========================================================================
-   CGE Playground — Apple Minimalist Theme
+   LeanContext — Apple Minimalist Theme
    Style Direction: Premium Developer Utility, Monochromatic Precision
    ========================================================================= */
 
@@ -509,8 +509,8 @@ body {
   display: flex;
   background: var(--bg-primary);
   border: 1px solid var(--border-subtle);
-  padding: 2px;
-  border-radius: 4px;
+  padding: 4px;
+  border-radius: 6px;
 }
 
 .switcher-btn {
@@ -518,11 +518,11 @@ body {
   border: none;
   color: var(--text-secondary);
   font-family: var(--font-body);
-  font-size: 0.7rem;
+  font-size: 0.85rem;
   font-weight: 500;
-  padding: 4px 10px;
+  padding: 6px 14px;
   cursor: pointer;
-  border-radius: 3px;
+  border-radius: 4px;
   transition: all var(--transition-speed);
 }
 
@@ -1248,8 +1248,57 @@ body {
   border-color: var(--text-primary);
 }
 
-.estimator-pill.active + .estimator-pill {
-  border-left-color: var(--text-primary);
+.checkbox-container {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  font-family: var(--font-code);
+  font-size: 0.85rem;
+  color: #d1d5db;
+  user-select: none;
+  transition: all 0.2s ease;
+}
+
+.checkbox-container:hover {
+  color: #fff;
+}
+
+.checkbox-container input {
+  display: none;
+}
+
+.checkmark {
+  width: 20px;
+  height: 20px;
+  border: 1.5px solid rgba(255,255,255,0.2);
+  border-radius: 6px;
+  background: rgba(0,0,0,0.3);
+  position: relative;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.checkbox-container:hover .checkmark {
+  border-color: rgba(255,255,255,0.4);
+  transform: translateY(-1px);
+}
+
+.checkbox-container input:checked + .checkmark {
+  background: #fff;
+  border-color: #fff;
+  box-shadow: 0 2px 8px rgba(255,255,255,0.15);
+}
+
+.checkbox-container input:checked + .checkmark::after {
+  content: "";
+  position: absolute;
+  left: 6.5px;
+  top: 3px;
+  width: 5px;
+  height: 10px;
+  border: solid #000;
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
 }
 
 .estimator-right {

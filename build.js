@@ -12,9 +12,12 @@ fs.mkdirSync(distDir);
 
 console.log('⚡ Starting build & minification process...');
 
-// 2. Copy HTML files
+// 2. Copy and transform HTML files
 if (fs.existsSync(path.join(__dirname, 'index.html'))) {
-  fs.copyFileSync(path.join(__dirname, 'index.html'), path.join(distDir, 'index.html'));
+  let html = fs.readFileSync(path.join(__dirname, 'index.html'), 'utf-8');
+  // For Vercel deployment, the root is 'dist/', so 'dist/leancontext_engine.js' becomes 'leancontext_engine.js'
+  html = html.replace('src="dist/leancontext_engine.js"', 'src="leancontext_engine.js"');
+  fs.writeFileSync(path.join(distDir, 'index.html'), html, 'utf-8');
 }
 if (fs.existsSync(path.join(__dirname, 'cge.html'))) {
   fs.copyFileSync(path.join(__dirname, 'cge.html'), path.join(distDir, 'cge.html'));

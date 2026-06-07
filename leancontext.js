@@ -1,5 +1,5 @@
 /* =========================================================================
-   CGE Playground — Core Compiler & UI Controller
+   LeanContext — Core Compiler & UI Controller
    ========================================================================= */
 
 // =========================================================================
@@ -1952,32 +1952,6 @@ std::string getHash(std::string val) {
 };
 
 // =========================================================================
-// 2.5 Auto-Detect Heuristic Engine
-// =========================================================================
-
-function autoDetectLanguage(code) {
-  if (!code || code.trim().length < 10) return null;
-  
-  // Fast regex heuristics looking for strong syntactical tells
-  const hasPython = /\bdef\b|\belif\b|:\s*\n\s+/.test(code) && !/[{}]/.test(code.substring(0, 50));
-  const hasRust = /\bfn\b|\bimpl\b|\bpub\s+(?:struct|fn|enum)\b/.test(code);
-  const hasGo = /\bfunc\b|\bpackage\b|\bchan\b/.test(code);
-  const hasCpp = /#include|\bstd::\b|\bint\s+main\s*\(/.test(code);
-  const hasTS = /\binterface\b|\bexport\b/.test(code);
-  
-  let matches = 0;
-  let detected = null;
-  
-  if (hasPython) { matches++; detected = "python"; }
-  if (hasRust) { matches++; detected = "rust"; }
-  if (hasGo) { matches++; detected = "go"; }
-  if (hasCpp) { matches++; detected = "cpp"; }
-  if (hasTS) { matches++; detected = "typescript"; }
-
-  // If we have exactly one strong match, we confidently return it. Otherwise, return null (ambiguous).
-  return matches === 1 ? detected : null;
-}
-
 // =========================================================================
 // 3. DOM Initialization & Event Binding
 // =========================================================================
@@ -2019,10 +1993,13 @@ document.addEventListener("DOMContentLoaded", () => {
   const optDeadCode = document.getElementById("opt-dead-code");
   const optWhitespace = document.getElementById("opt-whitespace");
   
-  if (optComments) optComments.addEventListener("change", handleCompile);
-  if (optJsdoc) optJsdoc.addEventListener("change", handleCompile);
-  if (optDeadCode) optDeadCode.addEventListener("change", handleCompile);
-  if (optWhitespace) optWhitespace.addEventListener("change", handleCompile);
+  [optComments, optJsdoc, optDeadCode, optWhitespace].forEach(btn => {
+    if (btn) {
+      btn.addEventListener("change", () => {
+        handleCompile();
+      });
+    }
+  });
   const llmPromptBtn  = document.getElementById("llm-prompt-btn");
   const tabBtns       = document.querySelectorAll(".segment-tab");
   const extLabel      = document.getElementById("ext-label");
@@ -2033,8 +2010,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Mode Swapping DOM nodes
   const btnModeCode   = document.getElementById("btn-mode-code");
-  const btnModeVisual = document.getElementById("btn-mode-visual");
-  const btnModeVerify = document.getElementById("btn-mode-verify");
   
   const containerCode = document.getElementById("container-code");
   const containerVisual = document.getElementById("container-visual");
@@ -2119,26 +2094,24 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  // --- Subtle Syntax-colored CGE output ---
+  // --- Subtle Syntax-colored CGE/JS output ---
   function highlightCGE(raw) {
     const escaped = raw
       .replace(/&/g, "&amp;")
       .replace(/</g, "&lt;")
       .replace(/>/g, "&gt;");
 
-    return escaped
-      // Header line
-      .replace(/^(CGE\/1\.0\s.+)$/m, '<span class="kw-header">$1</span>')
-      // Section labels
-      .replace(/^(IMPORTS:|TYPES:|STATE:|OPS:|PRIVATE:)/gm, '<span class="kw-section">$1</span>')
-      // EXPORTS line
-      .replace(/^(EXPORTS:\s.+)$/gm, '<span class="kw-exports">$1</span>')
-      // GUARD keyword
-      .replace(/\b(GUARD)\b/g, '<span class="kw-guard">$1</span>')
-      // SCAN keyword
-      .replace(/\b(SCAN)\b/g, '<span class="kw-scan">$1</span>')
-      // Action keywords
-      .replace(/\b(THROW|RETURN|CONST)\b/g, '<span class="kw-action">$1</span>');
+    const regex = /(".*?"|'.*?'|`.*?`)|(?:^(CGE\/1\.0\s.+)$)|(?:^(IMPORTS:|TYPES:|STATE:|OPS:|PRIVATE:))|(?:^(EXPORTS:\s.+)$)|\b(import|export|from|function|async|await|const|let|var|if|else|for|while|return|class|extends|new|true|false|null|undefined)\b|\b([A-Z][a-zA-Z0-9_]*)\b/gm;
+
+    return escaped.replace(regex, (match, str, cgeHeader, cgeSection, cgeExports, keyword, type) => {
+      if (str) return `<span class="kw-type">${str}</span>`;
+      if (cgeHeader) return `<span class="kw-header">${cgeHeader}</span>`;
+      if (cgeSection) return `<span class="kw-section">${cgeSection}</span>`;
+      if (cgeExports) return `<span class="kw-exports">${cgeExports}</span>`;
+      if (keyword) return `<span class="kw-action">${keyword}</span>`;
+      if (type) return `<span class="kw-guard">${type}</span>`;
+      return match;
+    });
   }
 
   // --- Snappy animated counters ---
@@ -2306,8 +2279,6 @@ document.addEventListener("DOMContentLoaded", () => {
     closeDrawer();
 
     btnModeCode.classList.remove("active");
-    btnModeVisual.classList.remove("active");
-    btnModeVerify.classList.remove("active");
     
     containerCode.classList.remove("active");
     containerVisual.classList.remove("active");
@@ -2317,13 +2288,6 @@ document.addEventListener("DOMContentLoaded", () => {
     if (newMode === "code") {
       btnModeCode.classList.add("active");
       containerCode.classList.add("active");
-    } else if (newMode === "visual") {
-      btnModeVisual.classList.add("active");
-      containerVisual.classList.add("active");
-      renderVisualAST();
-    } else if (newMode === "verify") {
-      btnModeVerify.classList.add("active");
-      containerVerify.classList.add("active");
     } else if (newMode === "audit") {
       containerAudit.style.display = "flex";
     }
@@ -2341,8 +2305,6 @@ document.addEventListener("DOMContentLoaded", () => {
     if (containerAudit) containerAudit.style.display = "none";
 
     btnModeCode.style.display = "none";
-    btnModeVisual.style.display = "none";
-    btnModeVerify.style.display = "none";
 
     if (newMode === "code") {
       btnInputCode.classList.add("active");
@@ -2355,8 +2317,6 @@ document.addEventListener("DOMContentLoaded", () => {
       if (editorGrid) editorGrid.style.gridTemplateColumns = "1fr 36px 1fr";
       
       btnModeCode.style.display = "inline-block";
-      btnModeVisual.style.display = "inline-block";
-      btnModeVerify.style.display = "inline-block";
       
       if (metricsSection) metricsSection.style.display = "block";
       
@@ -2382,8 +2342,6 @@ document.addEventListener("DOMContentLoaded", () => {
   btnInputZip.addEventListener("click", () => switchInputMode("zip"));
 
   btnModeCode.addEventListener("click", () => switchMode("code"));
-  btnModeVisual.addEventListener("click", () => switchMode("visual"));
-  btnModeVerify.addEventListener("click", () => switchMode("verify"));
   drawerCloseBtn.addEventListener("click", closeDrawer);
 
   // --- Metrics Update ---
@@ -2391,11 +2349,11 @@ document.addEventListener("DOMContentLoaded", () => {
     const origChars = original.length;
     const compChars = compressed.length;
     
-    const origTokens = Math.ceil(origChars / 4) + 12;
-    const compTokens = Math.max(12, Math.ceil(compChars / 4));
+    const origTokens = Math.ceil(origChars / 4);
+    const compTokens = Math.ceil(compChars / 4);
     
-    const ratio = parseFloat((origTokens / compTokens).toFixed(1));
-    const savingsPercent = Math.round((1 - (compTokens / origTokens)) * 100);
+    const ratio = origTokens === compTokens ? 1.0 : parseFloat((origTokens / compTokens).toFixed(1));
+    const savingsPercent = origTokens === 0 ? 0 : Math.round((1 - (compTokens / origTokens)) * 100);
     const tokensSaved = origTokens - compTokens;
     const charsSaved = origChars - compChars;
 
@@ -2561,34 +2519,7 @@ document.addEventListener("DOMContentLoaded", () => {
   // --- Input events ---
   codeInput.addEventListener("input", debouncedCompile);
   
-  // Auto-detect language on paste
-  codeInput.addEventListener("paste", (e) => {
-    // Wait for the pasted value to populate in the textarea
-    setTimeout(() => {
-      const pastedCode = codeInput.value;
-      const detected = autoDetectLanguage(pastedCode);
-      
-      if (detected) {
-        if (detected !== currentLang) {
-          // Switch tabs visually
-          tabBtns.forEach(b => b.classList.remove("active"));
-          const targetBtn = Array.from(tabBtns).find(b => b.getAttribute("data-lang") === detected);
-          if (targetBtn) targetBtn.classList.add("active");
-          
-          currentLang = detected;
-          if (extLabel) extLabel.textContent = getExt(currentLang);
-          
-          showToast(`✨ Auto-detected ${detected.charAt(0).toUpperCase() + detected.slice(1)}`);
-          // Note: Compilation happens automatically via the debouncedCompile 'input' listener
-        }
-      } else {
-        // Only show ambiguity warning for substantial snippets
-        if (pastedCode.trim().length > 20) {
-          showToast("⚠️ Language ambiguous. Please select the correct tab manually.", 3500);
-        }
-      }
-    }, 10);
-  });
+
   codeInput.addEventListener("scroll", () => {
     lineNumbers.scrollTop = codeInput.scrollTop;
   });
@@ -2617,7 +2548,7 @@ document.addEventListener("DOMContentLoaded", () => {
   llmPromptBtn.addEventListener("click", () => {
     const textContent = cgeOutput.textContent || cgeOutput.innerText;
     const currentLangName = currentLang.charAt(0).toUpperCase() + currentLang.slice(1);
-    const systemPromptWrapper = `Act as an expert ${currentLangName} compiler. Below is a code block translated into Cognitive Graph Encoding (CGE) loss-less shorthand notation.
+    const systemPromptWrapper = `Act as an expert ${currentLangName} compiler. Below is a code block optimized by LeanContext to remove unnecessary tokens.
 
 Please read the encoded representation carefully, then:
 1. Provide a clear, 2-sentence summary of what this code does.
@@ -2971,14 +2902,9 @@ ${textContent}`;
     const validExts = ['.ts', '.tsx', '.js', '.jsx', '.py', '.java', '.rs', '.go', '.cpp', '.h', '.hpp', '.cs', '.php', '.rb', '.md', '.json', '.css', '.html'];
     const sortedExts = Object.keys(extensionCounts).sort((a, b) => extensionCounts[b] - extensionCounts[a]);
 
-    if (!window.disabledZipExts) {
-      window.disabledZipExts = new Set();
-      // By default, ignore all files so the user can cleanly select what they want
-      sortedExts.forEach(ext => {
-        if (validExts.includes('.' + ext)) {
-          window.disabledZipExts.add('.' + ext);
-        }
-      });
+    if (!window.includedZipExts) {
+      window.includedZipExts = new Set();
+      // By default, NO files are included. The user must explicitly click to include them.
     }
     
     sortedExts.forEach(ext => {
@@ -2986,42 +2912,55 @@ ${textContent}`;
       if (!isCompiled) return;
 
       const chip = document.createElement("div");
-      const isDisabled = window.disabledZipExts.has('.' + ext);
+      const isIncluded = window.includedZipExts.has('.' + ext);
       
-      chip.style.cssText = "display: flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 6px; background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3); color: #6ee7b7; font-size: 0.85rem; cursor: pointer; user-select: none; transition: all 0.2s ease;";
-      if (isDisabled) {
+      chip.style.cssText = "display: flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 6px; font-size: 0.85rem; cursor: pointer; user-select: none; transition: all 0.2s ease;";
+      
+      if (isIncluded) {
+        chip.style.background = "rgba(16, 185, 129, 0.1)";
+        chip.style.border = "1px solid rgba(16, 185, 129, 0.3)";
+        chip.style.color = "#6ee7b7";
+      } else {
         chip.style.background = "rgba(0,0,0,0.3)";
-        chip.style.borderColor = "rgba(255,255,255,0.1)";
-        chip.style.color = "#6b7280";
+        chip.style.border = "1px solid rgba(255,255,255,0.1)";
+        chip.style.color = "#9ca3af";
       }
 
       chip.innerHTML = `
-        <input type="checkbox" ${isDisabled ? '' : 'checked'} style="pointer-events: none; margin: 0;">
         <span style="font-weight: 600;">.${ext}</span>
         <span style="opacity: 0.7; font-size: 0.75rem;">(${extensionCounts[ext]})</span>
       `;
       
       chip.addEventListener('click', () => {
-        if (window.disabledZipExts.has('.' + ext)) {
-          window.disabledZipExts.delete('.' + ext);
-          chip.style.background = "rgba(16, 185, 129, 0.1)";
-          chip.style.borderColor = "rgba(16, 185, 129, 0.3)";
-          chip.style.color = "#6ee7b7";
-          chip.style.textDecoration = "none";
-          chip.querySelector('input').checked = true;
-        } else {
-          window.disabledZipExts.add('.' + ext);
+        if (window.includedZipExts.has('.' + ext)) {
+          window.includedZipExts.delete('.' + ext);
           chip.style.background = "rgba(0,0,0,0.3)";
-          chip.style.borderColor = "rgba(255,255,255,0.1)";
-          chip.style.color = "#6b7280";
-          chip.style.textDecoration = "line-through";
-          chip.querySelector('input').checked = false;
+          chip.style.border = "1px solid rgba(255,255,255,0.1)";
+          chip.style.color = "#9ca3af";
+        } else {
+          window.includedZipExts.add('.' + ext);
+          chip.style.background = "rgba(16, 185, 129, 0.1)";
+          chip.style.border = "1px solid rgba(16, 185, 129, 0.3)";
+          chip.style.color = "#6ee7b7";
         }
       });
 
       configChipsContainer.appendChild(chip);
     });
   }
+
+  const zipOptCommentsBtn = document.getElementById("zip-opt-comments");
+  const zipOptJsdocBtn = document.getElementById("zip-opt-jsdoc");
+  const zipOptDeadCodeBtn = document.getElementById("zip-opt-dead-code");
+  const zipOptWhitespaceBtn = document.getElementById("zip-opt-whitespace");
+
+  [zipOptCommentsBtn, zipOptJsdocBtn, zipOptDeadCodeBtn, zipOptWhitespaceBtn].forEach(btn => {
+    if (btn) {
+      btn.addEventListener("change", () => {
+        // Just purely updates state now natively since they are checkboxes
+      });
+    }
+  });
 
   const zipSubmitBtn = document.getElementById("zip-submit-btn");
   if (zipSubmitBtn) {
@@ -3077,6 +3016,9 @@ ${textContent}`;
     // Switch active mode variable
     currentMode = 'audit';
     
+    console.log("DEBUG: cachedZipFiles.length = ", cachedZipFiles.length);
+    console.log("DEBUG: window.disabledZipExts = ", Array.from(window.disabledZipExts || []));
+    
     let totalOrigChars = 0;
     let totalCompChars = 0;
     let processedCount = 0;
@@ -3101,8 +3043,8 @@ ${textContent}`;
     
     const sortedExts = Object.keys(extensionCountsCache).sort((a, b) => extensionCountsCache[b] - extensionCountsCache[a]);
     sortedExts.forEach(ext => {
-      const isDisabled = window.disabledZipExts.has('.' + ext);
-      if (isDisabled) return; // Only show included files!
+      const isIncluded = !window.includedZipExts || window.includedZipExts.size === 0 || window.includedZipExts.has('.' + ext);
+      if (!isIncluded) return; // Only show included files!
       
       const chip = document.createElement("div");
       chip.className = "audit-chip-card compiled";
@@ -3127,8 +3069,8 @@ ${textContent}`;
       const name = cachedZipFiles[i];
       const ext = name.split(".").pop().toLowerCase();
       
-      // Skip user-deselected extensions
-      if (window.disabledZipExts && window.disabledZipExts.has('.' + ext)) {
+      // Skip extensions that are NOT explicitly included by the user
+      if (window.includedZipExts && window.includedZipExts.size > 0 && !window.includedZipExts.has('.' + ext)) {
         totalExcluded++;
         continue;
       }
@@ -3482,16 +3424,6 @@ export function processBatch${i}(data) {
   // Load sample button listener
   const btnLoadSample = document.getElementById("btn-load-sample");
   if (btnLoadSample) {
-    btnLoadSample.addEventListener("mouseenter", () => {
-      btnLoadSample.style.background = "rgba(59, 130, 246, 0.25)";
-      btnLoadSample.style.borderColor = "rgba(59, 130, 246, 0.5)";
-      btnLoadSample.style.color = "#93c5fd";
-    });
-    btnLoadSample.addEventListener("mouseleave", () => {
-      btnLoadSample.style.background = "rgba(59, 130, 246, 0.15)";
-      btnLoadSample.style.borderColor = "rgba(59, 130, 246, 0.3)";
-      btnLoadSample.style.color = "#60a5fa";
-    });
     btnLoadSample.addEventListener("click", () => {
       codeInput.value = generateMockCode();
       handleCompile();
