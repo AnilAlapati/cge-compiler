@@ -117,8 +117,8 @@
           
           <!-- Mode 1: Code Input -->
           <div class="editor-body mode-container active" id="input-container-code" style="display: flex; flex-direction: column;">
-            <div style="padding: 12px 16px; border-bottom: 1px solid rgba(255,255,255,0.1); display: flex; gap: 12px; align-items: center; background: rgba(0,0,0,0.2); overflow-x: auto;">
-              <div class="estimator-track" style="margin: 0;">
+            <div style="padding: 12px 16px; border-bottom: 1px solid rgba(255,255,255,0.1); display: flex; gap: 12px; align-items: center; background: rgba(0,0,0,0.2); flex-wrap: wrap;">
+              <div class="estimator-track light" style="margin: 0;">
                 <button class="estimator-pill active" id="opt-comments">Exclude Comments</button>
                 <button class="estimator-pill active" id="opt-jsdoc">Exclude JSDocs</button>
                 <button class="estimator-pill active" id="opt-dead-code">Exclude Dead Code</button>
@@ -185,25 +185,19 @@
             </div>
 
             <!-- Configuration Step (Shows after Zip Extraction) -->
-            <div id="zip-config-step" style="display: none; flex-direction: column; gap: 20px; background: rgba(31, 41, 55, 0.4); border: 1px solid rgba(255,255,255,0.05); padding: 24px; border-radius: 12px; max-height: 80vh; overflow-y: auto;">
+            <div id="zip-config-step" style="display: none; flex-direction: column; gap: 20px; background: rgba(31, 41, 55, 0.4); border: 1px solid rgba(255,255,255,0.05); padding: 24px; border-radius: 12px; overflow-y: auto;">
               <div style="text-align: center;">
                 <h3 style="color: #fff; margin: 0 0 8px 0; font-size: 1.25rem;">Zip Extracted Successfully</h3>
                 <p style="color: #9ca3af; margin: 0; font-size: 0.9rem;">Configure minification settings and select file types before calculating the ROI.</p>
               </div>
 
               <div style="padding: 16px; border-radius: 8px; display: flex; flex-wrap: wrap; gap: 20px; font-size: 0.9rem; color: #d1d5db; background: rgba(0,0,0,0.3); justify-content: center;">
-                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
-                  <input type="checkbox" id="zip-opt-comments" checked> Exclude Comments
-                </label>
-                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
-                  <input type="checkbox" id="zip-opt-jsdoc" checked> Exclude JSDocs
-                </label>
-                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
-                  <input type="checkbox" id="zip-opt-dead-code" checked> Exclude Dead Code
-                </label>
-                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
-                  <input type="checkbox" id="zip-opt-whitespace" checked> Trim Whitespace
-                </label>
+                <div class="estimator-track light" style="margin: 0;">
+                  <button class="estimator-pill active" id="zip-opt-comments">Exclude Comments</button>
+                  <button class="estimator-pill active" id="zip-opt-jsdoc">Exclude JSDocs</button>
+                  <button class="estimator-pill active" id="zip-opt-dead-code">Exclude Dead Code</button>
+                  <button class="estimator-pill active" id="zip-opt-whitespace">Trim Whitespace</button>
+                </div>
               </div>
 
               <div>
@@ -296,22 +290,6 @@
                 </div>
               </div>
 
-              <!-- File Breakdown Section -->
-              <div id="audit-file-breakdown" class="audit-breakdown-card">
-                <div class="audit-breakdown-header">
-                  <span class="audit-breakdown-title">📂 File Type & Exclusions Breakdown</span>
-                  <span id="audit-breakdown-summary" class="audit-breakdown-summary">0 processed / 0 bypassed</span>
-                </div>
-                <!-- Breakdown progress visualization -->
-                <div id="audit-breakdown-bar-container" class="audit-breakdown-progress-container">
-                  <div id="audit-breakdown-bar-processed" class="audit-progress-bar compiled" style="width: 0%;"></div>
-                  <div id="audit-breakdown-bar-excluded" class="audit-progress-bar bypassed" style="width: 0%;"></div>
-                </div>
-                <!-- Breakdown list -->
-                <div id="audit-breakdown-list" class="audit-chips-grid">
-                  <!-- Dynamic extension cards will go here -->
-                </div>
-              </div>
 
               <!-- Cost Projections -->
               <!-- ROI Price Comparison Cards -->

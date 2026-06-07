@@ -1252,6 +1252,38 @@ body {
   border-left-color: var(--text-primary);
 }
 
+.estimator-track.light {
+  background: #f1f5f9;
+  border-radius: 8px;
+  padding: 4px;
+  display: inline-flex;
+  gap: 4px;
+  border: none;
+}
+
+.estimator-track.light .estimator-pill {
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  color: #64748b;
+  font-family: var(--font-code);
+  font-size: 0.8rem;
+  font-weight: 600;
+  padding: 8px 16px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.estimator-track.light .estimator-pill:hover {
+  color: #0f172a;
+}
+
+.estimator-track.light .estimator-pill.active {
+  background: #ffffff;
+  color: #0f172a;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1), 0 1px 2px rgba(0,0,0,0.06);
+}
+
 .estimator-right {
   display: flex;
   align-items: center;
