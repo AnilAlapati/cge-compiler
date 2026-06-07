@@ -2127,17 +2127,17 @@ document.addEventListener("DOMContentLoaded", () => {
       .replace(/</g, "&lt;")
       .replace(/>/g, "&gt;");
 
-    return escaped
-      // Legacy CGE/1.0 headers
-      .replace(/^(CGE\/1\.0\s.+)$/m, '<span class="kw-header">$1</span>')
-      .replace(/^(IMPORTS:|TYPES:|STATE:|OPS:|PRIVATE:)/gm, '<span class="kw-section">$1</span>')
-      .replace(/^(EXPORTS:\s.+)$/gm, '<span class="kw-exports">$1</span>')
-      // Standard JS/TS Keywords
-      .replace(/\b(import|export|from|function|async|await|const|let|var|if|else|for|while|return|class|extends|new|true|false|null|undefined)\b/g, '<span class="kw-action">$1</span>')
-      // Strings (basic)
-      .replace(/(".*?"|'.*?'|`.*?`)/g, '<span class="kw-type">$1</span>')
-      // Types/Classes
-      .replace(/\b([A-Z][a-zA-Z0-9_]*)\b/g, '<span class="kw-guard">$1</span>');
+    const regex = /(".*?"|'.*?'|`.*?`)|(?:^(CGE\/1\.0\s.+)$)|(?:^(IMPORTS:|TYPES:|STATE:|OPS:|PRIVATE:))|(?:^(EXPORTS:\s.+)$)|\b(import|export|from|function|async|await|const|let|var|if|else|for|while|return|class|extends|new|true|false|null|undefined)\b|\b([A-Z][a-zA-Z0-9_]*)\b/gm;
+
+    return escaped.replace(regex, (match, str, cgeHeader, cgeSection, cgeExports, keyword, type) => {
+      if (str) return `<span class="kw-type">${str}</span>`;
+      if (cgeHeader) return `<span class="kw-header">${cgeHeader}</span>`;
+      if (cgeSection) return `<span class="kw-section">${cgeSection}</span>`;
+      if (cgeExports) return `<span class="kw-exports">${cgeExports}</span>`;
+      if (keyword) return `<span class="kw-action">${keyword}</span>`;
+      if (type) return `<span class="kw-guard">${type}</span>`;
+      return match;
+    });
   }
 
   // --- Snappy animated counters ---
