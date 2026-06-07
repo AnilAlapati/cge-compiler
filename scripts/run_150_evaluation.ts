@@ -2,7 +2,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import OpenAI from 'openai';
 import dotenv from 'dotenv';
-import { MinifyEngine } from '../src/minify/minify_engine';
+import { LeanContextEngine } from '../src/leancontext/leancontext_engine';
 
 dotenv.config();
 
@@ -87,9 +87,9 @@ function getContext(repoPath: string, targetPaths: string[], mode: Mode): { cont
     let finalContext = "";
     let totalTokens = 0;
 
-    let engine: MinifyEngine | null = null;
+    let engine: LeanContextEngine | null = null;
     if (mode === 'conservative') {
-        engine = new MinifyEngine({ 
+        engine = new LeanContextEngine({ 
             stripLineComments: false, 
             stripBlockComments: false, 
             stripDocComments: false, 
@@ -98,7 +98,7 @@ function getContext(repoPath: string, targetPaths: string[], mode: Mode): { cont
             stripTrailingWhitespace: true 
         });
     } else if (mode === 'safe') {
-        engine = new MinifyEngine({ 
+        engine = new LeanContextEngine({ 
             stripLineComments: true, 
             stripBlockComments: true, 
             stripDocComments: false, 
@@ -108,7 +108,7 @@ function getContext(repoPath: string, targetPaths: string[], mode: Mode): { cont
             stripTrailingWhitespace: true 
         });
     } else if (mode === 'aggressive') {
-        engine = new MinifyEngine({ 
+        engine = new LeanContextEngine({ 
             stripLineComments: true, 
             stripBlockComments: true, 
             stripDocComments: true, 
@@ -136,9 +136,9 @@ function getContext(repoPath: string, targetPaths: string[], mode: Mode): { cont
                 let tokens = Math.ceil(rawCode.length / 3.5);
 
                 if (engine) {
-                    const result = engine.minify(rawCode, lang);
+                    const result = engine.optimize(rawCode, lang);
                     processedCode = result.output;
-                    tokens = result.minifiedTokens;
+                    tokens = result.optimizedTokens;
                 }
                 
                 finalContext += `\n--- File: ${path.relative(repoPath, p)} ---\n`;
@@ -201,7 +201,7 @@ async function main() {
 
     // Generate Final Markdown Report
     const timestamp = new Date().toISOString();
-    let report = `# AI Minify: 150-Evaluation Matrix Results\n`;
+    let report = `# LeanContext: 150-Evaluation Matrix Results\n`;
     report += `*Generated on: ${timestamp}*\n\n`;
     
     for (const mode of modes) {

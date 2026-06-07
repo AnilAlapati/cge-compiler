@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { MinifyEngine } from '../../src/minify/minify_engine';
+import { LeanContextEngine } from '../../src/leancontext/leancontext_engine';
 import { encode } from 'gpt-tokenizer';
 
 const IGNORED_FOLDERS = ['node_modules', '.git', 'dist', 'build', 'coverage', '.next', 'target', 'out', 'vendor'];
@@ -32,12 +32,12 @@ async function gatherFiles(uri: vscode.Uri, filePaths: vscode.Uri[]) {
   }
 }
 
-async function buildContextString(uris: vscode.Uri[], options: any, progressCallback?: (msg: string) => void): Promise<{ xmlOutput: string, rawXmlOutput: string, auditSummary: string, processedCount: number, savingsPercent: string, savings: number, totalOrigTokens: number, totalMinTokens: number, folderStats: Map<string, number> }> {
-  const engine = new MinifyEngine(options);
+async function buildContextString(uris: vscode.Uri[], options: any, progressCallback?: (msg: string) => void): Promise<{ xmlOutput: string, rawXmlOutput: string, auditSummary: string, processedCount: number, savingsPercent: string, savings: number, totalOrigTokens: number, totalOptTokens: number, folderStats: Map<string, number> }> {
+  const engine = new LeanContextEngine(options);
   let xmlOutput = "";
   let rawXmlOutput = "";
   let totalOrigTokens = 0;
-  let totalMinTokens = 0;
+  let totalOptTokens = 0;
   let processedCount = 0;
   
   const folderStats = new Map<string, number>();
@@ -54,9 +54,9 @@ async function buildContextString(uris: vscode.Uri[], options: any, progressCall
       const ext = uri.path.split('.').pop()?.toLowerCase() || '';
       const lang = extensionToLanguage[ext] || "javascript";
       
-      const minCode = engine.minify(rawCode, lang).output;
+      const optCode = engine.optimize(rawCode, lang).output;
       const origTokens = encode(rawCode).length;
-      const minTokens = encode(minCode).length;
+      const optTokens = encode(optCode).length;
       
       if (totalOrigTokens + origTokens > 500000) {
         if (progressCallback) progressCallback('Workspace packaging reached the 500k token limit. Output has been truncated.');
@@ -64,28 +64,28 @@ async function buildContextString(uris: vscode.Uri[], options: any, progressCall
       }
 
       totalOrigTokens += origTokens;
-      totalMinTokens += minTokens;
+      totalOptTokens += optTokens;
       
       const relativePath = vscode.workspace.asRelativePath(uri, false);
       const dirPath = relativePath.includes('/') ? relativePath.substring(0, relativePath.lastIndexOf('/')) : '/';
       
-      folderStats.set(dirPath, (folderStats.get(dirPath) || 0) + minTokens);
+      folderStats.set(dirPath, (folderStats.get(dirPath) || 0) + optTokens);
       
-      xmlOutput += `<file path="${relativePath}">\n${minCode}\n</file>\n\n`;
+      xmlOutput += `<file path="${relativePath}">\n${optCode}\n</file>\n\n`;
       rawXmlOutput += `<file path="${relativePath}">\n${rawCode}\n</file>\n\n`;
       processedCount++;
       
-      if (progressCallback) progressCallback(`Minifying file ${processedCount} of ${uris.length}...`);
+      if (progressCallback) progressCallback(`Applying LeanContext to file ${processedCount} of ${uris.length}...`);
     } catch (e) {
       // Skip unreadable files
     }
   }
 
-  const savings = totalOrigTokens - totalMinTokens;
+  const savings = totalOrigTokens - totalOptTokens;
   const savingsPercent = totalOrigTokens > 0 ? ((savings / totalOrigTokens) * 100).toFixed(1) : "0.0";
 
   const origUsage = ((totalOrigTokens / 128000) * 100).toFixed(1);
-  const minUsage = ((totalMinTokens / 128000) * 100).toFixed(1);
+  const optUsage = ((totalOptTokens / 128000) * 100).toFixed(1);
 
   let topFolders = '';
   const sortedFolders = Array.from(folderStats.entries())
@@ -101,11 +101,11 @@ async function buildContextString(uris: vscode.Uri[], options: any, progressCall
 
 ## ⚡ Context Window Usage (128k Model)
 - **Before:** ${origUsage}%
-- **After:** ${minUsage}%
+- **After:** ${optUsage}%
 
 ## 📊 Token Statistics
 - **Original Tokens:** ${totalOrigTokens.toLocaleString()}
-- **Sent Tokens:** ${totalMinTokens.toLocaleString()}
+- **Sent Tokens:** ${totalOptTokens.toLocaleString()}
 - **Saved Tokens:** ${savings.toLocaleString()} (${savingsPercent}%)
 
 ## 📁 Largest Folders Sent
@@ -125,14 +125,14 @@ ${topFolders || "N/A"}
     savingsPercent, 
     savings, 
     totalOrigTokens, 
-    totalMinTokens, 
+    totalOptTokens, 
     folderStats 
   };
 }
 
 export function activate(context: vscode.ExtensionContext) {
   let lastGeneratedPackage_original = "";
-  let lastGeneratedPackage_minified = "";
+  let lastGeneratedPackage_optimized = "";
   let lastGeneratedPackage_summary = "";
   const participant = vscode.chat.createChatParticipant('leancontext.participant', async (request, context, response, token) => {
     const options = { stripLineComments: true, stripBlockComments: true, stripDocComments: true, stripDeadCode: true, normalizeNewlines: true, stripTrailingWhitespace: true, preserveTodos: false };
@@ -209,7 +209,7 @@ export function activate(context: vscode.ExtensionContext) {
       // Default / active file mode
       const editor = vscode.window.activeTextEditor;
       if (!editor) {
-        response.markdown('❌ I need an active file open to minify, or use `/workspace` / `/folder`.');
+        response.markdown('❌ I need an active file open to apply LeanContext, or use `/workspace` / `/folder`.');
         return;
       }
       uris.push(editor.document.uri);
@@ -220,22 +220,22 @@ export function activate(context: vscode.ExtensionContext) {
       return;
     }
 
-    response.progress(`Minifying ${uris.length} file${uris.length === 1 ? '' : 's'}...`);
+    response.progress(`Applying LeanContext to ${uris.length} file${uris.length === 1 ? '' : 's'}...`);
     
     const result = await buildContextString(uris, options, (msg) => response.progress(msg));
     lastGeneratedPackage_original = result.rawXmlOutput;
-    lastGeneratedPackage_minified = result.xmlOutput;
+    lastGeneratedPackage_optimized = result.xmlOutput;
     lastGeneratedPackage_summary = result.auditSummary;
 
     const copilotPrompt = `You are a helpful coding assistant. The user has asked the following question about their code.
-The code provided below has been automatically minified (comments and dead code removed) to save tokens.
+The code provided below has been automatically optimized with LeanContext (comments and dead code removed) to save tokens.
 
 User Question: ${userPrompt}
 
---- MINIFIED CODE CONTEXT ---
+--- OPTIMIZED CODE CONTEXT (LeanContext) ---
 ${result.xmlOutput}
 --------------------------------------------
-Please answer their question based on this minified code.`;
+Please answer their question based on this optimized code.`;
 
     let models = await vscode.lm.selectChatModels({ vendor: 'copilot', family: 'gpt-4o' });
     if (models.length === 0) models = await vscode.lm.selectChatModels({ vendor: 'copilot' });
@@ -264,8 +264,8 @@ Please answer their question based on this minified code.`;
           ? 'leancontext.previewPackage' 
           : 'leancontext.previewOptimized',
         title: request.command === 'workspace' || request.command === 'folder' 
-          ? 'Audit Minified Context' 
-          : 'View Minified Code'
+          ? 'Audit LeanContext' 
+          : 'View Optimized Code'
       });
     } catch (err: any) {
       response.markdown(`\n\n❌ Error communicating with Copilot: ${err.message}`);
@@ -277,7 +277,7 @@ Please answer their question based on this minified code.`;
   const previewProvider = new (class implements vscode.TextDocumentContentProvider {
     private contentMap = new Map<string, string>();
     provideTextDocumentContent(uri: vscode.Uri): string {
-      return this.contentMap.get(uri.toString()) || 'Error loading minified content.';
+      return this.contentMap.get(uri.toString()) || 'Error loading optimized content.';
     }
     setContent(uri: vscode.Uri, content: string) {
       this.contentMap.set(uri.toString(), content);
@@ -288,16 +288,16 @@ Please answer their question based on this minified code.`;
   const previewCommand = vscode.commands.registerCommand('leancontext.previewOptimized', async () => {
     const editor = vscode.window.activeTextEditor;
     if (!editor) return;
-    const engineForPreview = new MinifyEngine({ stripLineComments: true, stripBlockComments: true, stripDocComments: true, stripDeadCode: true, normalizeNewlines: true, stripTrailingWhitespace: true, preserveTodos: false });
-    const minCode = engineForPreview.minify(editor.document.getText(), editor.document.languageId.includes('javascript') || editor.document.languageId.includes('typescript') ? 'typescript' : 'python').output;
+    const engineForPreview = new LeanContextEngine({ stripLineComments: true, stripBlockComments: true, stripDocComments: true, stripDeadCode: true, normalizeNewlines: true, stripTrailingWhitespace: true, preserveTodos: false });
+    const optCode = engineForPreview.optimize(editor.document.getText(), editor.document.languageId.includes('javascript') || editor.document.languageId.includes('typescript') ? 'typescript' : 'python').output;
     const originalUri = editor.document.uri;
-    const minifiedUri = vscode.Uri.parse(`leancontext:${originalUri.path}.minified`);
-    previewProvider.setContent(minifiedUri, minCode);
-    await vscode.commands.executeCommand('vscode.diff', originalUri, minifiedUri, `Original ↔ Minified Context`);
+    const optimizedUri = vscode.Uri.parse(`leancontext:${originalUri.path}.optimized`);
+    previewProvider.setContent(optimizedUri, optCode);
+    await vscode.commands.executeCommand('vscode.diff', originalUri, optimizedUri, `Original ↔ Optimized Context`);
   });
 
   const previewPackageCmd = vscode.commands.registerCommand('leancontext.previewPackage', async () => {
-    if (!lastGeneratedPackage_minified || !lastGeneratedPackage_original) {
+    if (!lastGeneratedPackage_optimized || !lastGeneratedPackage_original) {
       vscode.window.showInformationMessage("No context package found in memory.");
       return;
     }
@@ -311,7 +311,7 @@ Please answer their question based on this minified code.`;
     const origUri = vscode.Uri.parse(`leancontext:Raw-Context.xml`);
     const minUri = vscode.Uri.parse(`leancontext:LLM-Context.xml`);
     previewProvider.setContent(origUri, lastGeneratedPackage_original);
-    previewProvider.setContent(minUri, lastGeneratedPackage_minified);
+    previewProvider.setContent(minUri, lastGeneratedPackage_optimized);
     await vscode.commands.executeCommand('vscode.diff', origUri, minUri, `Raw Context ↔ LLM Context`, { viewColumn: vscode.ViewColumn.Beside });
   });
 

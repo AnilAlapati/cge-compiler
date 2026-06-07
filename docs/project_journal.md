@@ -165,15 +165,15 @@ The next research question is whether architecture maps can be generated automat
 
 ---
 
-## 📅 Day 9: Strategic Portfolio Realignment & AI Minify Validation
+## 📅 Day 9: Strategic Portfolio Realignment & LeanContext Validation
 ### 💡 Core Focus
-We paused to structurally redefine the project's journey into a clean portfolio representation. We officially separated the work into three distinct ideas to present a clear, logical story to partners, collaborators, and future investors. In parallel, we completed Phase 0 validation of our primary product candidate: **AI Minify**.
+We paused to structurally redefine the project's journey into a clean portfolio representation. We officially separated the work into three distinct ideas to present a clear, logical story to partners, collaborators, and future investors. In parallel, we completed Phase 0 validation of our primary product candidate: **LeanContext**.
 
 ### 🧪 Milestones & Discoveries
 - **Three distinct branches formalized**:
   1. **Idea 1: Cognitive Graph Encoding (CGE)** [Archived/Disproven]: Replaced AST-level text compression with a focus on preserving the raw prior knowledge structure of LLMs. 
   2. **Idea 2: Repository Cognition** [Research]: Focused on extracting and mapping structure, behavior, and semantics of complex codebases.
-  3. **Idea 3: AI Minify** [Product Candidate]: Deleting non-essential tokens (comments, dead code, whitespace, license blocks) while leaving compiler semantics untouched.
+  3. **Idea 3: LeanContext** [Product Candidate]: Deleting non-essential tokens (comments, dead code, whitespace, license blocks) while leaving compiler semantics untouched.
 - **Phase 0 Validation Complete**:
   - Benchmark run of the 150-evaluation matrix on diverse repositories (`nestjs-realworld`, `medusa`, `commerce`, `react-admin`, `fastapi`, `django`, `spring-petclinic`).
   - **Results**: 100% accuracy was preserved across all modes (including Aggressive docstring-stripping). Token savings ranged between **10% to 46%**, depending on codebase density.

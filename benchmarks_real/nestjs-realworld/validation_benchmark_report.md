@@ -1,4 +1,4 @@
-# AI Minify: 10-Task Validation Benchmark
+# LeanContext: 10-Task Validation Benchmark
 
 **Model:** claude-haiku-4-5-20251001
 **Date:** 2026-06-05T03:13:41.168Z
@@ -22,7 +22,7 @@
 
 ## Aggregate
 
-| Metric | Raw | Minified | Delta |
+| Metric | Raw | Optimized | Delta |
 |--------|-----|----------|-------|
 | Tasks Passed | 10/10 | 10/10 | |
 | Input Tokens | 12,108 | 12,064 | 0.4% saved |
@@ -32,4 +32,4 @@
 
 ## Conclusion
 
-✅ AI Minify produces equivalent coding outcomes while reducing input token costs.
+✅ LeanContext produces equivalent coding outcomes while reducing input token costs.

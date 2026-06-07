@@ -1,14 +1,14 @@
 import * as fs from 'fs';
 import * as path from 'path';
-import { MinifyEngine } from '../src/minify/minify_engine';
+import { LeanContextEngine } from '../src/leancontext/leancontext_engine';
 import Anthropic from '@anthropic-ai/sdk';
 import OpenAI from 'openai';
 
 /**
- * AI Minify — Cross-Model Validation Benchmark
+ * LeanContext — Cross-Model Validation Benchmark
  * 
  * Runs the same 10 coding tasks on Claude AND GPT
- * to prove AI Minify is provider-agnostic.
+ * to prove LeanContext is provider-agnostic.
  */
 
 // === PROVIDERS ===
@@ -139,7 +139,7 @@ const TASKS: CodingTask[] = [
 ];
 
 // === ENGINE ===
-const engine = new MinifyEngine({
+const engine = new LeanContextEngine({
   stripLineComments: true,
   stripBlockComments: true,
   stripDocComments: true,
@@ -227,7 +227,7 @@ async function runProviderBenchmark(provider: LlmProvider, basePath: string): Pr
       continue;
     }
 
-    const minCode = engine.minify(rawCode, 'typescript').output;
+    const minCode = engine.optimize(rawCode, 'typescript').output;
 
     console.log(`  [Task #${task.id}] ${task.name}`);
 
@@ -300,7 +300,7 @@ async function runProviderBenchmark(provider: LlmProvider, basePath: string): Pr
 
 // === MAIN ===
 async function main() {
-  console.log(`\n🧪 AI Minify — Cross-Model Validation Benchmark`);
+  console.log(`\n🧪 LeanContext — Cross-Model Validation Benchmark`);
   console.log(`Repository: messy-nestjs`);
   console.log(`Tasks: 10 | Mode: Aggressive`);
   console.log(`${'='.repeat(70)}`);
@@ -369,7 +369,7 @@ async function main() {
   }
 
   // === WRITE REPORT ===
-  const report = `# AI Minify: Cross-Model Validation Report
+  const report = `# LeanContext: Cross-Model Validation Report
 
 **Date:** ${new Date().toISOString()}
 **Repository:** messy-nestjs (comment-heavy NestJS codebase)
@@ -406,10 +406,9 @@ ${r.results.map(t => `| ${t.id} | ${t.name} | ${t.rawInputTokens} | ${t.minInput
 
 ## Conclusion
 
-${allResults.every(r => r.reasoningPreservationRate === '100')
-  ? `✅ **AI Minify achieves 100% Reasoning Preservation Rate across all tested providers.** Token costs are reduced by ~25-30% with zero degradation in coding task success. This result is provider-agnostic.`
-  : `⚠️ Results vary across providers. See per-task details above for analysis.`}
-`;
+${  allResults.every(r => r.reasoningPreservationRate === '100')
+  ? `✅ **LeanContext achieves 100% Reasoning Preservation Rate across all tested providers.** Token costs are reduced by ~25-30% with zero degradation in coding task success. This result is provider-agnostic.`
+  : `⚠️ Results vary across providers. See per-task details above for analysis.`}`;
 
   const reportPath = path.resolve(basePath, 'cross_model_benchmark_report.md');
   fs.writeFileSync(reportPath, report);

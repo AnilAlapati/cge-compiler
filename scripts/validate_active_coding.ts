@@ -1,10 +1,10 @@
 import * as fs from 'fs';
 import * as path from 'path';
-import { MinifyEngine } from '../src/minify/minify_engine';
+import { LeanContextEngine } from '../src/leancontext/leancontext_engine';
 import Anthropic from '@anthropic-ai/sdk';
 
 /**
- * AI Minify - 10-Task Validation Benchmark
+ * LeanContext - 10-Task Validation Benchmark
  * Model: Claude Haiku 4.5 (cheapest available)
  * 
  * Measures: Success, Input Tokens, Output Tokens, Cost, Latency
@@ -94,7 +94,7 @@ const TASKS: CodingTask[] = [
   }
 ];
 
-const engine = new MinifyEngine({
+const engine = new LeanContextEngine({
   stripLineComments: true,
   stripBlockComments: true,
   stripDocComments: true,
@@ -175,7 +175,7 @@ PATCH_B: PASS or FAIL`;
 }
 
 async function main() {
-  console.log(`\n🧪 AI Minify — 10-Task Validation Benchmark`);
+  console.log(`\n🧪 LeanContext — 10-Task Validation Benchmark`);
   console.log(`Model: ${MODEL}`);
   console.log(`Repository: messy-nestjs`);
   console.log(`Mode: Aggressive (strip all comments, docs, dead code)\n`);
@@ -194,7 +194,7 @@ async function main() {
       continue;
     }
 
-    const minified = engine.minify(rawCode, 'typescript');
+    const minified = engine.optimize(rawCode, 'typescript');
     const minCode = minified.output;
 
     console.log(`[Task #${task.id}] ${task.name}`);
@@ -272,7 +272,7 @@ async function main() {
   console.log(`| Avg Latency     | ${String(avgRawLatency).padStart(9)}ms | ${String(avgMinLatency).padStart(9)}ms |                |`);
 
   // Write markdown report
-  const report = `# AI Minify: 10-Task Validation Benchmark
+  const report = `# LeanContext: 10-Task Validation Benchmark
 
 **Model:** ${MODEL}
 **Date:** ${new Date().toISOString()}
@@ -297,7 +297,7 @@ ${results.map(r => `| ${r.id} | ${r.name} | ${r.rawInputTokens} | ${r.minInputTo
 
 ## Conclusion
 
-${minPassed >= rawPassed ? '✅ AI Minify produces equivalent coding outcomes while reducing input token costs.' : '⚠️ Minification degraded some task outcomes. Further investigation needed.'}
+${minPassed >= rawPassed ? '✅ LeanContext produces equivalent coding outcomes while reducing input token costs.' : '⚠️ Optimization degraded some task outcomes. Further investigation needed.'}
 `;
 
   const reportPath = path.resolve(basePath, 'validation_benchmark_report.md');

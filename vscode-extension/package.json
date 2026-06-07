@@ -7,7 +7,7 @@
     "url": "https://github.com/anilalapati/cge-compiler.git"
   },
   "description": "Optimize code context for AI tools like Claude, ChatGPT, and Copilot.",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "engines": {
     "vscode": "^1.120.0"
   },
@@ -59,7 +59,7 @@
       },
       {
         "command": "leancontext.previewPackage",
-        "title": "LeanContext: Audit Minified Package"
+        "title": "LeanContext: Audit Context Package"
       }
     ]
   },

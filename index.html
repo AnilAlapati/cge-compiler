@@ -23,7 +23,7 @@
     };
   </script>
   <script defer src="/_vercel/insights/script.js"></script>
-  <script src="dist/minify_engine.js"></script>
+  <script src="dist/leancontext_engine.js"></script>
 </head>
 <body>
 
@@ -128,7 +128,7 @@
                 <input type="checkbox" id="opt-dead-code" checked> Exclude Dead Code
               </label>
               <label style="display: flex; align-items: center; gap: 6px; cursor: pointer;">
-                <input type="checkbox" id="opt-whitespace" checked> Minify Whitespace
+                <input type="checkbox" id="opt-whitespace" checked> Trim Whitespace
               </label>
               <button id="btn-load-sample" style="margin-left: auto; background: rgba(59, 130, 246, 0.15); border: 1px solid rgba(59, 130, 246, 0.3); color: #60a5fa; padding: 2px 10px; border-radius: 4px; font-size: 0.75rem; cursor: pointer; transition: all 0.2s; font-weight: 500;">
                 Load Sample
@@ -208,7 +208,7 @@
                   <input type="checkbox" id="zip-opt-dead-code" checked> Exclude Dead Code
                 </label>
                 <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
-                  <input type="checkbox" id="zip-opt-whitespace" checked> Minify Whitespace
+                  <input type="checkbox" id="zip-opt-whitespace" checked> Trim Whitespace
                 </label>
               </div>
 
@@ -773,6 +773,6 @@
   <!-- Apple Slick Toast Notification -->
   <div class="toast-bar" id="toast-bar"></div>
 
-  <script src="minify.js"></script>
+  <script src="leancontext.js"></script>
 </body>
 </html>

@@ -35,7 +35,7 @@ const compressCss = (filename) => {
 };
 
 compressCss('playground.css');
-compressCss('minify.css');
+compressCss('leancontext.css');
 
 // 4. Minify JS files using Terser CLI
 const minifyJs = (filename) => {
@@ -45,7 +45,7 @@ const minifyJs = (filename) => {
 };
 
 minifyJs('playground.js');
-minifyJs('minify.js');
+minifyJs('leancontext.js');
 minifyJs('compiler_worker.js');
 
 console.log('🎉 Build complete! Deploy the contents of the "dist" directory to Vercel.');

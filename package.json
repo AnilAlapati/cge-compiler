@@ -8,7 +8,7 @@
     "compile": "ts-node src/cge_compiler_runner.ts",
     "cge-copy": "ts-node src/cli/clipboard_tool.ts",
     "build:cli": "npx esbuild src/cli/index.ts --bundle --platform=node --outfile=dist/cli.js",
-    "build:browser": "npx esbuild src/minify/browser.ts --bundle --platform=browser --outfile=dist/minify_engine.js",
+    "build:browser": "npx esbuild src/leancontext/browser.ts --bundle --platform=browser --outfile=dist/leancontext_engine.js",
     "build": "node build.js && npm run build:cli && npm run build:browser"
   },
   "bin": {

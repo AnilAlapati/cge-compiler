@@ -1,4 +1,4 @@
-# AI Minify: Cross-Model Validation Report
+# LeanContext: Cross-Model Validation Report
 
 **Date:** 2026-06-05T04:09:19.785Z
 **Repository:** messy-nestjs (comment-heavy NestJS codebase)
@@ -29,7 +29,7 @@
 | 9 | Add article search by tag | 2384 | 1950 | 18.2% | ✅ | ✅ |
 | 10 | Add self-follow prevention | 1524 | 1090 | 28.5% | ✅ | ✅ |
 
-| Metric | Raw | Minified | Delta |
+| Metric | Raw | Optimized | Delta |
 |--------|-----|----------|-------|
 | Tasks Passed | 9/10 | 9/10 | RPR: 100% |
 | Input Tokens | 16,448 | 12,064 | 26.7% saved |
@@ -39,4 +39,4 @@
 
 ## Conclusion
 
-✅ **AI Minify achieves 100% Reasoning Preservation Rate across all tested providers.** Token costs are reduced by ~25-30% with zero degradation in coding task success. This result is provider-agnostic.
+✅ **LeanContext achieves 100% Reasoning Preservation Rate across all tested providers.** Token costs are reduced by ~25-30% with zero degradation in coding task success. This result is provider-agnostic.
