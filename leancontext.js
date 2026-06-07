@@ -3043,8 +3043,8 @@ ${textContent}`;
     
     const sortedExts = Object.keys(extensionCountsCache).sort((a, b) => extensionCountsCache[b] - extensionCountsCache[a]);
     sortedExts.forEach(ext => {
-      const isDisabled = window.disabledZipExts.has('.' + ext);
-      if (isDisabled) return; // Only show included files!
+      const isIncluded = !window.includedZipExts || window.includedZipExts.size === 0 || window.includedZipExts.has('.' + ext);
+      if (!isIncluded) return; // Only show included files!
       
       const chip = document.createElement("div");
       chip.className = "audit-chip-card compiled";
@@ -3070,7 +3070,7 @@ ${textContent}`;
       const ext = name.split(".").pop().toLowerCase();
       
       // Skip extensions that are NOT explicitly included by the user
-      if (!window.includedZipExts || !window.includedZipExts.has('.' + ext)) {
+      if (window.includedZipExts && window.includedZipExts.size > 0 && !window.includedZipExts.has('.' + ext)) {
         totalExcluded++;
         continue;
       }

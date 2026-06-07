@@ -509,8 +509,8 @@ body {
   display: flex;
   background: var(--bg-primary);
   border: 1px solid var(--border-subtle);
-  padding: 2px;
-  border-radius: 4px;
+  padding: 4px;
+  border-radius: 6px;
 }
 
 .switcher-btn {
@@ -518,11 +518,11 @@ body {
   border: none;
   color: var(--text-secondary);
   font-family: var(--font-body);
-  font-size: 0.7rem;
+  font-size: 0.85rem;
   font-weight: 500;
-  padding: 4px 10px;
+  padding: 6px 14px;
   cursor: pointer;
-  border-radius: 3px;
+  border-radius: 4px;
   transition: all var(--transition-speed);
 }
 
