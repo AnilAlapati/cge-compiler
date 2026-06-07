@@ -2033,8 +2033,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Mode Swapping DOM nodes
   const btnModeCode   = document.getElementById("btn-mode-code");
-  const btnModeVisual = document.getElementById("btn-mode-visual");
-  const btnModeVerify = document.getElementById("btn-mode-verify");
   
   const containerCode = document.getElementById("container-code");
   const containerVisual = document.getElementById("container-visual");
@@ -2306,8 +2304,6 @@ document.addEventListener("DOMContentLoaded", () => {
     closeDrawer();
 
     btnModeCode.classList.remove("active");
-    btnModeVisual.classList.remove("active");
-    btnModeVerify.classList.remove("active");
     
     containerCode.classList.remove("active");
     containerVisual.classList.remove("active");
@@ -2317,13 +2313,6 @@ document.addEventListener("DOMContentLoaded", () => {
     if (newMode === "code") {
       btnModeCode.classList.add("active");
       containerCode.classList.add("active");
-    } else if (newMode === "visual") {
-      btnModeVisual.classList.add("active");
-      containerVisual.classList.add("active");
-      renderVisualAST();
-    } else if (newMode === "verify") {
-      btnModeVerify.classList.add("active");
-      containerVerify.classList.add("active");
     } else if (newMode === "audit") {
       containerAudit.style.display = "flex";
     }
@@ -2341,8 +2330,6 @@ document.addEventListener("DOMContentLoaded", () => {
     if (containerAudit) containerAudit.style.display = "none";
 
     btnModeCode.style.display = "none";
-    btnModeVisual.style.display = "none";
-    btnModeVerify.style.display = "none";
 
     if (newMode === "code") {
       btnInputCode.classList.add("active");
@@ -2355,8 +2342,6 @@ document.addEventListener("DOMContentLoaded", () => {
       if (editorGrid) editorGrid.style.gridTemplateColumns = "1fr 36px 1fr";
       
       btnModeCode.style.display = "inline-block";
-      btnModeVisual.style.display = "inline-block";
-      btnModeVerify.style.display = "inline-block";
       
       if (metricsSection) metricsSection.style.display = "block";
       
@@ -2382,8 +2367,6 @@ document.addEventListener("DOMContentLoaded", () => {
   btnInputZip.addEventListener("click", () => switchInputMode("zip"));
 
   btnModeCode.addEventListener("click", () => switchMode("code"));
-  btnModeVisual.addEventListener("click", () => switchMode("visual"));
-  btnModeVerify.addEventListener("click", () => switchMode("verify"));
   drawerCloseBtn.addEventListener("click", closeDrawer);
 
   // --- Metrics Update ---
