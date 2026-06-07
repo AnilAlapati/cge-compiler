@@ -22,7 +22,10 @@ if (fs.existsSync(path.join(__dirname, 'index.html'))) {
 if (fs.existsSync(path.join(__dirname, 'cge.html'))) {
   fs.copyFileSync(path.join(__dirname, 'cge.html'), path.join(distDir, 'cge.html'));
 }
-console.log('✓ HTML files copied.');
+if (fs.existsSync(path.join(__dirname, 'vscode_preview.png'))) {
+  fs.copyFileSync(path.join(__dirname, 'vscode_preview.png'), path.join(distDir, 'vscode_preview.png'));
+}
+console.log('✓ HTML & Asset files copied.');
 
 // 3. Copy and compress CSS files
 const compressCss = (filename) => {
