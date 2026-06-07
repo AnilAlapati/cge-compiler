@@ -1952,32 +1952,6 @@ std::string getHash(std::string val) {
 };
 
 // =========================================================================
-// 2.5 Auto-Detect Heuristic Engine
-// =========================================================================
-
-function autoDetectLanguage(code) {
-  if (!code || code.trim().length < 10) return null;
-  
-  // Fast regex heuristics looking for strong syntactical tells
-  const hasPython = /\bdef\b|\belif\b|:\s*\n\s+/.test(code) && !/[{}]/.test(code.substring(0, 50));
-  const hasRust = /\bfn\b|\bimpl\b|\bpub\s+(?:struct|fn|enum)\b/.test(code);
-  const hasGo = /\bfunc\b|\bpackage\b|\bchan\b/.test(code);
-  const hasCpp = /#include|\bstd::\b|\bint\s+main\s*\(/.test(code);
-  const hasTS = /\binterface\b|\bexport\b/.test(code);
-  
-  let matches = 0;
-  let detected = null;
-  
-  if (hasPython) { matches++; detected = "python"; }
-  if (hasRust) { matches++; detected = "rust"; }
-  if (hasGo) { matches++; detected = "go"; }
-  if (hasCpp) { matches++; detected = "cpp"; }
-  if (hasTS) { matches++; detected = "typescript"; }
-
-  // If we have exactly one strong match, we confidently return it. Otherwise, return null (ambiguous).
-  return matches === 1 ? detected : null;
-}
-
 // =========================================================================
 // 3. DOM Initialization & Event Binding
 // =========================================================================
@@ -2545,34 +2519,7 @@ document.addEventListener("DOMContentLoaded", () => {
   // --- Input events ---
   codeInput.addEventListener("input", debouncedCompile);
   
-  // Auto-detect language on paste
-  codeInput.addEventListener("paste", (e) => {
-    // Wait for the pasted value to populate in the textarea
-    setTimeout(() => {
-      const pastedCode = codeInput.value;
-      const detected = autoDetectLanguage(pastedCode);
-      
-      if (detected) {
-        if (detected !== currentLang) {
-          // Switch tabs visually
-          tabBtns.forEach(b => b.classList.remove("active"));
-          const targetBtn = Array.from(tabBtns).find(b => b.getAttribute("data-lang") === detected);
-          if (targetBtn) targetBtn.classList.add("active");
-          
-          currentLang = detected;
-          if (extLabel) extLabel.textContent = getExt(currentLang);
-          
-          showToast(`✨ Auto-detected ${detected.charAt(0).toUpperCase() + detected.slice(1)}`);
-          // Note: Compilation happens automatically via the debouncedCompile 'input' listener
-        }
-      } else {
-        // Only show ambiguity warning for substantial snippets
-        if (pastedCode.trim().length > 20) {
-          showToast("⚠️ Language ambiguous. Please select the correct tab manually.", 3500);
-        }
-      }
-    }, 10);
-  });
+
   codeInput.addEventListener("scroll", () => {
     lineNumbers.scrollTop = codeInput.scrollTop;
   });
