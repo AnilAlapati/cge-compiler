@@ -154,6 +154,11 @@ export class ArchitectureMapGeneratorPhase2 {
         return relations;
     }
 
+    /**
+     * Builds a typed graph representation from the parsed architecture data.
+     * Nodes: files, routes, entity relations, services, middleware.
+     * Edges: has_route, depends_on, relates_to, uses_middleware.
+     */
     private buildGraph(
         rootDir: string,
         routesMap: string[],
@@ -204,6 +209,7 @@ export class ArchitectureMapGeneratorPhase2 {
         }
 
         // Parse entity relations: "EntityA -[RelType]-> EntityB (property)"
+        // e.g. "ArticleEntity -[ManyToOne]-> UserEntity (author)"
         for (const entry of entityRelationsMap) {
             const match = entry.match(/^(.+?) -\[(.+?)\]-> (.+?) \((.+?)\)$/);
             if (!match) continue;
@@ -315,7 +321,6 @@ export class ArchitectureMapGeneratorPhase2 {
             addNode({ id: cronId, type: 'middleware', label: `Cron: ${schedule}` });
             edges.push({ source: cronId, target: methodId, type: 'depends_on', label: 'triggers' });
         }
-
         return {
             generatedAt: new Date().toISOString(),
             rootDir,

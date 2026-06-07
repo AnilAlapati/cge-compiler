@@ -141,7 +141,7 @@ export class TypeScriptParserPhase2 implements CGEParserPhase2 {
             });
           }
         });
-
+        
         node.members.forEach((member) => {
           if (ts.isPropertyDeclaration(member)) {
             const prefix = isClassExport ? "EXPORT " : "";

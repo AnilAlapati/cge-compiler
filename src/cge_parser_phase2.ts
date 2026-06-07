@@ -28,4 +28,3 @@ export interface CGEParserPhase2 {
     classProperties?: string[];
   };
 }
-

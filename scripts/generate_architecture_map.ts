@@ -9,6 +9,4 @@ async function main() {
     await generator.generate(sourceDir, 'GENERATED_ARCHITECTURE.md');
     console.log(`Done generating architecture map for ${repo}!`);
 }
-
-
 main().catch(console.error);
