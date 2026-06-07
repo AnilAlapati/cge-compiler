@@ -2021,8 +2021,7 @@ document.addEventListener("DOMContentLoaded", () => {
   
   [optComments, optJsdoc, optDeadCode, optWhitespace].forEach(btn => {
     if (btn) {
-      btn.addEventListener("click", () => {
-        btn.classList.toggle("active");
+      btn.addEventListener("change", () => {
         handleCompile();
       });
     }
@@ -2497,12 +2496,12 @@ document.addEventListener("DOMContentLoaded", () => {
   function handleCompile() {
     const code = codeInput.value;
     const fileName = `source_code.${getExt(currentLang)}`;    const engine = new window.LeanContextEngine({
-      stripLineComments: optComments ? optComments.classList.contains("active") : true,
-      stripBlockComments: optComments ? optComments.classList.contains("active") : true,
-      stripDocComments: optJsdoc ? optJsdoc.classList.contains("active") : true,
-      stripDeadCode: optDeadCode ? optDeadCode.classList.contains("active") : true,
-      normalizeNewlines: optWhitespace ? optWhitespace.classList.contains("active") : true,
-      stripTrailingWhitespace: optWhitespace ? optWhitespace.classList.contains("active") : true,
+      stripLineComments: optComments ? optComments.checked : true,
+      stripBlockComments: optComments ? optComments.checked : true,
+      stripDocComments: optJsdoc ? optJsdoc.checked : true,
+      stripDeadCode: optDeadCode ? optDeadCode.checked : true,
+      normalizeNewlines: optWhitespace ? optWhitespace.checked : true,
+      stripTrailingWhitespace: optWhitespace ? optWhitespace.checked : true,
       preserveTodos: false
     });
     const res = engine.optimize(code, currentLang);
@@ -2958,12 +2957,7 @@ ${textContent}`;
 
     if (!window.disabledZipExts) {
       window.disabledZipExts = new Set();
-      // By default, ignore all files so the user can cleanly select what they want
-      sortedExts.forEach(ext => {
-        if (validExts.includes('.' + ext)) {
-          window.disabledZipExts.add('.' + ext);
-        }
-      });
+      // By default, include all files. The user can click a chip to exclude it.
     }
     
     sortedExts.forEach(ext => {
@@ -2978,10 +2972,10 @@ ${textContent}`;
         chip.style.background = "rgba(0,0,0,0.3)";
         chip.style.borderColor = "rgba(255,255,255,0.1)";
         chip.style.color = "#6b7280";
+        chip.style.textDecoration = "line-through";
       }
 
       chip.innerHTML = `
-        <input type="checkbox" ${isDisabled ? '' : 'checked'} style="pointer-events: none; margin: 0;">
         <span style="font-weight: 600;">.${ext}</span>
         <span style="opacity: 0.7; font-size: 0.75rem;">(${extensionCounts[ext]})</span>
       `;
@@ -2993,20 +2987,31 @@ ${textContent}`;
           chip.style.borderColor = "rgba(16, 185, 129, 0.3)";
           chip.style.color = "#6ee7b7";
           chip.style.textDecoration = "none";
-          chip.querySelector('input').checked = true;
         } else {
           window.disabledZipExts.add('.' + ext);
           chip.style.background = "rgba(0,0,0,0.3)";
           chip.style.borderColor = "rgba(255,255,255,0.1)";
           chip.style.color = "#6b7280";
           chip.style.textDecoration = "line-through";
-          chip.querySelector('input').checked = false;
         }
       });
 
       configChipsContainer.appendChild(chip);
     });
   }
+
+  const zipOptCommentsBtn = document.getElementById("zip-opt-comments");
+  const zipOptJsdocBtn = document.getElementById("zip-opt-jsdoc");
+  const zipOptDeadCodeBtn = document.getElementById("zip-opt-dead-code");
+  const zipOptWhitespaceBtn = document.getElementById("zip-opt-whitespace");
+
+  [zipOptCommentsBtn, zipOptJsdocBtn, zipOptDeadCodeBtn, zipOptWhitespaceBtn].forEach(btn => {
+    if (btn) {
+      btn.addEventListener("change", () => {
+        // Just purely updates state now natively since they are checkboxes
+      });
+    }
+  });
 
   const zipSubmitBtn = document.getElementById("zip-submit-btn");
   if (zipSubmitBtn) {
@@ -3061,6 +3066,9 @@ ${textContent}`;
     
     // Switch active mode variable
     currentMode = 'audit';
+    
+    console.log("DEBUG: cachedZipFiles.length = ", cachedZipFiles.length);
+    console.log("DEBUG: window.disabledZipExts = ", Array.from(window.disabledZipExts || []));
     
     let totalOrigChars = 0;
     let totalCompChars = 0;
