@@ -2327,7 +2327,14 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     } else if (newMode === "zip") {
       btnInputZip.classList.add("active");
-      inputContainerZip.style.display = "flex";
+      
+      if (window.isZipAuditComplete) {
+        if (containerAudit) containerAudit.style.display = "block";
+        inputContainerZip.style.display = "none";
+      } else {
+        inputContainerZip.style.display = "flex";
+        if (containerAudit) containerAudit.style.display = "none";
+      }
       
       // Hide right panel and set left panel to 100% full-width
       if (outputCard) outputCard.style.display = "none";
@@ -3033,6 +3040,7 @@ ${textContent}`;
       // Reset state variables
       window.extractedFiles = [];
       window.zipDataChunks = [];
+      window.isZipAuditComplete = false;
       
       if (zipSubmitBtn) {
         zipSubmitBtn.textContent = "Calculate Context Savings";
@@ -3233,6 +3241,8 @@ ${textContent}`;
 
     // Also populate the single file text view so they can copy the massive XML blob!
     if (cgeOutput) cgeOutput.textContent = xmlOutput;
+
+    window.isZipAuditComplete = true;
   }
 
   // ROI Logic
