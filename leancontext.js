@@ -2997,6 +2997,7 @@ ${textContent}`;
       const containerAudit = document.getElementById("container-audit");
       const inputContainerZip = document.getElementById("input-container-zip");
       const dropzoneNormalState = document.getElementById("dropzone-normal-state");
+      const dropzoneProcessingState = document.getElementById("dropzone-processing-state");
       const zipConfigStep = document.getElementById("zip-config-step");
       const auditDropzone = document.getElementById("audit-dropzone");
       const auditFileInput = document.getElementById("audit-file-input");
@@ -3008,6 +3009,9 @@ ${textContent}`;
       zipConfigStep.style.display = "none";
       auditDropzone.style.display = "flex";
       dropzoneNormalState.style.display = "flex";
+      if (dropzoneProcessingState) {
+        dropzoneProcessingState.style.display = "none";
+      }
       
       // Reset file input
       if (auditFileInput) auditFileInput.value = "";
