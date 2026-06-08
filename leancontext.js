@@ -2991,6 +2991,39 @@ ${textContent}`;
     });
   }
 
+  const btnUploadNewZip = document.getElementById("btn-upload-new-zip");
+  if (btnUploadNewZip) {
+    btnUploadNewZip.addEventListener("click", () => {
+      const containerAudit = document.getElementById("container-audit");
+      const inputContainerZip = document.getElementById("input-container-zip");
+      const dropzoneNormalState = document.getElementById("dropzone-normal-state");
+      const zipConfigStep = document.getElementById("zip-config-step");
+      const auditDropzone = document.getElementById("audit-dropzone");
+      const auditFileInput = document.getElementById("audit-file-input");
+      
+      containerAudit.style.display = "none";
+      inputContainerZip.style.display = "flex";
+      
+      // Reset dropzone UI
+      zipConfigStep.style.display = "none";
+      auditDropzone.style.display = "flex";
+      dropzoneNormalState.style.display = "flex";
+      
+      // Reset file input
+      if (auditFileInput) auditFileInput.value = "";
+      
+      // Reset state variables
+      window.extractedFiles = [];
+      window.zipDataChunks = [];
+      
+      if (zipSubmitBtn) {
+        zipSubmitBtn.textContent = "Calculate Context Savings";
+        zipSubmitBtn.style.opacity = "1";
+        zipSubmitBtn.style.pointerEvents = "auto";
+      }
+    });
+  }
+
   async function calculateZipROI() {
     const zipOptComments = document.getElementById("zip-opt-comments");
     const zipOptJsdoc = document.getElementById("zip-opt-jsdoc");
