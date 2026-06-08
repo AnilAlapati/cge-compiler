@@ -2991,6 +2991,57 @@ ${textContent}`;
     });
   }
 
+  const btnUploadNewZip = document.getElementById("btn-upload-new-zip");
+  if (btnUploadNewZip) {
+    btnUploadNewZip.addEventListener("click", () => {
+      const containerAudit = document.getElementById("container-audit");
+      const inputContainerZip = document.getElementById("input-container-zip");
+      const dropzoneNormalState = document.getElementById("dropzone-normal-state");
+      const dropzoneProcessingState = document.getElementById("dropzone-processing-state");
+      const zipConfigStep = document.getElementById("zip-config-step");
+      const auditDropzone = document.getElementById("audit-dropzone");
+      const auditFileInput = document.getElementById("audit-file-input");
+      
+      containerAudit.style.display = "none";
+      inputContainerZip.style.display = "flex";
+      
+      // Reset dropzone UI
+      zipConfigStep.style.display = "none";
+      auditDropzone.style.display = "flex";
+      dropzoneNormalState.style.display = "flex";
+      if (dropzoneProcessingState) {
+        dropzoneProcessingState.style.display = "none";
+      }
+      
+      // Reset checkboxes
+      const zipOptComments = document.getElementById("zip-opt-comments");
+      const zipOptJsdoc = document.getElementById("zip-opt-jsdoc");
+      const zipOptDeadCode = document.getElementById("zip-opt-dead-code");
+      const zipOptWhitespace = document.getElementById("zip-opt-whitespace");
+      if (zipOptComments) zipOptComments.checked = false;
+      if (zipOptJsdoc) zipOptJsdoc.checked = false;
+      if (zipOptDeadCode) zipOptDeadCode.checked = false;
+      if (zipOptWhitespace) zipOptWhitespace.checked = false;
+
+      // Reset chips
+      const zipConfigChips = document.getElementById("zip-config-chips");
+      if (zipConfigChips) zipConfigChips.innerHTML = "";
+
+      // Reset file input
+      if (auditFileInput) auditFileInput.value = "";
+      
+      // Reset state variables
+      window.extractedFiles = [];
+      window.zipDataChunks = [];
+      
+      if (zipSubmitBtn) {
+        zipSubmitBtn.textContent = "Calculate Context Savings";
+        zipSubmitBtn.style.opacity = "1";
+        zipSubmitBtn.style.pointerEvents = "auto";
+      }
+    });
+  }
+
   async function calculateZipROI() {
     const zipOptComments = document.getElementById("zip-opt-comments");
     const zipOptJsdoc = document.getElementById("zip-opt-jsdoc");
