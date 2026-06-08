@@ -3013,6 +3013,20 @@ ${textContent}`;
         dropzoneProcessingState.style.display = "none";
       }
       
+      // Reset checkboxes
+      const zipOptComments = document.getElementById("zip-opt-comments");
+      const zipOptJsdoc = document.getElementById("zip-opt-jsdoc");
+      const zipOptDeadCode = document.getElementById("zip-opt-dead-code");
+      const zipOptWhitespace = document.getElementById("zip-opt-whitespace");
+      if (zipOptComments) zipOptComments.checked = false;
+      if (zipOptJsdoc) zipOptJsdoc.checked = false;
+      if (zipOptDeadCode) zipOptDeadCode.checked = false;
+      if (zipOptWhitespace) zipOptWhitespace.checked = false;
+
+      // Reset chips
+      const zipConfigChips = document.getElementById("zip-config-chips");
+      if (zipConfigChips) zipConfigChips.innerHTML = "";
+
       // Reset file input
       if (auditFileInput) auditFileInput.value = "";
       
