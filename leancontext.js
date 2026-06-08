@@ -3042,6 +3042,11 @@ ${textContent}`;
       window.zipDataChunks = [];
       window.isZipAuditComplete = false;
       
+      // Free heavy memory buffers
+      window.cachedZipObject = null;
+      cachedZipFiles = [];
+      extensionCountsCache = {};
+      
       if (zipSubmitBtn) {
         zipSubmitBtn.textContent = "Calculate Context Savings";
         zipSubmitBtn.style.opacity = "1";
