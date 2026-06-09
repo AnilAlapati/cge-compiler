@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { LeanContextEngine } from '../../src/leancontext/leancontext_engine';
+import { LeanContextEngine } from 'leancontext-core';
 import { encode } from 'gpt-tokenizer';
 
 const IGNORED_FOLDERS = ['node_modules', '.git', 'dist', 'build', 'coverage', '.next', 'target', 'out', 'vendor'];

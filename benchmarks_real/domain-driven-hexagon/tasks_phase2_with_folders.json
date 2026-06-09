@@ -1,0 +1,109 @@
+[
+  {
+    "id": "task_1",
+    "question": "What are the API routes defined in the application?",
+    "expected": [
+      "POST /v1/users",
+      "DELETE /v1/users/:id",
+      "GET /v1/wallets",
+      "DELETE /v1/wallets/:id"
+    ],
+    "folder": "/Users/anilalapati/Development/cge-compiler/benchmarks_real/domain-driven-hexagon/source"
+  },
+  {
+    "id": "task_2",
+    "question": "What are the command handlers registered in the UserModule?",
+    "expected": [
+      "CreateUserService",
+      "DeleteUserService",
+      "FindUsersQueryHandler"
+    ],
+    "folder": "/Users/anilalapati/Development/cge-compiler/benchmarks_real/domain-driven-hexagon/source"
+  },
+  {
+    "id": "task_3",
+    "question": "What are the entities related to the User entity?",
+    "expected": [
+      "WalletEntity"
+    ],
+    "folder": "/Users/anilalapati/Development/cge-compiler/benchmarks_real/domain-driven-hexagon/source"
+  },
+  {
+    "id": "task_4",
+    "question": "What are the interceptors applied globally in the application?",
+    "expected": [
+      "ContextInterceptor",
+      "ExceptionInterceptor"
+    ],
+    "folder": "/Users/anilalapati/Development/cge-compiler/benchmarks_real/domain-driven-hexagon/source"
+  },
+  {
+    "id": "task_5",
+    "question": "What are the validation rules applied to the CreateUserRequestDto?",
+    "expected": [
+      "email: IsEmail, MaxLength(320), MinLength(5)",
+      "country: IsString, MaxLength(50), MinLength(4), Matches(/^[a-zA-Z ]*$/)",
+      "postalCode: IsAlphanumeric, MaxLength(10), MinLength(4)",
+      "street: IsString, MaxLength(50), MinLength(5), Matches(/^[a-zA-Z ]*$/)"
+    ],
+    "folder": "/Users/anilalapati/Development/cge-compiler/benchmarks_real/domain-driven-hexagon/source"
+  },
+  {
+    "id": "task_6",
+    "question": "What are the types of responses returned by the CreateUserHttpController?",
+    "expected": [
+      "IdResponse",
+      "ApiErrorResponse"
+    ],
+    "folder": "/Users/anilalapati/Development/cge-compiler/benchmarks_real/domain-driven-hexagon/source"
+  },
+  {
+    "id": "task_7",
+    "question": "What are the database connection parameters defined in the database.config.ts?",
+    "expected": [
+      "DB_HOST",
+      "DB_PORT",
+      "DB_USERNAME",
+      "DB_PASSWORD",
+      "DB_NAME"
+    ],
+    "folder": "/Users/anilalapati/Development/cge-compiler/benchmarks_real/domain-driven-hexagon/source"
+  },
+  {
+    "id": "task_8",
+    "question": "What are the domain events associated with the UserEntity?",
+    "expected": [
+      "UserCreatedDomainEvent",
+      "UserDeletedDomainEvent",
+      "UserRoleChangedDomainEvent",
+      "UserAddressUpdatedDomainEvent"
+    ],
+    "folder": "/Users/anilalapati/Development/cge-compiler/benchmarks_real/domain-driven-hexagon/source"
+  },
+  {
+    "id": "task_9",
+    "question": "What are the types of controllers defined in the UserModule?",
+    "expected": [
+      "CreateUserHttpController",
+      "DeleteUserHttpController",
+      "FindUsersHttpController",
+      "CreateUserCliController",
+      "CreateUserMessageController",
+      "CreateUserGraphqlResolver",
+      "FindUsersGraphqlResolver"
+    ],
+    "folder": "/Users/anilalapati/Development/cge-compiler/benchmarks_real/domain-driven-hexagon/source"
+  },
+  {
+    "id": "task_10",
+    "question": "What are the properties of the ApiErrorResponse class?",
+    "expected": [
+      "statusCode",
+      "message",
+      "error",
+      "correlationId",
+      "subErrors"
+    ],
+    "folder": "/Users/anilalapati/Development/cge-compiler/benchmarks_real/domain-driven-hexagon/source"
+  }
+]

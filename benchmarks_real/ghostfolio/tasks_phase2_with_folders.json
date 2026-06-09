@@ -1,0 +1,62 @@
+[
+  {
+    "id": "task_1",
+    "question": "What are all the routes defined in the AccessController?",
+    "expected": "/access (GET), /access (POST), /access/:id (DELETE), /access/:id (PUT)",
+    "folder": "/Users/anilalapati/Development/cge-compiler/benchmarks_real/ghostfolio/source/libs/common/src/lib"
+  },
+  {
+    "id": "task_2",
+    "question": "What services are imported in the AccountModule?",
+    "expected": "AccountBalanceModule, ApiModule, ConfigurationModule, ExchangeRateDataModule, ImpersonationModule, PortfolioModule, PrismaModule, RedactValuesInResponseModule, UserModule",
+    "folder": "/Users/anilalapati/Development/cge-compiler/benchmarks_real/ghostfolio/source/apps/client/src/locales"
+  },
+  {
+    "id": "task_3",
+    "question": "Which guards are used in the AuthController?",
+    "expected": "AuthGuard('google'), AuthGuard('oidc'), AuthGuard('jwt'), HasPermissionGuard",
+    "folder": "/Users/anilalapati/Development/cge-compiler/benchmarks_real/ghostfolio/source/apps/client/src/app/pages/faq/saas"
+  },
+  {
+    "id": "task_4",
+    "question": "What are the permissions required to access the AdminController?",
+    "expected": "accessAdminControl, syncDemoUserAccount",
+    "folder": "/Users/anilalapati/Development/cge-compiler/benchmarks_real/ghostfolio/source/apps/client/src/locales"
+  },
+  {
+    "id": "task_5",
+    "question": "What are the methods defined in the ExchangeRateService?",
+    "expected": "getExchangeRate",
+    "folder": "/Users/anilalapati/Development/cge-compiler/benchmarks_real/ghostfolio/source/apps/client/src/locales"
+  },
+  {
+    "id": "task_6",
+    "question": "What are the entities related to the User entity in the Prisma schema?",
+    "expected": "Account, Activity, AuthDevice, Subscription, Tag",
+    "folder": "/Users/anilalapati/Development/cge-compiler/benchmarks_real/ghostfolio/source/apps/client/src/locales"
+  },
+  {
+    "id": "task_7",
+    "question": "What are the endpoints defined in the MarketDataController?",
+    "expected": "/market-data/markets (GET), /market-data/:dataSource/:symbol (GET), /market-data/:dataSource/:symbol (POST)",
+    "folder": "/Users/anilalapati/Development/cge-compiler/benchmarks_real/ghostfolio/source/apps/client/src/locales"
+  },
+  {
+    "id": "task_8",
+    "question": "What are the dependencies of the AiService?",
+    "expected": "ConfigurationService, PortfolioService, PropertyService",
+    "folder": "/Users/anilalapati/Development/cge-compiler/benchmarks_real/ghostfolio/source/apps/client/src/locales"
+  },
+  {
+    "id": "task_9",
+    "question": "What middleware is applied to the /admin routes?",
+    "expected": "AuthGuard('jwt'), HasPermissionGuard",
+    "folder": "/Users/anilalapati/Development/cge-compiler/benchmarks_real/ghostfolio/source/apps/client/src/locales"
+  },
+  {
+    "id": "task_10",
+    "question": "What are the types of activities handled in the ActivitiesController?",
+    "expected": "BUY, SELL, DIVIDEND, FEE, INTEREST, LIABILITY",
+    "folder": "/Users/anilalapati/Development/cge-compiler/benchmarks_real/ghostfolio/source/apps/client/src/locales"
+  }
+]

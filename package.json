@@ -8,7 +8,7 @@
     "compile": "ts-node src/cge_compiler_runner.ts",
     "cge-copy": "ts-node src/cli/clipboard_tool.ts",
     "build:cli": "npx esbuild src/cli/index.ts --bundle --platform=node --outfile=dist/cli.js",
-    "build:browser": "npx esbuild src/leancontext/browser.ts --bundle --platform=browser --outfile=dist/leancontext_engine.js",
+    "build:browser": "npx esbuild packages/leancontext-core/src/browser.ts --bundle --platform=browser --outfile=dist/leancontext_engine.js",
     "build": "node build.js && npm run build:cli && npm run build:browser"
   },
   "bin": {
@@ -22,6 +22,9 @@
   "author": "",
   "license": "ISC",
   "type": "commonjs",
+  "workspaces": [
+    "packages/*"
+  ],
   "bugs": {
     "url": "https://github.com/AnilAlapati/cge-compiler/issues"
   },
@@ -39,6 +42,8 @@
     "@google/generative-ai": "^0.24.1",
     "@vercel/analytics": "^2.0.1",
     "dotenv": "^17.4.2",
-    "openai": "^6.39.1"
+    "jszip": "^3.10.1",
+    "openai": "^6.39.1",
+    "puppeteer": "^25.1.0"
   }
 }

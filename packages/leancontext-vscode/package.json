@@ -73,7 +73,8 @@
     "package": "node esbuild.js --production"
   },
   "dependencies": {
-    "gpt-tokenizer": "^2.1.2"
+    "gpt-tokenizer": "^2.1.2",
+    "leancontext-core": "*"
   },
   "devDependencies": {
     "@types/node": "18.x",

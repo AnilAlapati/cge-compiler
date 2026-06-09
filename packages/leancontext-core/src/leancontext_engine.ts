@@ -61,3 +61,55 @@ export class LeanContextEngine {
     };
   }
 }
+
+export interface ContextStats {
+  files: number;
+  originalTokens: number;
+  minifiedTokens: number;
+  savedTokens: number;
+  savingsPercent: number;
+}
+
+export function processFile(content: string, lang: string, options?: Partial<LeanContextOptions>): LeanContextResult {
+  const engine = new LeanContextEngine(options);
+  return engine.optimize(content, lang);
+}
+
+export function processFiles(files: { path: string; content: string; lang: string }[], options?: Partial<LeanContextOptions>): { context: string; stats: ContextStats } {
+  let context = "";
+  let totalFiles = 0;
+  let totalOrigTokens = 0;
+  let totalOptTokens = 0;
+
+  const engine = new LeanContextEngine(options);
+
+  for (const file of files) {
+    const result = engine.optimize(file.content, file.lang);
+    context += `<file path="${file.path}">\n${result.output}\n</file>\n\n`;
+    totalFiles++;
+    totalOrigTokens += result.originalTokens;
+    totalOptTokens += result.optimizedTokens;
+  }
+
+  const savedTokens = totalOrigTokens - totalOptTokens;
+  const savingsPercent = totalOrigTokens > 0 ? Number(((savedTokens / totalOrigTokens) * 100).toFixed(1)) : 0;
+
+  return {
+    context: context.trim(),
+    stats: {
+      files: totalFiles,
+      originalTokens: totalOrigTokens,
+      minifiedTokens: totalOptTokens,
+      savedTokens,
+      savingsPercent
+    }
+  };
+}
+
+export function buildXmlPackage(files: { path: string; optimizedContent: string }[]): string {
+  let result = "";
+  for (const file of files) {
+    result += `<file path="${file.path}">\n${file.optimizedContent}\n</file>\n\n`;
+  }
+  return result.trim();
+}

@@ -5,6 +5,15 @@
 
 **Live Demo / Savings Calculator:** [cge-compiler.vercel.app](https://cge-compiler.vercel.app)
 
+# CGE Compiler & LeanContext
+
+This repository is an npm workspaces monorepo containing:
+- `packages/leancontext-core`: The pure context transformation engine.
+- `packages/leancontext-mcp`: The Model Context Protocol (MCP) server for LeanContext.
+- `packages/leancontext-vscode`: The VS Code extension for LeanContext.
+
+The original CGE compiler code is located in `src/`.
+
 **LeanContext** (formerly LeanContext) reduces your LLM prompt token costs by up to 46% without sacrificing a single percentage point of architectural reasoning or code understanding. It works by surgically stripping comments, dead code, license boilerplate, and unnecessary whitespace before sending context to AI agents like Copilot, Cursor, or Gemini.
 
 ---
