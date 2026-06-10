@@ -218,6 +218,8 @@ export class CommentStripper {
           inString = true;
           stringChar = char + char + char;
           result += stringChar;
+          i += 3;
+          continue;
         } else {
           // If we are stripping docstrings, we need to skip until the next triple quote
           let j = i + 3;
