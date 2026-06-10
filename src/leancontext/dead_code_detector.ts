@@ -17,17 +17,14 @@ export class DeadCodeDetector {
     /^\s*for\s*\(/,
     /^\s*while\s*\(/,
     /^\s*switch\s*\(/,
-    /^\s*return\b/,
     
     // Function declarations
     /^\s*function\s+\w+\s*\(/,
-    /^\s*async\s+function/,
+    /^\s*async\s+function\s*\w*\s*\(/,
     /^\s*const\s+\w+\s*=\s*(?:async\s*)?\([^)]*\)\s*=>/,
     
     // Class definitions
-    /^\s*class\s+\w+/,
-    /^\s*public\s+\w+/,
-    /^\s*private\s+\w+/,
+    /^\s*class\s+\w+\s*(?:\{|extends|implements)/,
     
     // Imports/Exports
     /^\s*import\s+.*from\s+['"]/,
