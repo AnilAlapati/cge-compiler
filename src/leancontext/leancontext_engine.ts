@@ -31,16 +31,13 @@ export class LeanContextEngine {
   public optimize(code: string, language: string): LeanContextResult {
     const originalTokens = this.tokenEstimator.estimate(code);
 
-    // 1. Strip comments (docstrings, line comments, block comments based on options)
-    let processed = this.commentStripper.strip(code, language);
-
-    // 2. Strip dead code (commented-out blocks of code that slipped through or if comments were disabled but we still want dead code gone)
+    // 1. Strip dead code (commented-out blocks of code that slipped through or if comments were disabled but we still want dead code gone)
     // Actually, DeadCodeDetector works on line comments, so if CommentStripper removed all comments, this does nothing.
     // However, if we preserve some comments, we can still strip dead code. 
     // To make this work best, DeadCodeDetector should run BEFORE CommentStripper.
-    // Let's swap the order!
-    
     let pass1 = this.deadCodeDetector.process(code);
+
+    // 2. Strip comments (docstrings, line comments, block comments based on options)
     let pass2 = this.commentStripper.strip(pass1, language);
 
     // 3. Normalize whitespace

@@ -19,17 +19,28 @@ export class CommentStripper {
   }
 
   public strip(code: string, language: string): string {
-    // For now, we use a robust state-machine approach for C-style languages (TS, JS, C++, Go, Rust)
-    // Python requires a different state machine for # and """ """.
+    const lang = language.toLowerCase();
     
-    if (['python', 'py'].includes(language.toLowerCase())) {
+    // Python requires a different state machine for # and """ """.
+    if (['python', 'py'].includes(lang)) {
       return this.stripPython(code);
     }
     
-    return this.stripCStyle(code);
+    // Do not attempt to strip comments from these text/data formats
+    if (['json', 'md', 'markdown', 'html', 'txt'].includes(lang)) {
+      return code;
+    }
+    
+    // CSS supports block comments /* */ but line comments // are invalid
+    if (['css'].includes(lang)) {
+      return this.stripCStyle(code, true);
+    }
+    
+    // For now, we use a robust state-machine approach for C-style languages (TS, JS, C++, Go, Rust)
+    return this.stripCStyle(code, false);
   }
 
-  private stripCStyle(code: string): string {
+  private stripCStyle(code: string, disableLineComments: boolean = false): string {
     let result = '';
     let i = 0;
     
@@ -108,7 +119,7 @@ export class CommentStripper {
       }
 
       // Check for comments start
-      if (char === '/' && nextChar === '/') {
+      if (!disableLineComments && char === '/' && nextChar === '/') {
         inLineComment = true;
         currentComment = '//';
         i += 2;
@@ -139,11 +150,11 @@ export class CommentStripper {
 
       // Check for regex literal start
       if (char === '/' && nextChar !== '/' && nextChar !== '*') {
-        let prevIdx = i - 1;
-        while (prevIdx >= 0 && /\s/.test(code[prevIdx])) {
+        let prevIdx = result.length - 1;
+        while (prevIdx >= 0 && /\s/.test(result[prevIdx])) {
           prevIdx--;
         }
-        const prevChar = prevIdx >= 0 ? code[prevIdx] : '';
+        const prevChar = prevIdx >= 0 ? result[prevIdx] : '';
         if (['=', '(', ',', ':', '[', '!', '&', '|', '?', '{', '}', ';', '<', '>'].includes(prevChar) || prevChar === '') {
           inRegex = true;
           result += char;
@@ -218,6 +229,8 @@ export class CommentStripper {
           inString = true;
           stringChar = char + char + char;
           result += stringChar;
+          i += 3;
+          continue;
         } else {
           // If we are stripping docstrings, we need to skip until the next triple quote
           let j = i + 3;
