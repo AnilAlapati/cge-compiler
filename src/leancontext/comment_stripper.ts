@@ -139,11 +139,11 @@ export class CommentStripper {
 
       // Check for regex literal start
       if (char === '/' && nextChar !== '/' && nextChar !== '*') {
-        let prevIdx = i - 1;
-        while (prevIdx >= 0 && /\s/.test(code[prevIdx])) {
+        let prevIdx = result.length - 1;
+        while (prevIdx >= 0 && /\s/.test(result[prevIdx])) {
           prevIdx--;
         }
-        const prevChar = prevIdx >= 0 ? code[prevIdx] : '';
+        const prevChar = prevIdx >= 0 ? result[prevIdx] : '';
         if (['=', '(', ',', ':', '[', '!', '&', '|', '?', '{', '}', ';', '<', '>'].includes(prevChar) || prevChar === '') {
           inRegex = true;
           result += char;
