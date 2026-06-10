@@ -38,6 +38,7 @@ export class CommentStripper {
     let inLineComment = false;
     let inBlockComment = false;
     let inDocComment = false;
+    let inRegex = false;
     
     // To preserve TODOs
     let currentComment = '';
@@ -55,6 +56,20 @@ export class CommentStripper {
         }
         if (char === stringChar) {
           inString = false;
+        }
+        i++;
+        continue;
+      }
+
+      if (inRegex) {
+        result += char;
+        if (char === '\\') {
+          result += nextChar || '';
+          i += 2;
+          continue;
+        }
+        if (char === '/') {
+          inRegex = false;
         }
         i++;
         continue;
@@ -120,6 +135,21 @@ export class CommentStripper {
         result += char;
         i++;
         continue;
+      }
+
+      // Check for regex literal start
+      if (char === '/' && nextChar !== '/' && nextChar !== '*') {
+        let prevIdx = i - 1;
+        while (prevIdx >= 0 && /\s/.test(code[prevIdx])) {
+          prevIdx--;
+        }
+        const prevChar = prevIdx >= 0 ? code[prevIdx] : '';
+        if (['=', '(', ',', ':', '[', '!', '&', '|', '?', '{', '}', ';', '<', '>'].includes(prevChar) || prevChar === '') {
+          inRegex = true;
+          result += char;
+          i++;
+          continue;
+        }
       }
 
       result += char;
