@@ -2327,7 +2327,14 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     } else if (newMode === "zip") {
       btnInputZip.classList.add("active");
-      inputContainerZip.style.display = "flex";
+      
+      if (window.isZipAuditComplete) {
+        if (containerAudit) containerAudit.style.display = "block";
+        inputContainerZip.style.display = "none";
+      } else {
+        inputContainerZip.style.display = "flex";
+        if (containerAudit) containerAudit.style.display = "none";
+      }
       
       // Hide right panel and set left panel to 100% full-width
       if (outputCard) outputCard.style.display = "none";
@@ -2991,6 +2998,63 @@ ${textContent}`;
     });
   }
 
+  const btnUploadNewZip = document.getElementById("btn-upload-new-zip");
+  if (btnUploadNewZip) {
+    btnUploadNewZip.addEventListener("click", () => {
+      const containerAudit = document.getElementById("container-audit");
+      const inputContainerZip = document.getElementById("input-container-zip");
+      const dropzoneNormalState = document.getElementById("dropzone-normal-state");
+      const dropzoneProcessingState = document.getElementById("dropzone-processing-state");
+      const zipConfigStep = document.getElementById("zip-config-step");
+      const auditDropzone = document.getElementById("audit-dropzone");
+      const auditFileInput = document.getElementById("audit-file-input");
+      
+      containerAudit.style.display = "none";
+      inputContainerZip.style.display = "flex";
+      
+      // Reset dropzone UI
+      zipConfigStep.style.display = "none";
+      auditDropzone.style.display = "flex";
+      dropzoneNormalState.style.display = "flex";
+      if (dropzoneProcessingState) {
+        dropzoneProcessingState.style.display = "none";
+      }
+      
+      // Reset checkboxes
+      const zipOptComments = document.getElementById("zip-opt-comments");
+      const zipOptJsdoc = document.getElementById("zip-opt-jsdoc");
+      const zipOptDeadCode = document.getElementById("zip-opt-dead-code");
+      const zipOptWhitespace = document.getElementById("zip-opt-whitespace");
+      if (zipOptComments) zipOptComments.checked = false;
+      if (zipOptJsdoc) zipOptJsdoc.checked = false;
+      if (zipOptDeadCode) zipOptDeadCode.checked = false;
+      if (zipOptWhitespace) zipOptWhitespace.checked = false;
+
+      // Reset chips
+      const zipConfigChips = document.getElementById("zip-config-chips");
+      if (zipConfigChips) zipConfigChips.innerHTML = "";
+
+      // Reset file input
+      if (auditFileInput) auditFileInput.value = "";
+      
+      // Reset state variables
+      window.extractedFiles = [];
+      window.zipDataChunks = [];
+      window.isZipAuditComplete = false;
+      
+      // Free heavy memory buffers
+      window.cachedZipObject = null;
+      cachedZipFiles = [];
+      extensionCountsCache = {};
+      
+      if (zipSubmitBtn) {
+        zipSubmitBtn.textContent = "Calculate Context Savings";
+        zipSubmitBtn.style.opacity = "1";
+        zipSubmitBtn.style.pointerEvents = "auto";
+      }
+    });
+  }
+
   async function calculateZipROI() {
     const zipOptComments = document.getElementById("zip-opt-comments");
     const zipOptJsdoc = document.getElementById("zip-opt-jsdoc");
@@ -3182,6 +3246,8 @@ ${textContent}`;
 
     // Also populate the single file text view so they can copy the massive XML blob!
     if (cgeOutput) cgeOutput.textContent = xmlOutput;
+
+    window.isZipAuditComplete = true;
   }
 
   // ROI Logic
