@@ -2,8 +2,13 @@ import { CommentStripper, CommentStripperOptions } from './comment_stripper';
 import { DeadCodeDetector, DeadCodeDetectorOptions } from './dead_code_detector';
 import { WhitespaceNormalizer, WhitespaceNormalizerOptions } from './whitespace_normalizer';
 import { TokenEstimator } from './token_estimator';
+import { SkeletonExtractor } from './skeleton_extractor';
 
-export interface LeanContextOptions extends CommentStripperOptions, DeadCodeDetectorOptions, WhitespaceNormalizerOptions {}
+export type LeanContextMode = 'minify' | 'skeleton';
+
+export interface LeanContextOptions extends CommentStripperOptions, DeadCodeDetectorOptions, WhitespaceNormalizerOptions {
+  mode?: LeanContextMode;
+}
 
 export interface LeanContextResult {
   output: string;
@@ -20,28 +25,34 @@ export class LeanContextEngine {
   private deadCodeDetector: DeadCodeDetector;
   private whitespaceNormalizer: WhitespaceNormalizer;
   private tokenEstimator: TokenEstimator;
+  private skeletonExtractor: SkeletonExtractor;
+  private mode: LeanContextMode;
 
   constructor(options?: Partial<LeanContextOptions>) {
     this.commentStripper = new CommentStripper(options);
     this.deadCodeDetector = new DeadCodeDetector(options);
     this.whitespaceNormalizer = new WhitespaceNormalizer(options);
     this.tokenEstimator = new TokenEstimator();
+    this.skeletonExtractor = new SkeletonExtractor();
+    this.mode = options?.mode ?? 'minify';
   }
 
   public optimize(code: string, language: string): LeanContextResult {
     const originalTokens = this.tokenEstimator.estimate(code);
 
-    // 1. Strip dead code (commented-out blocks of code that slipped through or if comments were disabled but we still want dead code gone)
-    // Actually, DeadCodeDetector works on line comments, so if CommentStripper removed all comments, this does nothing.
-    // However, if we preserve some comments, we can still strip dead code. 
-    // To make this work best, DeadCodeDetector should run BEFORE CommentStripper.
-    let pass1 = this.deadCodeDetector.process(code);
+    let finalOutput: string;
 
-    // 2. Strip comments (docstrings, line comments, block comments based on options)
-    let pass2 = this.commentStripper.strip(pass1, language);
-
-    // 3. Normalize whitespace
-    let finalOutput = this.whitespaceNormalizer.normalize(pass2);
+    if (this.mode === 'skeleton') {
+      // Skeleton mode: extract architecture signature, then normalize whitespace
+      const skeletonized = this.skeletonExtractor.extract(code, language);
+      finalOutput = this.whitespaceNormalizer.normalize(skeletonized);
+    } else {
+      // Minify mode (default): dead code → strip comments → normalize whitespace
+      // DeadCodeDetector runs BEFORE CommentStripper so it can see comment markers
+      const pass1 = this.deadCodeDetector.process(code);
+      const pass2 = this.commentStripper.strip(pass1, language);
+      finalOutput = this.whitespaceNormalizer.normalize(pass2);
+    }
 
     const optimizedTokens = this.tokenEstimator.estimate(finalOutput);
     const totalTokensSaved = originalTokens - optimizedTokens;
