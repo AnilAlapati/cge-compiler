@@ -1,0 +1,46 @@
+{
+  "repo": "express-real",
+  "source_dir": "benchmarks_real/express-real/source",
+  "questions": [
+    {
+      "id": "express-001",
+      "category": "architecture",
+      "question": "How does authentication work in this Express app? What mechanism is used and how is it applied to routes?",
+      "expected_files": ["source/middleware/auth.js", "source/app.js"],
+      "expected_concepts": ["JWT", "verifyToken", "Authorization header", "Bearer", "middleware", "jsonwebtoken"],
+      "difficulty": "easy"
+    },
+    {
+      "id": "express-002",
+      "category": "architecture",
+      "question": "How is role-based access control implemented? Give an example of how a super_admin-only route is protected.",
+      "expected_files": ["source/middleware/auth.js", "source/app.js"],
+      "expected_concepts": ["requireRole", "super_admin", "req.user.role", "middleware factory", "/api/admin/reset"],
+      "difficulty": "easy"
+    },
+    {
+      "id": "express-003",
+      "category": "architecture",
+      "question": "How is the database accessed across different routes? How is the Prisma client made available to route handlers?",
+      "expected_files": ["source/app.js"],
+      "expected_concepts": ["PrismaClient", "req.db", "global middleware", "app.use"],
+      "difficulty": "easy"
+    },
+    {
+      "id": "express-004",
+      "category": "bug_investigation",
+      "question": "A request with a valid JWT returns 401. What could be the causes based on the auth middleware?",
+      "expected_files": ["source/middleware/auth.js"],
+      "expected_concepts": ["JWT_SECRET mismatch", "token expired", "missing Authorization header", "Bearer prefix", "jwt.verify error"],
+      "difficulty": "easy"
+    },
+    {
+      "id": "express-005",
+      "category": "navigation",
+      "question": "Where would I add a new protected route that only authenticated users with the 'moderator' role can access?",
+      "expected_files": ["source/app.js", "source/middleware/auth.js"],
+      "expected_concepts": ["app.use", "verifyToken", "requireRole('moderator')", "new router file"],
+      "difficulty": "easy"
+    }
+  ]
+}

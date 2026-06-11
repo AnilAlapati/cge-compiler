@@ -1,0 +1,206 @@
+{
+  "repo": "nestjs-real",
+  "source_dir": "benchmarks_real/nestjs-real/source",
+  "questions": [
+    {
+      "id": "nestjs-real-001",
+      "category": "architecture",
+      "question": "How does authentication work in this codebase? Walk through the entire auth flow from an incoming HTTP request to an authenticated user.",
+      "expected_files": ["src/user/auth.middleware.ts", "src/user/user.service.ts", "src/user/user.module.ts"],
+      "expected_concepts": ["JWT", "jsonwebtoken", "Authorization header", "Bearer token", "middleware", "MiddlewareConsumer"],
+      "difficulty": "medium"
+    },
+    {
+      "id": "nestjs-real-002",
+      "category": "architecture",
+      "question": "How are passwords stored and verified? What library is used and where does hashing happen?",
+      "expected_files": ["src/user/user.entity.ts", "src/user/user.service.ts"],
+      "expected_concepts": ["argon2", "BeforeInsert", "hashPassword", "checkPassword"],
+      "difficulty": "easy"
+    },
+    {
+      "id": "nestjs-real-003",
+      "category": "architecture",
+      "question": "How are JWT tokens generated? What is in the token payload and how long do they last?",
+      "expected_files": ["src/user/user.service.ts"],
+      "expected_concepts": ["generateJWT", "jsonwebtoken", "sign", "60 days", "id", "email", "username"],
+      "difficulty": "easy"
+    },
+    {
+      "id": "nestjs-real-004",
+      "category": "architecture",
+      "question": "What is the article slug and how is it generated when a new article is created?",
+      "expected_files": ["src/article/article.service.ts", "src/article/article.entity.ts"],
+      "expected_concepts": ["slug", "random suffix", "title", "slug npm package"],
+      "difficulty": "easy"
+    },
+    {
+      "id": "nestjs-real-005",
+      "category": "architecture",
+      "question": "How does the favorites/unfavorite system work for articles? What database operations happen?",
+      "expected_files": ["src/article/article.service.ts", "src/user/user.entity.ts", "src/article/article.entity.ts"],
+      "expected_concepts": ["favorites", "favoriteCount", "ManyToMany", "addToFavorites", "deleteFromFavorites"],
+      "difficulty": "medium"
+    },
+    {
+      "id": "nestjs-real-006",
+      "category": "navigation",
+      "question": "Where would I add a new API endpoint to allow users to bookmark articles (separate from favorites)?",
+      "expected_files": ["src/article/article.controller.ts", "src/article/article.service.ts", "src/article/article.module.ts"],
+      "expected_concepts": ["@Controller", "@Post", "@Delete", "MiddlewareConsumer", "forRoutes"],
+      "difficulty": "medium"
+    },
+    {
+      "id": "nestjs-real-007",
+      "category": "navigation",
+      "question": "Where is the global API prefix configured, and where are Swagger docs set up?",
+      "expected_files": ["src/main.ts"],
+      "expected_concepts": ["setGlobalPrefix", "SwaggerModule", "DocumentBuilder", "/api", "/docs"],
+      "difficulty": "easy"
+    },
+    {
+      "id": "nestjs-real-008",
+      "category": "navigation",
+      "question": "Where should I add a new field to the User profile response (e.g., a 'location' field)?",
+      "expected_files": ["src/user/user.entity.ts", "src/user/user.service.ts", "src/user/user.controller.ts"],
+      "expected_concepts": ["UserEntity", "@Column", "UserData", "toProfileJSONFor"],
+      "difficulty": "easy"
+    },
+    {
+      "id": "nestjs-real-009",
+      "category": "navigation",
+      "question": "Where is authentication middleware applied to routes, and which routes require authentication?",
+      "expected_files": ["src/article/article.module.ts", "src/user/user.module.ts"],
+      "expected_concepts": ["MiddlewareConsumer", "configure", "forRoutes", "apply", "AuthMiddleware", "RequestMethod"],
+      "difficulty": "medium"
+    },
+    {
+      "id": "nestjs-real-010",
+      "category": "dependency",
+      "question": "What services or modules depend on UserService?",
+      "expected_files": ["src/user/user.module.ts", "src/article/article.module.ts", "src/profile/profile.module.ts"],
+      "expected_concepts": ["UserModule", "exports", "imports", "ArticleModule", "ProfileModule"],
+      "difficulty": "medium"
+    },
+    {
+      "id": "nestjs-real-011",
+      "category": "dependency",
+      "question": "What database entities exist and how are they related to each other?",
+      "expected_files": ["src/user/user.entity.ts", "src/article/article.entity.ts", "src/article/comment.entity.ts", "src/profile/follows.entity.ts", "src/tag/tag.entity.ts"],
+      "expected_concepts": ["UserEntity", "ArticleEntity", "Comment", "FollowsEntity", "ManyToOne", "ManyToMany", "OneToMany"],
+      "difficulty": "medium"
+    },
+    {
+      "id": "nestjs-real-012",
+      "category": "dependency",
+      "question": "What does ArticleService depend on? List all its injected dependencies.",
+      "expected_files": ["src/article/article.service.ts"],
+      "expected_concepts": ["UserEntity", "ArticleEntity", "Comment", "getRepository", "InjectRepository"],
+      "difficulty": "easy"
+    },
+    {
+      "id": "nestjs-real-013",
+      "category": "change_impact",
+      "question": "If I remove the `favorites` relationship from UserEntity, what else in the codebase would break?",
+      "expected_files": ["src/user/user.entity.ts", "src/article/article.service.ts", "src/article/article.entity.ts"],
+      "expected_concepts": ["favorites", "addToFavorites", "deleteFromFavorites", "favoriteCount", "ManyToMany"],
+      "difficulty": "hard"
+    },
+    {
+      "id": "nestjs-real-014",
+      "category": "change_impact",
+      "question": "If I change the JWT secret, what happens to currently logged-in users?",
+      "expected_files": ["src/user/user.service.ts", "src/user/auth.middleware.ts"],
+      "expected_concepts": ["jsonwebtoken", "verify", "sign", "SECRET", "invalid signature", "all existing tokens invalidated"],
+      "difficulty": "medium"
+    },
+    {
+      "id": "nestjs-real-015",
+      "category": "change_impact",
+      "question": "If I change the password hashing algorithm from argon2 to bcrypt, what steps are required?",
+      "expected_files": ["src/user/user.entity.ts", "src/user/user.service.ts"],
+      "expected_concepts": ["hashPassword", "checkPassword", "BeforeInsert", "argon2", "existing passwords broken"],
+      "difficulty": "medium"
+    },
+    {
+      "id": "nestjs-real-016",
+      "category": "bug_investigation",
+      "question": "A user reports they can create articles without being logged in. How could this happen and where should I look?",
+      "expected_files": ["src/article/article.module.ts", "src/article/article.controller.ts", "src/user/auth.middleware.ts"],
+      "expected_concepts": ["MiddlewareConsumer", "forRoutes", "POST method", "RequestMethod", "AuthMiddleware not applied"],
+      "difficulty": "hard"
+    },
+    {
+      "id": "nestjs-real-017",
+      "category": "bug_investigation",
+      "question": "A user reports that their article's `favoriteCount` is out of sync with the actual number of users who favorited it. Where could this inconsistency come from?",
+      "expected_files": ["src/article/article.service.ts", "src/article/article.entity.ts"],
+      "expected_concepts": ["favoriteCount", "increment", "manual count", "not derived from relation", "race condition"],
+      "difficulty": "hard"
+    },
+    {
+      "id": "nestjs-real-018",
+      "category": "bug_investigation",
+      "question": "Two users try to follow each other at the same time and one follow relationship gets lost. What is the likely cause?",
+      "expected_files": ["src/profile/profile.service.ts", "src/profile/follows.entity.ts"],
+      "expected_concepts": ["FollowsEntity", "save", "no transaction", "race condition", "concurrent writes"],
+      "difficulty": "hard"
+    },
+    {
+      "id": "nestjs-real-019",
+      "category": "architecture",
+      "question": "How does the article feed (followed authors' articles) work? How does it differ from the global article list?",
+      "expected_files": ["src/article/article.service.ts", "src/article/article.controller.ts"],
+      "expected_concepts": ["getFeed", "findAll", "followingIds", "FollowsEntity", "query builder", "where author in"],
+      "difficulty": "medium"
+    },
+    {
+      "id": "nestjs-real-020",
+      "category": "architecture",
+      "question": "How is the database connection configured? What database does the app use by default?",
+      "expected_files": ["src/app.module.ts"],
+      "expected_concepts": ["TypeOrmModule", "ormconfig.json", "forRoot", "entities", "synchronize"],
+      "difficulty": "easy"
+    },
+    {
+      "id": "nestjs-real-021",
+      "category": "navigation",
+      "question": "I want to add rate limiting to the login endpoint. Where would I add it and what existing middleware patterns can I follow?",
+      "expected_files": ["src/user/user.module.ts", "src/user/user.controller.ts", "src/main.ts"],
+      "expected_concepts": ["configure", "MiddlewareConsumer", "NestMiddleware", "POST /users/login"],
+      "difficulty": "medium"
+    },
+    {
+      "id": "nestjs-real-022",
+      "category": "dependency",
+      "question": "How does the `@User()` decorator work and where is it defined?",
+      "expected_files": ["src/user/user.decorator.ts"],
+      "expected_concepts": ["createParamDecorator", "ExecutionContext", "req.user", "custom decorator"],
+      "difficulty": "easy"
+    },
+    {
+      "id": "nestjs-real-023",
+      "category": "change_impact",
+      "question": "What happens if I add a `NOT NULL` constraint to the `image` column of `UserEntity` without a migration?",
+      "expected_files": ["src/user/user.entity.ts"],
+      "expected_concepts": ["@Column", "nullable", "synchronize", "TypeORM", "migration", "existing rows"],
+      "difficulty": "medium"
+    },
+    {
+      "id": "nestjs-real-024",
+      "category": "bug_investigation",
+      "question": "A user logs in successfully but gets 401 errors on authenticated endpoints immediately after. What are the likely causes?",
+      "expected_files": ["src/user/auth.middleware.ts", "src/user/user.service.ts"],
+      "expected_concepts": ["Authorization header", "Bearer", "SECRET mismatch", "findById", "token format"],
+      "difficulty": "medium"
+    },
+    {
+      "id": "nestjs-real-025",
+      "category": "architecture",
+      "question": "How are tags associated with articles? Are they stored as a separate table or inline?",
+      "expected_files": ["src/article/article.entity.ts", "src/tag/tag.entity.ts", "src/article/article.service.ts"],
+      "expected_concepts": ["tagList", "simple-array", "TagEntity", "separate table", "string array"],
+      "difficulty": "easy"
+    }
+  ]
+}

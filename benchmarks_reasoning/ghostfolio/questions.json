@@ -1,0 +1,206 @@
+{
+  "repo": "ghostfolio",
+  "source_dir": "benchmarks_real/ghostfolio/source",
+  "questions": [
+    {
+      "id": "ghostfolio-001",
+      "category": "architecture",
+      "question": "How many authentication strategies does this application support and how does each one work?",
+      "expected_files": ["apps/api/src/app/auth/jwt.strategy.ts", "apps/api/src/app/auth/auth.service.ts", "apps/api/src/app/auth/auth.controller.ts"],
+      "expected_concepts": ["JWT", "Google OAuth", "OIDC", "anonymous token", "WebAuthn", "API key", "passport", "multiple strategies"],
+      "difficulty": "hard"
+    },
+    {
+      "id": "ghostfolio-002",
+      "category": "architecture",
+      "question": "What happens when a user logs in anonymously? How is that user tracked and what can they access?",
+      "expected_files": ["apps/api/src/app/auth/auth.service.ts", "apps/api/src/app/auth/auth.controller.ts"],
+      "expected_concepts": ["accessToken", "anonymous", "validateAnonymousLogin", "hashed token", "ANONYMOUS provider"],
+      "difficulty": "medium"
+    },
+    {
+      "id": "ghostfolio-003",
+      "category": "architecture",
+      "question": "How does the JwtStrategy validate tokens? Does it query the database on every request?",
+      "expected_files": ["apps/api/src/app/auth/jwt.strategy.ts"],
+      "expected_concepts": ["validate", "findById", "Analytics update", "DB call", "activityCount", "lastRequestAt"],
+      "difficulty": "medium"
+    },
+    {
+      "id": "ghostfolio-004",
+      "category": "architecture",
+      "question": "How does the portfolio sharing / impersonation feature work? How can user A view user B's portfolio?",
+      "expected_files": ["apps/api/src/app/access/", "apps/api/src/app/portfolio/portfolio.controller.ts"],
+      "expected_concepts": ["Access model", "ImpersonationService", "granteeUserId", "permissions", "READ", "READ_RESTRICTED", "impersonation token"],
+      "difficulty": "hard"
+    },
+    {
+      "id": "ghostfolio-005",
+      "category": "architecture",
+      "question": "What are the main data models in the Prisma schema and how do they relate to each other?",
+      "expected_files": ["prisma/schema.prisma"],
+      "expected_concepts": ["User", "Account", "Order", "SymbolProfile", "MarketData", "Access", "Subscription", "Tag", "AuthDevice", "relations"],
+      "difficulty": "medium"
+    },
+    {
+      "id": "ghostfolio-006",
+      "category": "architecture",
+      "question": "How is market data fetched and kept up to date? What background jobs or scheduled tasks exist?",
+      "expected_files": ["apps/api/src/services/cron/", "apps/api/src/services/data-provider/data-provider.module.ts"],
+      "expected_concepts": ["CronModule", "ScheduleModule", "DataGatheringQueue", "Bull", "market data", "cron job", "data providers"],
+      "difficulty": "hard"
+    },
+    {
+      "id": "ghostfolio-007",
+      "category": "architecture",
+      "question": "How does the subscription/billing system work? What happens when a user's subscription expires?",
+      "expected_files": ["apps/api/src/app/subscription/", "prisma/schema.prisma"],
+      "expected_concepts": ["Subscription", "Stripe", "stripeCheckoutSessionId", "expiresAt", "HasPermissionGuard", "premium features"],
+      "difficulty": "hard"
+    },
+    {
+      "id": "ghostfolio-008",
+      "category": "architecture",
+      "question": "How is WebAuthn (hardware security key) authentication implemented?",
+      "expected_files": ["apps/api/src/app/auth/web-auth.service.ts", "apps/api/src/app/auth/auth.controller.ts"],
+      "expected_concepts": ["WebAuthn", "AuthDevice", "credentialId", "credentialPublicKey", "counter", "registration", "assertion"],
+      "difficulty": "hard"
+    },
+    {
+      "id": "ghostfolio-009",
+      "category": "navigation",
+      "question": "Where would I add a new market data provider (e.g., a custom broker API)?",
+      "expected_files": ["apps/api/src/services/data-provider/data-provider.module.ts", "apps/api/src/services/data-provider/"],
+      "expected_concepts": ["DataProviderModule", "DataSource enum", "interface", "existing providers", "YahooFinance", "CoinGecko"],
+      "difficulty": "hard"
+    },
+    {
+      "id": "ghostfolio-010",
+      "category": "navigation",
+      "question": "I want to add a new portfolio metric (e.g., Sharpe ratio). Where in the codebase would I implement this?",
+      "expected_files": ["apps/api/src/app/portfolio/portfolio.service.ts", "apps/api/src/app/portfolio/portfolio.controller.ts"],
+      "expected_concepts": ["PortfolioService", "analytics method", "controller endpoint", "PortfolioModule"],
+      "difficulty": "hard"
+    },
+    {
+      "id": "ghostfolio-011",
+      "category": "navigation",
+      "question": "Where would I add a new OIDC identity provider configuration (e.g., Keycloak)?",
+      "expected_files": ["apps/api/src/app/auth/", "apps/api/src/app/auth/strategies/"],
+      "expected_concepts": ["OidcStrategy", "OIDC_CLIENT_ID", "OIDC_CLIENT_SECRET", "environment config", "ConfigurationService"],
+      "difficulty": "medium"
+    },
+    {
+      "id": "ghostfolio-012",
+      "category": "dependency",
+      "question": "What does the root AppModule import? List the major feature modules.",
+      "expected_files": ["apps/api/src/app/app.module.ts"],
+      "expected_concepts": ["30+ imports", "PortfolioModule", "UserModule", "AuthModule", "AccountModule", "PrismaModule", "ScheduleModule", "BullModule"],
+      "difficulty": "easy"
+    },
+    {
+      "id": "ghostfolio-013",
+      "category": "dependency",
+      "question": "What services does the auth system depend on to complete a Google OAuth login?",
+      "expected_files": ["apps/api/src/app/auth/auth.service.ts", "apps/api/src/app/user/user.service.ts"],
+      "expected_concepts": ["validateOAuthLogin", "GoogleStrategy", "UserService", "findByThirdPartyId", "createUser", "generateAuthToken"],
+      "difficulty": "medium"
+    },
+    {
+      "id": "ghostfolio-014",
+      "category": "dependency",
+      "question": "What does the Analytics model track and what updates it?",
+      "expected_files": ["apps/api/src/app/auth/jwt.strategy.ts", "prisma/schema.prisma"],
+      "expected_concepts": ["Analytics", "activityCount", "lastRequestAt", "country", "JwtStrategy.validate", "every authenticated request"],
+      "difficulty": "medium"
+    },
+    {
+      "id": "ghostfolio-015",
+      "category": "change_impact",
+      "question": "If I add a new required field to the `Order` (activity) model in Prisma, what parts of the codebase need updating?",
+      "expected_files": ["prisma/schema.prisma", "apps/api/src/app/activities/"],
+      "expected_concepts": ["Prisma migration", "create activity DTO", "import service", "activities service", "controller DTOs"],
+      "difficulty": "hard"
+    },
+    {
+      "id": "ghostfolio-016",
+      "category": "change_impact",
+      "question": "If I disable the Redis cache, what features would be affected?",
+      "expected_files": ["apps/api/src/app/redis-cache/"],
+      "expected_concepts": ["RedisCacheModule", "Bull queues", "DataGatheringQueue", "PortfolioSnapshotQueue", "caching layer", "job processing"],
+      "difficulty": "hard"
+    },
+    {
+      "id": "ghostfolio-017",
+      "category": "change_impact",
+      "question": "What happens if I rotate the JWT_SECRET_KEY environment variable in production?",
+      "expected_files": ["apps/api/src/app/auth/jwt.strategy.ts", "apps/api/src/app/auth/auth.service.ts"],
+      "expected_concepts": ["all existing tokens invalid", "force re-login", "anonymous tokens", "API keys", "which tokens are affected"],
+      "difficulty": "medium"
+    },
+    {
+      "id": "ghostfolio-018",
+      "category": "bug_investigation",
+      "question": "A user reports that after logging in via Google, they see a different account's data. What could cause this?",
+      "expected_files": ["apps/api/src/app/auth/auth.service.ts"],
+      "expected_concepts": ["thirdPartyId", "validateOAuthLogin", "findByThirdPartyId", "email collision", "provider matching"],
+      "difficulty": "hard"
+    },
+    {
+      "id": "ghostfolio-019",
+      "category": "bug_investigation",
+      "question": "Portfolio performance calculations are running very slowly for large accounts. Where would you start investigating?",
+      "expected_files": ["apps/api/src/app/portfolio/portfolio.service.ts", "apps/api/src/services/cron/"],
+      "expected_concepts": ["PortfolioService", "68KB service", "N+1 queries", "PortfolioSnapshotQueue", "caching", "Bull queue"],
+      "difficulty": "hard"
+    },
+    {
+      "id": "ghostfolio-020",
+      "category": "bug_investigation",
+      "question": "A user's API key stops working after they change their password. Is this expected behavior and why?",
+      "expected_files": ["prisma/schema.prisma", "apps/api/src/app/auth/auth.service.ts"],
+      "expected_concepts": ["ApiKey", "hashedKey", "independent of password", "session deletion", "expected or not"],
+      "difficulty": "medium"
+    },
+    {
+      "id": "ghostfolio-021",
+      "category": "architecture",
+      "question": "How does the codebase handle multiple currencies? Where is currency conversion performed?",
+      "expected_files": ["apps/api/src/app/exchange-rate/"],
+      "expected_concepts": ["ExchangeRateModule", "ExchangeRateService", "currency conversion", "base currency", "MarketData"],
+      "difficulty": "medium"
+    },
+    {
+      "id": "ghostfolio-022",
+      "category": "navigation",
+      "question": "Where is the Angular frontend served from and how does it communicate with the NestJS API?",
+      "expected_files": ["apps/api/src/app/app.module.ts", "apps/client/"],
+      "expected_concepts": ["ServeStaticModule", "HtmlTemplateMiddleware", "wildcard route", "SPA routing", "API prefix"],
+      "difficulty": "medium"
+    },
+    {
+      "id": "ghostfolio-023",
+      "category": "dependency",
+      "question": "What is the role of the `Access` model and how does it enable portfolio sharing between users?",
+      "expected_files": ["prisma/schema.prisma", "apps/api/src/app/access/"],
+      "expected_concepts": ["Access", "userId", "granteeUserId", "permissions", "READ", "READ_RESTRICTED", "sharing link"],
+      "difficulty": "medium"
+    },
+    {
+      "id": "ghostfolio-024",
+      "category": "change_impact",
+      "question": "The Ghostfolio codebase is an Nx monorepo. What are the main apps and libraries in the workspace?",
+      "expected_files": ["apps/api/", "apps/client/", "libs/common/", "libs/ui/"],
+      "expected_concepts": ["Nx", "apps/api", "apps/client", "libs/common", "libs/ui", "path aliases", "@ghostfolio/"],
+      "difficulty": "easy"
+    },
+    {
+      "id": "ghostfolio-025",
+      "category": "bug_investigation",
+      "question": "Market data prices stop updating for some symbols. What parts of the system handle data fetching and where would you look for the failure?",
+      "expected_files": ["apps/api/src/services/cron/", "apps/api/src/services/data-provider/", "apps/api/src/app/admin/"],
+      "expected_concepts": ["CronService", "DataGatheringQueue", "Bull", "data provider", "gatherer", "YAHOO", "COINGECKO", "admin trigger"],
+      "difficulty": "hard"
+    }
+  ]
+}

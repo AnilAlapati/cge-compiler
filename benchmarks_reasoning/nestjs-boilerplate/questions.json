@@ -1,0 +1,206 @@
+{
+  "repo": "nestjs-boilerplate",
+  "source_dir": "benchmarks_real/nestjs-boilerplate/source",
+  "questions": [
+    {
+      "id": "boilerplate-001",
+      "category": "architecture",
+      "question": "How does the full authentication flow work — from registration to accessing a protected endpoint? Include email confirmation if relevant.",
+      "expected_files": ["src/auth/auth.service.ts", "src/auth/auth.controller.ts", "src/auth/strategies/jwt.strategy.ts", "src/users/users.service.ts"],
+      "expected_concepts": ["register", "email confirmation", "JWT", "access token", "refresh token", "JwtStrategy", "AuthGuard"],
+      "difficulty": "hard"
+    },
+    {
+      "id": "boilerplate-002",
+      "category": "architecture",
+      "question": "How do refresh tokens work? Where are they stored and how are they validated?",
+      "expected_files": ["src/auth/strategies/jwt-refresh.strategy.ts", "src/session/session.service.ts", "src/auth/auth.service.ts"],
+      "expected_concepts": ["session", "hash", "SHA-256", "refresh token rotation", "JwtRefreshStrategy", "validateRefresh"],
+      "difficulty": "hard"
+    },
+    {
+      "id": "boilerplate-003",
+      "category": "architecture",
+      "question": "What social login providers are supported and how does social authentication work?",
+      "expected_files": ["src/auth-facebook/", "src/auth-google/", "src/auth-apple/", "src/auth/auth.service.ts"],
+      "expected_concepts": ["validateSocialLogin", "Google", "Facebook", "Apple", "thirdPartyId", "provider", "OAuth"],
+      "difficulty": "medium"
+    },
+    {
+      "id": "boilerplate-004",
+      "category": "architecture",
+      "question": "How does the codebase support both SQL and MongoDB databases? What design pattern enables this?",
+      "expected_files": ["src/app.module.ts", "src/users/infrastructure/persistence/"],
+      "expected_concepts": ["DATABASE_IS_DOCUMENT_DATABASE", "TypeORM", "Mongoose", "repository pattern", "abstract UserRepository", "relational", "document"],
+      "difficulty": "hard"
+    },
+    {
+      "id": "boilerplate-005",
+      "category": "architecture",
+      "question": "How does password hashing work? Where does it happen and what algorithm is used?",
+      "expected_files": ["src/users/users.service.ts"],
+      "expected_concepts": ["bcryptjs", "bcrypt.hash", "bcrypt.compare", "create", "update"],
+      "difficulty": "easy"
+    },
+    {
+      "id": "boilerplate-006",
+      "category": "architecture",
+      "question": "How does the forgot password / password reset flow work end-to-end?",
+      "expected_files": ["src/auth/auth.service.ts", "src/auth/auth.controller.ts", "src/mail/mail.service.ts"],
+      "expected_concepts": ["forgotPassword", "resetPassword", "email", "JWT hash", "MailService", "token expiry"],
+      "difficulty": "medium"
+    },
+    {
+      "id": "boilerplate-007",
+      "category": "architecture",
+      "question": "How is role-based access control (RBAC) implemented? How do you protect an endpoint to admin users only?",
+      "expected_files": ["src/users/users.controller.ts", "src/roles/roles.decorator.ts", "src/roles/roles.guard.ts"],
+      "expected_concepts": ["@Roles", "RoleEnum.admin", "RolesGuard", "UseGuards", "role field on User"],
+      "difficulty": "medium"
+    },
+    {
+      "id": "boilerplate-008",
+      "category": "architecture",
+      "question": "How is API versioning implemented and what is the URL pattern for versioned routes?",
+      "expected_files": ["src/main.ts", "src/auth/auth.controller.ts"],
+      "expected_concepts": ["VersioningType.URI", "enableVersioning", "/v1/", "@Version"],
+      "difficulty": "easy"
+    },
+    {
+      "id": "boilerplate-009",
+      "category": "navigation",
+      "question": "I want to add a new 'phone number verification' flow similar to email confirmation. What existing files should I model it after?",
+      "expected_files": ["src/auth/auth.service.ts", "src/auth/auth.controller.ts", "src/mail/mail.service.ts"],
+      "expected_concepts": ["confirmEmail", "emailVerifyHash", "MailService", "JWT for verification", "confirm endpoint"],
+      "difficulty": "hard"
+    },
+    {
+      "id": "boilerplate-010",
+      "category": "navigation",
+      "question": "Where would I add a new user field (e.g., 'dateOfBirth') so it works correctly across both the SQL and MongoDB backends?",
+      "expected_files": ["src/users/domain/user.ts", "src/users/infrastructure/persistence/relational/entities/user.entity.ts", "src/users/infrastructure/persistence/document/entities/user.schema.ts"],
+      "expected_concepts": ["domain/user.ts", "relational entity", "document schema", "both persistence layers", "mapper"],
+      "difficulty": "hard"
+    },
+    {
+      "id": "boilerplate-011",
+      "category": "navigation",
+      "question": "Where is i18n (internationalization) configured and how would I add a new translation string?",
+      "expected_files": ["src/app.module.ts", "src/i18n/"],
+      "expected_concepts": ["nestjs-i18n", "I18nModule", "AcceptLanguageResolver", "translation JSON files"],
+      "difficulty": "medium"
+    },
+    {
+      "id": "boilerplate-012",
+      "category": "dependency",
+      "question": "What does the User domain class look like and how does it differ from the database entity?",
+      "expected_files": ["src/users/domain/user.ts", "src/users/infrastructure/persistence/relational/entities/user.entity.ts"],
+      "expected_concepts": ["domain class", "no ORM decorators", "@Entity", "@Column", "mapper", "separation"],
+      "difficulty": "medium"
+    },
+    {
+      "id": "boilerplate-013",
+      "category": "dependency",
+      "question": "What modules and services does AuthModule depend on?",
+      "expected_files": ["src/auth/auth.module.ts"],
+      "expected_concepts": ["UsersModule", "SessionModule", "MailModule", "JwtModule", "PassportModule", "imports"],
+      "difficulty": "easy"
+    },
+    {
+      "id": "boilerplate-014",
+      "category": "dependency",
+      "question": "What happens during session creation and what is stored in the session table?",
+      "expected_files": ["src/session/session.service.ts", "src/auth/auth.service.ts"],
+      "expected_concepts": ["Session", "hash", "user", "crypto.randomUUID", "SHA-256", "createSession"],
+      "difficulty": "medium"
+    },
+    {
+      "id": "boilerplate-015",
+      "category": "change_impact",
+      "question": "If I delete the Session table, what authentication features would break?",
+      "expected_files": ["src/session/session.service.ts", "src/auth/strategies/jwt-refresh.strategy.ts", "src/auth/auth.service.ts"],
+      "expected_concepts": ["refresh tokens", "logout", "token rotation", "JwtRefreshStrategy", "all refresh-based flows"],
+      "difficulty": "hard"
+    },
+    {
+      "id": "boilerplate-016",
+      "category": "change_impact",
+      "question": "What happens if a user's status is changed from 'active' to 'inactive'? What parts of the system check this?",
+      "expected_files": ["src/auth/strategies/jwt.strategy.ts", "src/users/users.service.ts"],
+      "expected_concepts": ["status", "StatusEnum", "validate", "403", "blocked", "JwtStrategy check"],
+      "difficulty": "medium"
+    },
+    {
+      "id": "boilerplate-017",
+      "category": "change_impact",
+      "question": "If I rename the `email` field to `emailAddress` in the User domain, what files need to be updated?",
+      "expected_files": ["src/users/domain/user.ts", "src/users/infrastructure/persistence/relational/entities/user.entity.ts", "src/users/infrastructure/persistence/document/entities/user.schema.ts", "src/auth/auth.service.ts", "src/users/users.service.ts"],
+      "expected_concepts": ["domain/user.ts", "relational entity", "document schema", "mapper", "auth service references", "DTO"],
+      "difficulty": "hard"
+    },
+    {
+      "id": "boilerplate-018",
+      "category": "bug_investigation",
+      "question": "Users report that they remain logged in after changing their password. What is the likely cause and where is the fix?",
+      "expected_files": ["src/auth/auth.service.ts", "src/session/session.service.ts"],
+      "expected_concepts": ["deleteAllByUserId", "session invalidation", "password change", "old tokens still valid", "soft delete sessions"],
+      "difficulty": "hard"
+    },
+    {
+      "id": "boilerplate-019",
+      "category": "bug_investigation",
+      "question": "A user creates an account but never receives the confirmation email. What parts of the system handle email sending and where might it fail?",
+      "expected_files": ["src/auth/auth.service.ts", "src/mail/mail.service.ts", "src/mailer/mailer.service.ts"],
+      "expected_concepts": ["MailService", "sendConfirmMail", "MailerService", "nodemailer", "SMTP config", "queue/async"],
+      "difficulty": "medium"
+    },
+    {
+      "id": "boilerplate-020",
+      "category": "bug_investigation",
+      "question": "A Google OAuth login works in development but fails in production with 'invalid redirect URI'. Where is the redirect URI configured?",
+      "expected_files": ["src/auth-google/auth-google.module.ts", "src/auth-google/config/google.config.ts"],
+      "expected_concepts": ["callbackURL", "GOOGLE_CALLBACK_URL", "PassportModule", "GoogleStrategy", "environment variable"],
+      "difficulty": "medium"
+    },
+    {
+      "id": "boilerplate-021",
+      "category": "architecture",
+      "question": "How does the JWT strategy validate tokens? Does it make a database call on every request?",
+      "expected_files": ["src/auth/strategies/jwt.strategy.ts"],
+      "expected_concepts": ["validate", "payload", "id", "no DB call", "trusts signed JWT", "stateless"],
+      "difficulty": "medium"
+    },
+    {
+      "id": "boilerplate-022",
+      "category": "navigation",
+      "question": "Where are the Swagger API docs configured and how would I add authentication to the Swagger UI?",
+      "expected_files": ["src/main.ts"],
+      "expected_concepts": ["DocumentBuilder", "SwaggerModule", "addBearerAuth", "setup", "/docs"],
+      "difficulty": "easy"
+    },
+    {
+      "id": "boilerplate-023",
+      "category": "dependency",
+      "question": "How are files/uploads handled and where does uploaded content get stored?",
+      "expected_files": ["src/files/", "src/files/files.controller.ts", "src/files/files.service.ts"],
+      "expected_concepts": ["FilesModule", "MulterModule", "FileInterceptor", "local storage", "S3"],
+      "difficulty": "medium"
+    },
+    {
+      "id": "boilerplate-024",
+      "category": "change_impact",
+      "question": "The app currently uses `bcryptjs` for password hashing. If I switch to `argon2`, what could go wrong for existing users?",
+      "expected_files": ["src/users/users.service.ts"],
+      "expected_concepts": ["existing hashes", "bcrypt.compare", "incompatible", "migration", "re-hash on login"],
+      "difficulty": "medium"
+    },
+    {
+      "id": "boilerplate-025",
+      "category": "bug_investigation",
+      "question": "An API client sends `Authorization: Bearer <token>` but consistently gets 401 errors even with a valid token. What could cause this?",
+      "expected_files": ["src/auth/strategies/jwt.strategy.ts", "src/main.ts", "src/auth/auth.module.ts"],
+      "expected_concepts": ["JwtStrategy", "JWT_SECRET", "expiry", "AuthGuard", "PassportModule", "environment mismatch"],
+      "difficulty": "medium"
+    }
+  ]
+}

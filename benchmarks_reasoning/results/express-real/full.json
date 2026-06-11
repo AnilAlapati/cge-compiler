@@ -1,0 +1,14 @@
+[
+  {
+    "questionId": "express-001",
+    "mode": "full",
+    "question": "How does authentication work in this Express app? What mechanism is used and how is it applied to routes?",
+    "answer": "",
+    "inputTokens": 0,
+    "outputTokens": 0,
+    "contextTokens": 455,
+    "latencyMs": 35,
+    "costUSD": 0,
+    "error": "Could not resolve authentication method. Expected one of apiKey, authToken, credentials, config, or profile to be set. Or for one of the \"X-Api-Key\" or \"Authorization\" headers to be explicitly omitted"
+  }
+]
