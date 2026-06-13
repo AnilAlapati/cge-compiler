@@ -1,0 +1,632 @@
+[
+  {
+    "questionId": "nestjs-real-001",
+    "question": "How does authentication work in this codebase? Walk through the entire auth flow from an incoming HTTP request to an authenticated user.",
+    "mode": "full",
+    "answer": "# Authentication Flow in This NestJS Codebase\n\n## Overview\nThis codebase uses JWT (JSON Web Tokens) for authentication. Here's the complete flow:\n\n---\n\n## 1. **User Registration/Login** (Entry Point)\n\n### Registration: `POST /api/users`\n**File:** `src/user/user.controller.ts`\n```typescript\n@UsePipes(new ValidationPipe())\n@Post('users')\nasync create(@Body('user') userData: CreateUserDto) {\n  return this.userService.create(userData);\n}\n```\n\n**File:** `src/user/user.service.ts` - `create()` method\n- Validates username/email uniqueness\n- Creates new `UserEntity` with password\n- `@BeforeInsert()` hook in `UserEntity` automatically hashes password using **argon2**\n\n### Login: `POST /api/users/login`\n**File:** `src/user/user.controller.ts`\n```typescript\n@Post('users/login')\nasync login(@Body('user') loginUserDto: LoginUserDto): Promise<UserRO> {\n  const _user = await this.userService.findOne(loginUserDto);\n  const token = await this.userService.generateJWT(_user);\n  return {user: {email, token, username, bio, image}};\n}\n```\n\n**File:** `src/user/user.service.ts`\n- `findOne()` verifies password using **argon2.verify()**\n- `generateJWT()` creates a signed JWT token with 60-day expiration:\n```typescript\nreturn jwt.sign({\n  id: user.id,\n  username: user.username,\n  email: user.email,\n  exp: exp.getTime() / 1000,\n}, SECRET);\n```\n\n---\n\n## 2. **Protected Routes Setup**\n\nProtected routes are configured in module middleware:\n\n### Example: `ArticleModule` \n**File:** `src/article/article.module.ts`\n```typescript\nconsumer\n  .apply(AuthMiddleware)\n  .forRoutes(\n    {path: 'articles/feed', method: RequestMethod.GET},\n    {path: 'articles', method: RequestMethod.POST},\n    {path: 'articles/:slug', method: RequestMethod.DELETE},\n    // ... other protected routes\n  );\n```\n\nSimilarly in `src/user/user.module.ts` and `src/profile/profile.module.ts`.\n\n---\n\n## 3. **Auth Middleware Intercepts Request**\n\n**File:** `src/user/auth.middleware.ts`\n\nWhen a request hits a protected route:\n\n```typescript\nasync use(req: Request, res: Response, next: NextFunction) {\n  const authHeaders = req.headers.authorization;\n  \n  if (authHeaders && (authHeaders as string).split(' ')[1]) {\n    // Extract token from \"Bearer <token>\"\n    const token = (authHeaders as string).split(' ')[1];\n    \n    // Verify JWT signature\n    const decoded: any = jwt.verify(token, SECRET);\n    \n    // Fetch user from database\n    const user = await this.userService.findById(decoded.id);\n\n    if (!user) {\n      throw new HttpException('User not found.', HttpStatus.UNAUTHORIZED);\n    }\n\n    // Attach user to request object\n    req.user = user.user;\n    next();\n  } else {\n    throw new HttpException('Not authorized.', HttpStatus.UNAUTHORIZED);\n  }\n}\n```\n\n**Key steps:**\n1. Extracts token from `Authorization: Bearer <token>` header\n2. Verifies JWT signature using `SECRET` constant\n3. Decodes token to get `user.id`\n4. Queries database for user by ID\n5. Attaches user to `req.user` if found\n6. Throws `401 UNAUTHORIZED` if token invalid or user not found\n\n---\n\n## 4. **User Decorator Extracts User Info**\n\n**File:** `src/user/user.decorator.ts`\n\nControllers use the `@User()` decorator to extract authenticated user data:\n\n```typescript\nexport const User = createParamDecorator((data: any, ctx: ExecutionContext) => {\n  const req = ctx.switchToHttp().getRequest();\n  \n  //",
+    "score": {
+      "correctness": 4,
+      "fileIdentification": 5,
+      "reasoningQuality": 4
+    },
+    "inputTokens": 11539,
+    "outputTokens": 1024,
+    "costUSD": 0.016659
+  },
+  {
+    "questionId": "nestjs-real-002",
+    "question": "How are passwords stored and verified? What library is used and where does hashing happen?",
+    "mode": "full",
+    "answer": "# Password Storage and Verification\n\n## Library Used\n**argon2** - A modern password hashing library that provides strong security properties.\n\n## Where Hashing Happens\n\n### 1. **Password Hashing on User Creation**\nLocation: `nestjs-real/source/src/user/user.entity.ts`\n\n```typescript\n@BeforeInsert()\nasync hashPassword() {\n  this.password = await argon2.hash(this.password);\n}\n```\n\nThe `@BeforeInsert()` decorator ensures that whenever a new `UserEntity` is saved to the database, the password is automatically hashed using argon2 before insertion.\n\n### 2. **Password Verification on Login**\nLocation: `nestjs-real/source/src/user/user.service.ts`, in the `findOne()` method:\n\n```typescript\nasync findOne({email, password}: LoginUserDto): Promise<UserEntity> {\n  const user = await this.userRepository.findOne({email});\n  if (!user) {\n    return null;\n  }\n\n  if (await argon2.verify(user.password, password)) {\n    return user;\n  }\n\n  return null;\n}\n```\n\nThe `argon2.verify()` function compares the plaintext password provided during login against the hashed password stored in the database. It returns `true` if they match, `false` otherwise.\n\n## Summary\n\n- **Hash Algorithm**: Argon2 (imported from `argon2` package)\n- **Hashing Trigger**: TypeORM `@BeforeInsert()` lifecycle hook in `UserEntity`\n- **Verification**: During login via `UserService.findOne()` using `argon2.verify()`\n- **Security**: Passwords are never stored in plaintext in the database",
+    "score": {
+      "correctness": 5,
+      "fileIdentification": 5,
+      "reasoningQuality": 5
+    },
+    "inputTokens": 11531,
+    "outputTokens": 419,
+    "costUSD": 0.013626
+  },
+  {
+    "questionId": "nestjs-real-003",
+    "question": "How are JWT tokens generated? What is in the token payload and how long do they last?",
+    "mode": "full",
+    "answer": "# JWT Token Generation\n\n## Location\nJWT tokens are generated in **`nestjs-real/source/src/user/user.service.ts`** in the `generateJWT()` method.\n\n## Token Payload\nThe JWT token contains the following claims:\n\n```typescript\n{\n  id: user.id,\n  username: user.username,\n  email: user.email,\n  exp: exp.getTime() / 1000,  // expiration time in seconds\n}\n```\n\n## Token Lifespan\nTokens are valid for **60 days** from the time of generation.\n\n### Code Reference:\n```typescript\npublic generateJWT(user) {\n  let today = new Date();\n  let exp = new Date(today);\n  exp.setDate(today.getDate() + 60);  // Add 60 days\n\n  return jwt.sign({\n    id: user.id,\n    username: user.username,\n    email: user.email,\n    exp: exp.getTime() / 1000,\n  }, SECRET);\n}\n```\n\n## Secret Key\nTokens are signed using the `SECRET` constant imported from `'../config'` (the config file is not provided in the context, but this is where the signing secret is stored).\n\n## Token Usage\n- Tokens are generated when users **login** (in the `login()` method of `UserController`)\n- They are returned in the response as part of the user data\n- Tokens are used to authenticate protected routes via the `AuthMiddleware` and the custom `@User()` decorator",
+    "score": {
+      "correctness": 4,
+      "fileIdentification": 4,
+      "reasoningQuality": 5
+    },
+    "inputTokens": 11532,
+    "outputTokens": 362,
+    "costUSD": 0.013342
+  },
+  {
+    "questionId": "nestjs-real-004",
+    "question": "What is the article slug and how is it generated when a new article is created?",
+    "mode": "full",
+    "answer": "# Article Slug Generation\n\n## What is the Article Slug?\n\nThe article slug is a URL-friendly identifier stored in the `slug` column of the `ArticleEntity`. It's used to uniquely identify articles in API routes (e.g., `/articles/:slug`).\n\n## How It's Generated\n\nWhen a new article is created, the slug is generated in the `create` method of `ArticleService` (in `nestjs-real/source/src/article/article.service.ts`):\n\n```typescript\nasync create(userId: number, articleData: CreateArticleDto): Promise<ArticleEntity> {\n  let article = new ArticleEntity();\n  article.title = articleData.title;\n  article.description = articleData.description;\n  article.slug = this.slugify(articleData.title);  // ← Slug is generated here\n  article.tagList = articleData.tagList || [];\n  article.comments = [];\n\n  const newArticle = await this.articleRepository.save(article);\n  // ...\n}\n```\n\n## The Slugify Function\n\nThe slug is created using the `slugify` method:\n\n```typescript\nslugify(title: string) {\n  return slug(title, {lower: true}) + '-' + (Math.random() * Math.pow(36, 6) | 0).toString(36)\n}\n```\n\n**How it works:**\n1. **`slug(title, {lower: true})`** - Converts the article title to a lowercase, URL-friendly format using the `slug` npm package\n2. **`'-' + (Math.random() * Math.pow(36, 6) | 0).toString(36)`** - Appends a hyphen followed by a random 6-character alphanumeric string for uniqueness\n\n**Example:** An article titled \"Hello World\" might generate a slug like `hello-world-a3k2z1`",
+    "score": {
+      "correctness": 5,
+      "fileIdentification": 5,
+      "reasoningQuality": 5
+    },
+    "inputTokens": 11530,
+    "outputTokens": 444,
+    "costUSD": 0.01375
+  },
+  {
+    "questionId": "nestjs-real-005",
+    "question": "How does the favorites/unfavorite system work for articles? What database operations happen?",
+    "mode": "full",
+    "answer": "# Favorites/Unfavorite System Analysis\n\n## Overview\nThe favorites system allows users to mark articles as favorites. It's implemented through a many-to-many relationship between `UserEntity` and `ArticleEntity`.\n\n## Database Structure\n\n### Entity Relationship\nIn `nestjs-real/source/src/user/user.entity.ts`:\n```typescript\n@ManyToMany(type => ArticleEntity)\n@JoinTable()\nfavorites: ArticleEntity[];\n```\n\nThis creates a join table linking users to their favorite articles, with the `ArticleEntity` also tracking a `favoriteCount`:\n\nIn `nestjs-real/source/src/article/article.entity.ts`:\n```typescript\n@Column({default: 0})\nfavoriteCount: number;\n```\n\n## API Endpoints\n\nBoth endpoints are defined in `nestjs-real/source/src/article/article.controller.ts`:\n\n1. **Favorite**: `POST /articles/:slug/favorite`\n2. **Unfavorite**: `DELETE /articles/:slug/favorite`\n\nBoth require authentication (enforced by `AuthMiddleware` in `nestjs-real/source/src/article/article.module.ts`).\n\n## Database Operations\n\n### Favorite Operation\nIn `nestjs-real/source/src/article/article.service.ts` - `favorite()` method:\n\n```typescript\nasync favorite(id: number, slug: string): Promise<ArticleRO> {\n  let article = await this.articleRepository.findOne({slug});\n  const user = await this.userRepository.findOne(id);\n\n  const isNewFavorite = user.favorites.findIndex(_article => _article.id === article.id) < 0;\n  if (isNewFavorite) {\n    user.favorites.push(article);           // Add to join table\n    article.favoriteCount++;                 // Increment counter\n    \n    await this.userRepository.save(user);   // Save user + join table\n    article = await this.articleRepository.save(article);  // Update counter\n  }\n\n  return {article};\n}\n```\n\n**Operations:**\n1. Query article by slug\n2. Query user by ID\n3. Check if article already in user's favorites\n4. If new favorite: add article to `user.favorites` array\n5. Increment `article.favoriteCount`\n6. Save user record (updates join table)\n7. Save article record (updates favorite count)\n\n### Unfavorite Operation\nIn `nestjs-real/source/src/article/article.service.ts` - `unFavorite()` method:\n\n```typescript\nasync unFavorite(id: number, slug: string): Promise<ArticleRO> {\n  let article = await this.articleRepository.findOne({slug});\n  const user = await this.userRepository.findOne(id);\n\n  const deleteIndex = user.favorites.findIndex(_article => _article.id === article.id);\n\n  if (deleteIndex >= 0) {\n    user.favorites.splice(deleteIndex, 1);  // Remove from join table\n    article.favoriteCount--;                 // Decrement counter\n    \n    await this.userRepository.save(user);   // Save user + join table\n    article = await this.articleRepository.save(article);  // Update counter\n  }\n\n  return {article};\n}\n```\n\n**Operations:**\n1. Query article by slug\n2. Query user by ID\n3. Find article in user's favorites array\n4. If found: remove from `user.favorites` array\n5. Decrement `article.favoriteCount`\n6. Save user record (updates join table)\n7. Save article record (updates favorite count)\n\n## Key Points\n\n- **Denormalized Design**: The `favoriteCount` is stored directly on the article (denormalized) for quick access, rather than computing it from the join table\n- **Join Table**: TypeORM automatically manages the join table via the `@JoinTable()` decorator\n- **Idempotency**: Both operations check for duplicates/existence before modifying\n- **Atomic Operations**: Each favorite/unfavorite triggers 2 saves (user + article) for consistency",
+    "score": {
+      "correctness": 5,
+      "fileIdentification": 5,
+      "reasoningQuality": 5
+    },
+    "inputTokens": 11531,
+    "outputTokens": 974,
+    "costUSD": 0.016401
+  },
+  {
+    "questionId": "nestjs-real-006",
+    "question": "Where would I add a new API endpoint to allow users to bookmark articles (separate from favorites)?",
+    "mode": "full",
+    "answer": "# Adding a Bookmark Articles Endpoint\n\nBased on the codebase structure, here's where you would add a new bookmark articles feature:\n\n## 1. **Create a Bookmark Entity**\nCreate a new file `nestjs-real/source/src/article/bookmark.entity.ts`:\n```typescript\nimport { Entity, PrimaryGeneratedColumn, Column, ManyToOne } from 'typeorm';\nimport { UserEntity } from '../user/user.entity';\nimport { ArticleEntity } from './article.entity';\n\n@Entity('bookmark')\nexport class BookmarkEntity {\n  @PrimaryGeneratedColumn()\n  id: number;\n\n  @ManyToOne(type => UserEntity, user => user.bookmarks)\n  user: UserEntity;\n\n  @Column()\n  userId: number;\n\n  @ManyToOne(type => ArticleEntity)\n  article: ArticleEntity;\n\n  @Column()\n  articleId: number;\n\n  @Column({ type: 'timestamp', default: () => \"CURRENT_TIMESTAMP\"})\n  created: Date;\n}\n```\n\n## 2. **Update UserEntity**\nIn `nestjs-real/source/src/user/user.entity.ts`, add the bookmarks relationship:\n```typescript\n@OneToMany(type => BookmarkEntity, bookmark => bookmark.user)\nbookmarks: BookmarkEntity[];\n```\n\n## 3. **Add Methods to ArticleService**\nIn `nestjs-real/source/src/article/article.service.ts`, inject and add:\n```typescript\n@InjectRepository(BookmarkEntity)\nprivate readonly bookmarkRepository: Repository<BookmarkEntity>\n\nasync bookmark(userId: number, slug: string): Promise<ArticleRO> {\n  const article = await this.articleRepository.findOne({slug});\n  const bookmark = await this.bookmarkRepository.findOne({userId, articleId: article.id});\n  \n  if (!bookmark) {\n    const newBookmark = new BookmarkEntity();\n    newBookmark.userId = userId;\n    newBookmark.articleId = article.id;\n    await this.bookmarkRepository.save(newBookmark);\n  }\n  \n  return {article};\n}\n\nasync unbookmark(userId: number, slug: string): Promise<ArticleRO> {\n  const article = await this.articleRepository.findOne({slug});\n  await this.bookmarkRepository.delete({userId, articleId: article.id});\n  return {article};\n}\n\nasync getBookmarks(userId: number, query): Promise<ArticlesRO> {\n  const qb = this.articleRepository.createQueryBuilder('article')\n    .innerJoin('bookmark', 'bookmark', 'bookmark.articleId = article.id')\n    .where('bookmark.userId = :userId', {userId})\n    .orderBy('bookmark.created', 'DESC');\n\n  const articlesCount = await qb.getCount();\n  \n  if ('limit' in query) qb.limit(query.limit);\n  if ('offset' in query) qb.offset(query.offset);\n  \n  const articles = await qb.getMany();\n  return {articles, articlesCount};\n}\n```\n\n## 4. **Add Endpoints to ArticleController**\nIn `nestjs-real/source/src/article/article.controller.ts`:\n```typescript\n@ApiOperation({ summary: 'Bookmark article' })\n@Post(':slug/bookmark')\nasync bookmark(@User('id') userId: number, @Param('slug') slug) {\n  return await this.articleService.bookmark(userId, slug);\n}\n\n@ApiOperation({ summary: 'Unbookmark article' })\n@Delete(':slug/bookmark')\nasync unbookmark(@User('id') userId: number, @Param('slug') slug) {\n  return await this.articleService.unbookmark(userId, slug);\n}\n\n@ApiOperation({ summary: 'Get user bookmarks' })\n@Get('bookmarks/list')\nasync getBookmarks(@User('id') userId: number, @Query() query): Promise<ArticlesRO> {\n  return await this.articleService.getBookmarks(userId, query);\n}\n```\n\n## 5. **Update ArticleModule**\nIn `nestjs-real/source/src/article/article.module.ts`:\n- Add `BookmarkEntity` to",
+    "score": {
+      "correctness": 4,
+      "fileIdentification": 5,
+      "reasoningQuality": 4
+    },
+    "inputTokens": 11532,
+    "outputTokens": 1024,
+    "costUSD": 0.016652
+  },
+  {
+    "questionId": "nestjs-real-007",
+    "question": "Where is the global API prefix configured, and where are Swagger docs set up?",
+    "mode": "full",
+    "answer": "# Global API Prefix and Swagger Configuration\n\nBoth the global API prefix and Swagger documentation setup are configured in the **`nestjs-real/source/src/main.ts`** file, specifically in the `bootstrap()` function:\n\n## API Prefix\n```typescript\napp.setGlobalPrefix('api');\n```\nThis line sets the global prefix to `'api'`, meaning all routes are prefixed with `/api`.\n\n## Swagger Documentation\nThe Swagger setup includes:\n\n```typescript\nconst options = new DocumentBuilder()\n  .setTitle('NestJS Realworld Example App')\n  .setDescription('The Realworld API description')\n  .setVersion('1.0')\n  .setBasePath('api')\n  .addBearerAuth()\n  .build();\nconst document = SwaggerModule.createDocument(app, options);\nSwaggerModule.setup('/docs', app, document);\n```\n\n**Key Details:**\n- **Swagger UI Location**: `/docs` endpoint\n- **API Base Path**: Configured as `'api'` via `.setBasePath('api')`\n- **Authentication**: Bearer token authentication is enabled via `.addBearerAuth()`\n- **Title**: \"NestJS Realworld Example App\"\n- **Version**: 1.0\n\nThe application listens on **port 3000** as configured by `await app.listen(3000);`",
+    "score": {
+      "correctness": 5,
+      "fileIdentification": 5,
+      "reasoningQuality": 5
+    },
+    "inputTokens": 11530,
+    "outputTokens": 320,
+    "costUSD": 0.01313
+  },
+  {
+    "questionId": "nestjs-real-008",
+    "question": "Where should I add a new field to the User profile response (e.g., a 'location' field)?",
+    "mode": "full",
+    "answer": "# Adding a 'location' Field to User Profile Response\n\nTo add a new `location` field to the User profile response, you need to modify **three key files**:\n\n## 1. Update the UserEntity\n**File:** `nestjs-real/source/src/user/user.entity.ts`\n\nAdd the column definition:\n```typescript\n@Column({default: ''})\nlocation: string;\n```\n\n## 2. Update the UserData Interface\n**File:** `nestjs-real/source/src/user/user.interface.ts`\n\nAdd the field to the `UserData` interface:\n```typescript\nexport interface UserData {\n  username: string;\n  email: string;\n  token: string;\n  bio: string;\n  image?: string;\n  location?: string;  // Add this line\n}\n```\n\n## 3. Update the buildUserRO Method\n**File:** `nestjs-real/source/src/user/user.service.ts`\n\nInclude `location` when building the response object in the `buildUserRO()` method:\n```typescript\nprivate buildUserRO(user: UserEntity) {\n  const userRO = {\n    id: user.id,\n    username: user.username,\n    email: user.email,\n    bio: user.bio,\n    token: this.generateJWT(user),\n    image: user.image,\n    location: user.location  // Add this line\n  };\n\n  return {user: userRO};\n}\n```\n\n## Optional: Update ProfileData Interface\nIf you also want the `location` field in profile responses, update `nestjs-real/source/src/profile/profile.interface.ts`:\n```typescript\nexport interface ProfileData {\n  username: string;\n  bio: string;\n  image?: string;\n  location?: string;  // Add this line\n  following?: boolean;\n}\n```\n\nAnd update the `findProfile()` method in `nestjs-real/source/src/profile/profile.service.ts` to include it when building the profile object.\n\n**Note:** You'll also need to create a database migration to add the `location` column to the `user` table.",
+    "score": {
+      "correctness": 4,
+      "fileIdentification": 5,
+      "reasoningQuality": 5
+    },
+    "inputTokens": 11537,
+    "outputTokens": 507,
+    "costUSD": 0.014072
+  },
+  {
+    "questionId": "nestjs-real-009",
+    "question": "Where is authentication middleware applied to routes, and which routes require authentication?",
+    "mode": "full",
+    "answer": "# Authentication Middleware Application\n\n## Middleware Application Locations\n\nAuthentication middleware is applied in two module files:\n\n### 1. **UserModule** (`nestjs-real/source/src/user/user.module.ts`)\n\nThe `AuthMiddleware` is applied to:\n- `GET /user` - Get current user\n- `PUT /user` - Update current user\n\n```typescript\nconsumer\n  .apply(AuthMiddleware)\n  .forRoutes({path: 'user', method: RequestMethod.GET}, {path: 'user', method: RequestMethod.PUT});\n```\n\n### 2. **ArticleModule** (`nestjs-real/source/src/article/article.module.ts`)\n\nThe `AuthMiddleware` is applied to:\n- `GET /articles/feed` - Get article feed\n- `POST /articles` - Create article\n- `DELETE /articles/:slug` - Delete article\n- `PUT /articles/:slug` - Update article\n- `POST /articles/:slug/comments` - Create comment\n- `DELETE /articles/:slug/comments/:id` - Delete comment\n- `POST /articles/:slug/favorite` - Favorite article\n- `DELETE /articles/:slug/favorite` - Unfavorite article\n\n```typescript\nconsumer\n  .apply(AuthMiddleware)\n  .forRoutes(\n    {path: 'articles/feed', method: RequestMethod.GET},\n    {path: 'articles', method: RequestMethod.POST},\n    {path: 'articles/:slug', method: RequestMethod.DELETE},\n    {path: 'articles/:slug', method: RequestMethod.PUT},\n    {path: 'articles/:slug/comments', method: RequestMethod.POST},\n    {path: 'articles/:slug/comments/:id', method: RequestMethod.DELETE},\n    {path: 'articles/:slug/favorite', method: RequestMethod.POST},\n    {path: 'articles/:slug/favorite', method: RequestMethod.DELETE}\n  );\n```\n\n### 3. **ProfileModule** (`nestjs-real/source/src/profile/profile.module.ts`)\n\nThe `AuthMiddleware` is applied to:\n- `profiles/:username/follow` - All HTTP methods for follow operations\n\n```typescript\nconsumer\n  .apply(AuthMiddleware)\n  .forRoutes({path: 'profiles/:username/follow', method: RequestMethod.ALL});\n```\n\n## Middleware Implementation\n\nThe `AuthMiddleware` (`nestjs-real/source/src/user/auth.middleware.ts`) extracts and verifies JWT tokens from the `Authorization` header, validates the user exists, and attaches the user object to `req.user` for authenticated routes.",
+    "score": {
+      "correctness": 4,
+      "fileIdentification": 5,
+      "reasoningQuality": 5
+    },
+    "inputTokens": 11527,
+    "outputTokens": 620,
+    "costUSD": 0.014627
+  },
+  {
+    "questionId": "nestjs-real-010",
+    "question": "What services or modules depend on UserService?",
+    "mode": "full",
+    "answer": "# Services/Modules Depending on UserService\n\nBased on the codebase, the following services and modules depend on `UserService`:\n\n## Direct Dependencies:\n\n1. **ArticleService** (`nestjs-real/source/src/article/article.service.ts`)\n   - Injects `UserEntity` repository directly (not UserService)\n   - Uses `this.userRepository` to find users and manage favorites\n\n2. **ProfileService** (`nestjs-real/source/src/profile/profile.service.ts`)\n   - Injects `UserEntity` repository directly (not UserService)\n   - Uses `this.userRepository` for profile operations\n\n3. **AuthMiddleware** (`nestjs-real/source/src/user/auth.middleware.ts`)\n   - Directly depends on `UserService`\n   - Calls `this.userService.findById(decoded.id)` to validate authenticated users\n\n## Module-Level Dependencies:\n\n4. **ArticleModule** (`nestjs-real/source/src/article/article.module.ts`)\n   - Imports `UserModule` (which exports `UserService`)\n\n5. **ProfileModule** (`nestjs-real/source/src/profile/profile.module.ts`)\n   - Imports `UserModule` (which exports `UserService`)\n\n6. **TagModule** (`nestjs-real/source/src/tag/tag.module.ts`)\n   - Imports `UserModule` (which exports `UserService`)\n\n## Summary:\n\nThe most direct dependency is **AuthMiddleware**, which explicitly uses `UserService`. The modules (Article, Profile, Tag) import the UserModule to make UserService available, though some services in those modules access the `UserEntity` repository directly rather than through the service.",
+    "score": {
+      "correctness": 3,
+      "fileIdentification": 4,
+      "reasoningQuality": 4
+    },
+    "inputTokens": 11522,
+    "outputTokens": 403,
+    "costUSD": 0.013537
+  },
+  {
+    "questionId": "nestjs-real-011",
+    "question": "What database entities exist and how are they related to each other?",
+    "mode": "full",
+    "answer": "# Database Entities and Relationships\n\nBased on the codebase, there are **5 main database entities**:\n\n## 1. **UserEntity** (`src/user/user.entity.ts`)\n- `id` (PrimaryGeneratedColumn)\n- `username`\n- `email`\n- `bio`\n- `image`\n- `password`\n\n**Relationships:**\n- **ManyToMany** → `ArticleEntity` (via `favorites`) - Users can favorite multiple articles\n- **OneToMany** → `ArticleEntity` (via `articles`) - Users can author multiple articles\n\n---\n\n## 2. **ArticleEntity** (`src/article/article.entity.ts`)\n- `id` (PrimaryGeneratedColumn)\n- `slug`\n- `title`\n- `description`\n- `body`\n- `created` (timestamp)\n- `updated` (timestamp)\n- `tagList` (simple-array)\n- `favoriteCount`\n\n**Relationships:**\n- **ManyToOne** → `UserEntity` (via `author`) - Each article has one author\n- **OneToMany** → `Comment` (via `comments`) - Each article can have multiple comments\n\n---\n\n## 3. **Comment** (`src/article/comment.entity.ts`)\n- `id` (PrimaryGeneratedColumn)\n- `body`\n\n**Relationships:**\n- **ManyToOne** → `ArticleEntity` (via `article`) - Each comment belongs to one article\n\n---\n\n## 4. **TagEntity** (`src/tag/tag.entity.ts`)\n- `id` (PrimaryGeneratedColumn)\n- `tag`\n\n**Relationships:**\n- No direct database relationships (stored as `tagList` string array in ArticleEntity)\n\n---\n\n## 5. **FollowsEntity** (`src/profile/follows.entity.ts`)\n- `id` (PrimaryGeneratedColumn)\n- `followerId` (references UserEntity)\n- `followingId` (references UserEntity)\n\n**Relationships:**\n- No formal foreign key decorators, but logically represents a **self-referential Many-to-Many** relationship between users (followers/following)\n\n---\n\n## Entity Relationship Summary\n\n```\nUserEntity ◄──────────► ArticleEntity\n   (1)    ManyToMany      (favorites)\n          (OneToMany)\n          (articles)      ◄──── Comment\n                          (OneToMany)\n\nUserEntity ──(FollowsEntity)──► UserEntity\n(self-referential Many-to-Many for followers/following)\n\nArticleEntity ──(tagList)──► TagEntity\n(informal relationship via string array)\n```",
+    "score": {
+      "correctness": 4,
+      "fileIdentification": 5,
+      "reasoningQuality": 5
+    },
+    "inputTokens": 11526,
+    "outputTokens": 631,
+    "costUSD": 0.014681
+  },
+  {
+    "questionId": "nestjs-real-012",
+    "question": "What does ArticleService depend on? List all its injected dependencies.",
+    "mode": "full",
+    "answer": "# ArticleService Dependencies\n\nBased on the code in `nestjs-real/source/src/article/article.service.ts`, the `ArticleService` has **4 injected dependencies**:\n\n1. **`ArticleRepository`** - `Repository<ArticleEntity>`\n   - Injected via `@InjectRepository(ArticleEntity)`\n   - Used for CRUD operations on articles\n\n2. **`CommentRepository`** - `Repository<Comment>`\n   - Injected via `@InjectRepository(Comment)`\n   - Used for managing comments on articles\n\n3. **`UserRepository`** - `Repository<UserEntity>`\n   - Injected via `@InjectRepository(UserEntity)`\n   - Used for accessing user data (e.g., finding authors, managing favorites)\n\n4. **`FollowsRepository`** - `Repository<FollowsEntity>`\n   - Injected via `@InjectRepository(FollowsEntity)`\n   - Used for retrieving user follow relationships (particularly in the `findFeed()` method)\n\nAll dependencies are injected through the constructor:\n```typescript\nconstructor(\n  @InjectRepository(ArticleEntity)\n  private readonly articleRepository: Repository<ArticleEntity>,\n  @InjectRepository(Comment)\n  private readonly commentRepository: Repository<Comment>,\n  @InjectRepository(UserEntity)\n  private readonly userRepository: Repository<UserEntity>,\n  @InjectRepository(FollowsEntity)\n  private readonly followsRepository: Repository<FollowsEntity>\n) {}\n```",
+    "score": {
+      "correctness": 5,
+      "fileIdentification": 5,
+      "reasoningQuality": 5
+    },
+    "inputTokens": 11528,
+    "outputTokens": 362,
+    "costUSD": 0.013338
+  },
+  {
+    "questionId": "nestjs-real-013",
+    "question": "If I remove the `favorites` relationship from UserEntity, what else in the codebase would break?",
+    "mode": "full",
+    "answer": "# Impact Analysis: Removing `favorites` from UserEntity\n\nIf you remove the `favorites` relationship from `UserEntity`, the following parts of the codebase would break:\n\n## 1. **ArticleService** (Critical)\n   - **File**: `nestjs-real/source/src/article/article.service.ts`\n   - **Methods affected**:\n     - `favorite()` - Line: `user.favorites.push(article)` and `user.favorites.findIndex()`\n     - `unFavorite()` - Line: `user.favorites.findIndex()` and `user.favorites.splice()`\n     - `findAll()` - Line: `const ids = author.favorites.map(el => el.id)` (in the 'favorited' query filter)\n\n   These methods directly access and manipulate the `favorites` array on the user object.\n\n## 2. **UserService** (Minor)\n   - **File**: `nestjs-real/source/src/user/user.service.ts`\n   - **Method affected**: `update()` - Line: `delete toUpdate.favorites`\n   \n   This line explicitly removes the favorites property before updating, which would become unnecessary but wouldn't cause a runtime error.\n\n## Summary\nThe **ArticleService** would be most severely impacted, with three methods containing logic that depends on the `favorites` relationship. You would need to refactor the favorite/unfavorite functionality to use a different data structure or query pattern (e.g., a separate junction table, or querying through the relationship differently).",
+    "score": {
+      "correctness": 4,
+      "fileIdentification": 5,
+      "reasoningQuality": 4
+    },
+    "inputTokens": 11535,
+    "outputTokens": 358,
+    "costUSD": 0.013325
+  },
+  {
+    "questionId": "nestjs-real-014",
+    "question": "If I change the JWT secret, what happens to currently logged-in users?",
+    "mode": "full",
+    "answer": "If you change the JWT secret, currently logged-in users will **lose access** to protected routes immediately.\n\nHere's why:\n\n## Token Verification Process\n\nWhen a user makes a request to a protected route, the `AuthMiddleware` (in `nestjs-real/source/src/user/auth.middleware.ts`) verifies their JWT token:\n\n```typescript\nconst decoded: any = jwt.verify(token, SECRET);\n```\n\nThe `jwt.verify()` function uses the current `SECRET` value to validate the token's signature. If the secret changes, the signature validation will fail because:\n\n1. The user's token was signed with the **old secret**\n2. The server is now trying to verify it with the **new secret**\n3. The signatures won't match → verification fails\n\n## Immediate Effects\n\n- **Protected endpoints** (decorated with `@AuthMiddleware`) will return `HttpStatus.UNAUTHORIZED` with the message `\"Not authorized.\"`\n- Affected routes include:\n  - `GET /api/user`\n  - `PUT /api/user`\n  - `GET /api/articles/feed`\n  - `POST /api/articles`\n  - `POST /api/articles/:slug/favorite`\n  - And others configured in `article.module.ts` and `profile.module.ts`\n\n## Required Action\n\nUsers will need to **log in again** via `POST /api/users/login` to receive a new token signed with the new secret.\n\nThis is a standard security practice when rotating JWT secrets in production (though ideally you'd implement a grace period supporting both old and new secrets).",
+    "score": {
+      "correctness": 5,
+      "fileIdentification": 4,
+      "reasoningQuality": 5
+    },
+    "inputTokens": 11529,
+    "outputTokens": 365,
+    "costUSD": 0.013354
+  },
+  {
+    "questionId": "nestjs-real-015",
+    "question": "If I change the password hashing algorithm from argon2 to bcrypt, what steps are required?",
+    "mode": "full",
+    "answer": "# Steps to Change Password Hashing from Argon2 to Bcrypt\n\nBased on the codebase, here are the required changes:\n\n## 1. **Update Dependencies**\n   - Remove `argon2` package\n   - Install `bcrypt` package\n\n## 2. **Update `src/user/user.entity.ts`**\n   \n   Change the import statement (line 5):\n   ```typescript\n   // FROM:\n   import * as argon2 from 'argon2';\n   \n   // TO:\n   import * as bcrypt from 'bcrypt';\n   ```\n\n   Update the `hashPassword()` method (lines 33-35):\n   ```typescript\n   // FROM:\n   @BeforeInsert()\n   async hashPassword() {\n     this.password = await argon2.hash(this.password);\n   }\n   \n   // TO:\n   @BeforeInsert()\n   async hashPassword() {\n     this.password = await bcrypt.hash(this.password, 10);\n   }\n   ```\n\n## 3. **Update `src/user/user.service.ts`**\n\n   Change the import statement (line 5):\n   ```typescript\n   // FROM:\n   import * as argon2 from 'argon2';\n   \n   // TO:\n   import * as bcrypt from 'bcrypt';\n   ```\n\n   Update the password verification in `findOne()` method (lines 27-28):\n   ```typescript\n   // FROM:\n   if (await argon2.verify(user.password, password)) {\n     return user;\n   }\n   \n   // TO:\n   if (await bcrypt.compare(password, user.password)) {\n     return user;\n   }\n   ```\n\n## Summary\n- **2 files** need modification: `user.entity.ts` and `user.service.ts`\n- **4 code locations** require changes: 2 imports and 2 function calls\n- **Note:** Existing hashed passwords will remain incompatible. Users with argon2-hashed passwords will need to reset their passwords to use bcrypt hashing.",
+    "score": {
+      "correctness": 4,
+      "fileIdentification": 5,
+      "reasoningQuality": 5
+    },
+    "inputTokens": 11535,
+    "outputTokens": 506,
+    "costUSD": 0.014065
+  },
+  {
+    "questionId": "nestjs-real-001",
+    "question": "How does authentication work in this codebase? Walk through the entire auth flow from an incoming HTTP request to an authenticated user.",
+    "mode": "minify",
+    "answer": "# Authentication Flow Analysis\n\n## Overview\nThis codebase uses **JWT (JSON Web Token) based authentication** with middleware protection on specific routes.\n\n---\n\n## Complete Auth Flow\n\n### 1. **User Registration/Login** (`src/user/user.controller.ts`)\n\n#### Registration - POST `/api/users`\n```typescript\n@UsePipes(new ValidationPipe())\n@Post('users')\nasync create(@Body('user') userData: CreateUserDto) {\n  return this.userService.create(userData);\n}\n```\n\n**Flow:**\n- Validates input with `ValidationPipe`\n- `UserService.create()` hashes password with **argon2** (`src/user/user.entity.ts` - `@BeforeInsert()`)\n- Saves new user to database\n- Returns user data without password\n\n#### Login - POST `/api/users/login`\n```typescript\n@UsePipes(new ValidationPipe())\n@Post('users/login')\nasync login(@Body('user') loginUserDto: LoginUserDto): Promise<UserRO> {\n  const _user = await this.userService.findOne(loginUserDto);\n  // ... validation ...\n  const token = await this.userService.generateJWT(_user);\n  const {email, username, bio, image} = _user;\n  const user = {email, token, username, bio, image};\n  return {user}\n}\n```\n\n**Flow:**\n- Finds user by email\n- Verifies password with **argon2.verify()** in `UserService.findOne()`\n- If valid, generates JWT via `generateJWT()`:\n  ```typescript\n  jwt.sign({\n    id: user.id,\n    username: user.username,\n    email: user.email,\n    exp: exp.getTime() / 1000,  // 60 days expiration\n  }, SECRET)\n  ```\n- Returns token to client\n\n---\n\n### 2. **Incoming Request with Token**\n\nClient sends request with Authorization header:\n```\nAuthorization: Bearer <jwt_token>\n```\n\n---\n\n### 3. **Middleware Authentication** (`src/user/auth.middleware.ts`)\n\nProtected routes are configured in module files (e.g., `ArticleModule`):\n```typescript\nconsumer\n  .apply(AuthMiddleware)\n  .forRoutes(\n    {path: 'articles/feed', method: RequestMethod.GET},\n    {path: 'articles', method: RequestMethod.POST},\n    // ... other protected routes\n  );\n```\n\n**AuthMiddleware execution:**\n```typescript\n@Injectable()\nexport class AuthMiddleware implements NestMiddleware {\n  constructor(private readonly userService: UserService) {}\n\n  async use(req: Request, res: Response, next: NextFunction) {\n    const authHeaders = req.headers.authorization;\n    \n    // 1. Check if Authorization header exists\n    if (authHeaders && (authHeaders as string).split(' ')[1]) {\n      \n      // 2. Extract token (second part after \"Bearer \")\n      const token = (authHeaders as string).split(' ')[1];\n      \n      // 3. Verify and decode JWT\n      const decoded: any = jwt.verify(token, SECRET);\n      \n      // 4. Fetch user from database by decoded ID\n      const user = await this.userService.findById(decoded.id);\n\n      if (!user) {\n        throw new HttpException('User not found.', HttpStatus.UNAUTHORIZED);\n      }\n\n      // 5. Attach user to request object\n      req.user = user.user;\n      next();\n\n    } else {\n      throw new HttpException('Not authorized.', HttpStatus.UNAUTHORIZED);\n    }\n  }\n}\n```\n\n---\n\n### 4. **Controller Access with @User Decorator** \n\nRoutes can extract user data using the `@User()` custom decorator (`src/user/user.decorator.ts`):\n\n```typescript\nexport const User = createParamDecorator((data: any, ctx: ExecutionContext) => {\n  const req = ctx.switchToHttp().getRequest();\n\n  // 1. Check if user already attached to request (from middleware)\n  if (!!req.user) {\n    return !!data ? req.user[data] : req.user;\n  }\n\n  // 2. Fallback: decode JWT from",
+    "score": {
+      "correctness": 4,
+      "fileIdentification": 5,
+      "reasoningQuality": 4
+    },
+    "inputTokens": 11482,
+    "outputTokens": 1024,
+    "costUSD": 0.016602
+  },
+  {
+    "questionId": "nestjs-real-002",
+    "question": "How are passwords stored and verified? What library is used and where does hashing happen?",
+    "mode": "minify",
+    "answer": "# Password Storage and Verification\n\n## Library Used\n**argon2** - A modern password hashing library that is more secure than bcrypt.\n\n## Where Hashing Happens\n\n### Storage (Hashing):\n**File: `nestjs-real/source/src/user/user.entity.ts`**\n\n```typescript\n@BeforeInsert()\nasync hashPassword() {\n  this.password = await argon2.hash(this.password);\n}\n```\n\nThe password is automatically hashed using the `@BeforeInsert()` decorator, which runs before any new user entity is saved to the database. This ensures plain-text passwords are never stored.\n\n### Verification (Checking):\n**File: `nestjs-real/source/src/user/user.service.ts`** - `findOne()` method\n\n```typescript\nasync findOne({email, password}: LoginUserDto): Promise<UserEntity> {\n  const user = await this.userRepository.findOne({email});\n  if (!user) {\n    return null;\n  }\n\n  if (await argon2.verify(user.password, password)) {\n    return user;\n  }\n\n  return null;\n}\n```\n\nDuring login, the provided plain-text password is verified against the stored hashed password using `argon2.verify()`. This method safely compares the input with the hash without revealing the actual password.\n\n## Summary\n- **Hashing library:** argon2\n- **When hashed:** Before user insertion into database (via `@BeforeInsert()` hook)\n- **Verification method:** `argon2.verify()` during login in `UserService.findOne()`",
+    "score": {
+      "correctness": 5,
+      "fileIdentification": 5,
+      "reasoningQuality": 5
+    },
+    "inputTokens": 11474,
+    "outputTokens": 385,
+    "costUSD": 0.013399
+  },
+  {
+    "questionId": "nestjs-real-003",
+    "question": "How are JWT tokens generated? What is in the token payload and how long do they last?",
+    "mode": "minify",
+    "answer": "# JWT Token Generation\n\n## Token Generation Location\n\nJWT tokens are generated in **`nestjs-real/source/src/user/user.service.ts`** in the `generateJWT()` method:\n\n```typescript\npublic generateJWT(user) {\n  let today = new Date();\n  let exp = new Date(today);\n  exp.setDate(today.getDate() + 60);\n\n  return jwt.sign({\n    id: user.id,\n    username: user.username,\n    email: user.email,\n    exp: exp.getTime() / 1000,\n  }, SECRET);\n}\n```\n\n## Token Payload\n\nThe JWT token contains the following claims:\n\n- **`id`** - The user's ID\n- **`username`** - The user's username\n- **`email`** - The user's email address\n- **`exp`** - Expiration time (in seconds since Unix epoch)\n\n## Token Lifetime\n\n**Tokens expire after 60 days** (see the `setDate(today.getDate() + 60)` line).\n\n## Where Tokens Are Used\n\nTokens are generated during the login flow in the `login()` endpoint of **`nestjs-real/source/src/user/user.controller.ts`**:\n\n```typescript\n@Post('users/login')\nasync login(@Body('user') loginUserDto: LoginUserDto): Promise<UserRO> {\n  const _user = await this.userService.findOne(loginUserDto);\n  const token = await this.userService.generateJWT(_user);\n  const {email, username, bio, image} = _user;\n  const user = {email, token, username, bio, image};\n  return {user}\n}\n```\n\nTokens are verified using the `SECRET` constant (imported from `../config`) in middleware and custom decorators like the `@User()` decorator in **`nestjs-real/source/src/user/user.decorator.ts`**.",
+    "score": {
+      "correctness": 5,
+      "fileIdentification": 5,
+      "reasoningQuality": 5
+    },
+    "inputTokens": 11475,
+    "outputTokens": 463,
+    "costUSD": 0.01379
+  },
+  {
+    "questionId": "nestjs-real-004",
+    "question": "What is the article slug and how is it generated when a new article is created?",
+    "mode": "minify",
+    "answer": "# Article Slug Generation\n\n## What is the Article Slug?\n\nThe article slug is a URL-friendly identifier for an article stored in the `slug` column of the `ArticleEntity`. It's used in routes like `GET /articles/:slug` to retrieve specific articles.\n\n## How It's Generated\n\nWhen a new article is created, the slug is generated in the `ArticleService.create()` method in **`nestjs-real/source/src/article/article.service.ts`** (lines 142-160):\n\n```typescript\nasync create(userId: number, articleData: CreateArticleDto): Promise<ArticleEntity> {\n    let article = new ArticleEntity();\n    article.title = articleData.title;\n    article.description = articleData.description;\n    article.slug = this.slugify(articleData.title);  // ← Slug generation here\n    article.tagList = articleData.tagList || [];\n    article.comments = [];\n    // ... rest of method\n}\n```\n\n## Slug Format\n\nThe slug is generated using the `slugify()` method (lines 191-193):\n\n```typescript\nslugify(title: string) {\n    return slug(title, {lower: true}) + '-' + (Math.random() * Math.pow(36, 6) | 0).toString(36)\n}\n```\n\n**Format:** `<slugified-title>-<random-string>`\n\n**Example:** If the article title is \"My Great Article\", the slug might be:\n- `my-great-article-a1b2c3`\n\nThe slug uses:\n1. The **npm `slug` package** to convert the title to lowercase, removing special characters and spaces\n2. A **random alphanumeric suffix** to ensure uniqueness (base-36 encoded random number)",
+    "score": {
+      "correctness": 5,
+      "fileIdentification": 5,
+      "reasoningQuality": 5
+    },
+    "inputTokens": 11473,
+    "outputTokens": 418,
+    "costUSD": 0.013563
+  },
+  {
+    "questionId": "nestjs-real-005",
+    "question": "How does the favorites/unfavorite system work for articles? What database operations happen?",
+    "mode": "minify",
+    "answer": "# Favorites/Unfavorite System for Articles\n\n## Overview\nThe favorites system allows users to mark articles as favorites and remove them. It's implemented through a many-to-many relationship between users and articles.\n\n## Database Structure\n\n**Relationship Definition** (in `nestjs-real/source/src/user/user.entity.ts`):\n```typescript\n@ManyToMany(type => ArticleEntity)\n@JoinTable()\nfavorites: ArticleEntity[];\n```\n\nThis creates a join table linking `UserEntity` and `ArticleEntity` for the favorites relationship.\n\n**Article Entity** (in `nestjs-real/source/src/article/article.entity.ts`):\n```typescript\n@Column({default: 0})\nfavoriteCount: number;\n```\n\n## API Endpoints\n\nBoth endpoints are in `nestjs-real/source/src/article/article.controller.ts`:\n\n1. **POST** `/articles/:slug/favorite` - Favorite an article\n2. **DELETE** `/articles/:slug/favorite` - Unfavorite an article\n\nBoth require authentication via `AuthMiddleware`.\n\n## Database Operations\n\n### Favorite Operation\nIn `nestjs-real/source/src/article/article.service.ts`, the `favorite()` method:\n\n```typescript\nasync favorite(id: number, slug: string): Promise<ArticleRO> {\n  let article = await this.articleRepository.findOne({slug});\n  const user = await this.userRepository.findOne(id);\n\n  const isNewFavorite = user.favorites.findIndex(_article => _article.id === article.id) < 0;\n  if (isNewFavorite) {\n    user.favorites.push(article);        // Add to user's favorites array\n    article.favoriteCount++;               // Increment count\n\n    await this.userRepository.save(user);    // Save user (updates join table)\n    article = await this.articleRepository.save(article);  // Save article\n  }\n\n  return {article};\n}\n```\n\n**Operations:**\n1. Fetch article by slug\n2. Fetch user by ID\n3. Check if article is already favorited\n4. If new: Push article to user's favorites array\n5. Increment `article.favoriteCount`\n6. Persist both entities (creates join table entry)\n\n### Unfavorite Operation\nIn `nestjs-real/source/src/article/article.service.ts`, the `unFavorite()` method:\n\n```typescript\nasync unFavorite(id: number, slug: string): Promise<ArticleRO> {\n  let article = await this.articleRepository.findOne({slug});\n  const user = await this.userRepository.findOne(id);\n\n  const deleteIndex = user.favorites.findIndex(_article => _article.id === article.id);\n\n  if (deleteIndex >= 0) {\n    user.favorites.splice(deleteIndex, 1);  // Remove from favorites\n    article.favoriteCount--;                  // Decrement count\n\n    await this.userRepository.save(user);     // Save user (updates join table)\n    article = await this.articleRepository.save(article);  // Save article\n  }\n\n  return {article};\n}\n```\n\n**Operations:**\n1. Fetch article by slug\n2. Fetch user by ID\n3. Find article in user's favorites array\n4. If found: Remove from favorites array\n5. Decrement `article.favoriteCount`\n6. Persist both entities (removes join table entry)\n\n## Key Points\n\n- **No duplicate prevention**: The system checks before adding but relies on the check—duplicate additions are silently ignored\n- **Count denormalization**: `favoriteCount` is stored on the article for efficient querying\n- **Bidirectional sync**: Both user and article entities are updated and saved\n- **Join table management**: TypeORM automatically manages the join table through the `@ManyToMany` relationship",
+    "score": {
+      "correctness": 5,
+      "fileIdentification": 5,
+      "reasoningQuality": 5
+    },
+    "inputTokens": 11474,
+    "outputTokens": 914,
+    "costUSD": 0.016044
+  },
+  {
+    "questionId": "nestjs-real-006",
+    "question": "Where would I add a new API endpoint to allow users to bookmark articles (separate from favorites)?",
+    "mode": "minify",
+    "answer": "# Adding a Bookmark Feature\n\nBased on the codebase structure, here's where you would add a new bookmark endpoint:\n\n## 1. **Create a Bookmark Entity**\nCreate a new file `nestjs-real/source/src/article/bookmark.entity.ts`:\n```typescript\nimport { Entity, PrimaryGeneratedColumn, Column, ManyToOne } from 'typeorm';\nimport { UserEntity } from '../user/user.entity';\nimport { ArticleEntity } from './article.entity';\n\n@Entity('bookmark')\nexport class BookmarkEntity {\n  @PrimaryGeneratedColumn()\n  id: number;\n\n  @ManyToOne(type => UserEntity, user => user.bookmarks)\n  user: UserEntity;\n\n  @ManyToOne(type => ArticleEntity)\n  article: ArticleEntity;\n\n  @Column({ type: 'timestamp', default: () => \"CURRENT_TIMESTAMP\"})\n  created: Date;\n}\n```\n\n## 2. **Update UserEntity**\nIn `nestjs-real/source/src/user/user.entity.ts`, add the bookmark relation:\n```typescript\n@OneToMany(type => BookmarkEntity, bookmark => bookmark.user)\nbookmarks: BookmarkEntity[];\n```\n\n## 3. **Add Methods to ArticleService**\nIn `nestjs-real/source/src/article/article.service.ts`, add:\n```typescript\n@InjectRepository(BookmarkEntity)\nprivate readonly bookmarkRepository: Repository<BookmarkEntity>\n\nasync bookmark(userId: number, slug: string): Promise<ArticleRO> {\n  const article = await this.articleRepository.findOne({slug});\n  const user = await this.userRepository.findOne(userId);\n  \n  const existingBookmark = await this.bookmarkRepository.findOne({user, article});\n  if (!existingBookmark) {\n    const bookmark = new BookmarkEntity();\n    bookmark.user = user;\n    bookmark.article = article;\n    await this.bookmarkRepository.save(bookmark);\n  }\n  \n  return {article};\n}\n\nasync removeBookmark(userId: number, slug: string): Promise<ArticleRO> {\n  const article = await this.articleRepository.findOne({slug});\n  await this.bookmarkRepository.delete({user: {id: userId}, article});\n  return {article};\n}\n```\n\n## 4. **Add Endpoints to ArticleController**\nIn `nestjs-real/source/src/article/article.controller.ts`, add:\n```typescript\n@ApiOperation({ summary: 'Bookmark article' })\n@ApiResponse({ status: 201, description: 'The article has been successfully bookmarked.'})\n@Post(':slug/bookmark')\nasync bookmark(@User('id') userId: number, @Param('slug') slug) {\n  return await this.articleService.bookmark(userId, slug);\n}\n\n@ApiOperation({ summary: 'Remove bookmark' })\n@Delete(':slug/bookmark')\nasync removeBookmark(@User('id') userId: number, @Param('slug') slug) {\n  return await this.articleService.removeBookmark(userId, slug);\n}\n```\n\n## 5. **Register BookmarkEntity in ArticleModule**\nIn `nestjs-real/source/src/article/article.module.ts`, update the TypeOrmModule import:\n```typescript\nimports: [TypeOrmModule.forFeature([ArticleEntity, Comment, UserEntity, FollowsEntity, BookmarkEntity]), UserModule],\n```\n\n## 6. **Protect Routes with AuthMiddleware**\nUpdate the middleware configuration in `nestjs-real/source/src/article/article.module.ts`:\n```typescript\n.forRoutes(\n  // ... existing routes ...\n  {path: 'articles/:slug/bookmark', method: RequestMethod.ALL}\n);\n```\n\nThe endpoints would then be accessible at:\n- `POST /api/articles/:slug/bookmark` - bookmark an article\n- `DELETE /api/articles/:slug/bookmark` - remove a bookmark",
+    "score": {
+      "correctness": 4,
+      "fileIdentification": 5,
+      "reasoningQuality": 5
+    },
+    "inputTokens": 11475,
+    "outputTokens": 953,
+    "costUSD": 0.01624
+  },
+  {
+    "questionId": "nestjs-real-007",
+    "question": "Where is the global API prefix configured, and where are Swagger docs set up?",
+    "mode": "minify",
+    "answer": "# Global API Prefix and Swagger Configuration\n\nBoth configurations are set up in **`nestjs-real/source/src/main.ts`** in the `bootstrap()` function:\n\n## Global API Prefix\n```typescript\napp.setGlobalPrefix('api');\n```\nThis line sets the global API prefix to `'api'`, meaning all routes will be prefixed with `/api`.\n\n## Swagger Documentation Setup\n```typescript\nconst options = new DocumentBuilder()\n  .setTitle('NestJS Realworld Example App')\n  .setDescription('The Realworld API description')\n  .setVersion('1.0')\n  .setBasePath('api')\n  .addBearerAuth()\n  .build();\nconst document = SwaggerModule.createDocument(app, options);\nSwaggerModule.setup('/docs', app, document);\n```\n\nThe Swagger configuration:\n- Creates documentation with the title \"NestJS Realworld Example App\"\n- Sets the base path to `'api'`\n- Adds Bearer authentication support\n- Sets up the Swagger UI at the `/docs` endpoint\n\nThe application listens on port 3000, so the Swagger docs would be accessible at `http://localhost:3000/docs`.",
+    "score": {
+      "correctness": 5,
+      "fileIdentification": 5,
+      "reasoningQuality": 5
+    },
+    "inputTokens": 11473,
+    "outputTokens": 283,
+    "costUSD": 0.012888
+  },
+  {
+    "questionId": "nestjs-real-008",
+    "question": "Where should I add a new field to the User profile response (e.g., a 'location' field)?",
+    "mode": "minify",
+    "answer": "# Adding a 'location' Field to the User Profile Response\n\nTo add a new 'location' field to the user profile response, you need to modify **three files**:\n\n## 1. Update the UserEntity (Database Model)\n**File:** `nestjs-real/source/src/user/user.entity.ts`\n\nAdd the column definition:\n```typescript\n@Column({default: ''})\nlocation: string;\n```\n\n## 2. Update the UserData Interface\n**File:** `nestjs-real/source/src/user/user.interface.ts`\n\nAdd the field to the interface:\n```typescript\nexport interface UserData {\n  username: string;\n  email: string;\n  token: string;\n  bio: string;\n  image?: string;\n  location?: string;  // Add this line\n}\n```\n\n## 3. Update the UserService Response Builder\n**File:** `nestjs-real/source/src/user/user.service.ts`\n\nModify the `buildUserRO()` private method to include the location field:\n```typescript\nprivate buildUserRO(user: UserEntity) {\n  const userRO = {\n    id: user.id,\n    username: user.username,\n    email: user.email,\n    bio: user.bio,\n    token: this.generateJWT(user),\n    image: user.image,\n    location: user.location  // Add this line\n  };\n\n  return {user: userRO};\n}\n```\n\n## Additional Step (if using ProfileData)\nIf you also want to expose location in the **profile endpoints** (like `GET /api/profiles/:username`), update:\n\n**File:** `nestjs-real/source/src/profile/profile.interface.ts`\n\n```typescript\nexport interface ProfileData {\n  username: string;\n  bio: string;\n  image?: string;\n  location?: string;  // Add this line\n  following?: boolean;\n}\n```\n\nAnd update `profile.service.ts` to include location when building the profile object in methods like `findProfile()` and `follow()`.",
+    "score": {
+      "correctness": 4,
+      "fileIdentification": 5,
+      "reasoningQuality": 5
+    },
+    "inputTokens": 11480,
+    "outputTokens": 490,
+    "costUSD": 0.01393
+  },
+  {
+    "questionId": "nestjs-real-009",
+    "question": "Where is authentication middleware applied to routes, and which routes require authentication?",
+    "mode": "minify",
+    "answer": "# Authentication Middleware Application\n\nBased on the codebase, authentication middleware is applied through NestModule implementations that configure which routes require the `AuthMiddleware`.\n\n## AuthMiddleware Location\n**File:** `nestjs-real/source/src/user/auth.middleware.ts`\n\nThe `AuthMiddleware` class validates JWT tokens from request headers and attaches the user to the request object.\n\n## Routes Requiring Authentication\n\n### 1. **Article Routes** (ArticleModule)\n**File:** `nestjs-real/source/src/article/article.module.ts` (lines 24-32)\n\n```typescript\nconsumer\n  .apply(AuthMiddleware)\n  .forRoutes(\n    {path: 'articles/feed', method: RequestMethod.GET},\n    {path: 'articles', method: RequestMethod.POST},\n    {path: 'articles/:slug', method: RequestMethod.DELETE},\n    {path: 'articles/:slug', method: RequestMethod.PUT},\n    {path: 'articles/:slug/comments', method: RequestMethod.POST},\n    {path: 'articles/:slug/comments/:id', method: RequestMethod.DELETE},\n    {path: 'articles/:slug/favorite', method: RequestMethod.POST},\n    {path: 'articles/:slug/favorite', method: RequestMethod.DELETE}\n  );\n```\n\n### 2. **Profile Routes** (ProfileModule)\n**File:** `nestjs-real/source/src/profile/profile.module.ts` (lines 23-25)\n\n```typescript\nconsumer\n  .apply(AuthMiddleware)\n  .forRoutes({path: 'profiles/:username/follow', method: RequestMethod.ALL});\n```\n\n### 3. **User Routes** (UserModule)\n**File:** `nestjs-real/source/src/user/user.module.ts` (lines 22-23)\n\n```typescript\nconsumer\n  .apply(AuthMiddleware)\n  .forRoutes(\n    {path: 'user', method: RequestMethod.GET}, \n    {path: 'user', method: RequestMethod.PUT}\n  );\n```\n\n## Summary\n\n**Protected routes require:**\n- Bearer token in `Authorization` header\n- Valid JWT token signed with the SECRET\n- Token must contain a valid user ID that exists in the database\n\n**Routes that don't require authentication:**\n- `GET /api/articles` (list all articles)\n- `GET /api/articles/:slug` (get single article)\n- `GET /api/articles/:slug/comments` (get comments)\n- `GET /api/profiles/:username` (get profile)\n- `POST /api/users` (user registration)\n- `POST /api/users/login` (user login)\n- `GET /api/tags` (list tags)",
+    "score": {
+      "correctness": 5,
+      "fileIdentification": 5,
+      "reasoningQuality": 5
+    },
+    "inputTokens": 11470,
+    "outputTokens": 651,
+    "costUSD": 0.014725
+  },
+  {
+    "questionId": "nestjs-real-010",
+    "question": "What services or modules depend on UserService?",
+    "mode": "minify",
+    "answer": "# Services/Modules Depending on UserService\n\nBased on the codebase analysis, the following services and modules depend on **UserService**:\n\n## Direct Dependencies:\n\n1. **UserController** (`src/user/user.controller.ts`)\n   - Injects `UserService` in its constructor\n   - Uses methods: `findByEmail()`, `update()`, `create()`, `delete()`, `findOne()`, `generateJWT()`\n\n2. **AuthMiddleware** (`src/user/auth.middleware.ts`)\n   - Injects `UserService` in its constructor\n   - Uses method: `findById()`\n\n## Module-Level Dependencies:\n\n3. **UserModule** (`src/user/user.module.ts`)\n   - Exports `UserService` making it available to other modules\n   - Provides `UserService` as a provider\n\n4. **ArticleModule** (`src/article/article.module.ts`)\n   - Imports `UserModule` (which provides `UserService`)\n\n5. **ProfileModule** (`src/profile/profile.module.ts`)\n   - Imports `UserModule` (which provides `UserService`)\n\n6. **TagModule** (`src/tag/tag.module.ts`)\n   - Imports `UserModule` (which provides `UserService`)\n\n## Indirect Usage:\n\n- **ArticleService** (`src/article/article.service.ts`) - Uses `UserEntity` repository but not `UserService` directly\n- **ProfileService** (`src/profile/profile.service.ts`) - Uses `UserEntity` repository but not `UserService` directly",
+    "score": {
+      "correctness": 4,
+      "fileIdentification": 4,
+      "reasoningQuality": 4
+    },
+    "inputTokens": 11465,
+    "outputTokens": 372,
+    "costUSD": 0.013325
+  },
+  {
+    "questionId": "nestjs-real-011",
+    "question": "What database entities exist and how are they related to each other?",
+    "mode": "minify",
+    "answer": "# Database Entities and Relationships\n\nBased on the codebase, there are **4 main database entities** with the following relationships:\n\n## Entities\n\n### 1. **UserEntity** (`src/user/user.entity.ts`)\n- Fields: `id`, `username`, `email`, `bio`, `image`, `password`\n- Relations:\n  - **One-to-Many** with `ArticleEntity`: A user can author multiple articles (`articles`)\n  - **Many-to-Many** with `ArticleEntity`: A user can favorite multiple articles (`favorites`)\n\n### 2. **ArticleEntity** (`src/article/article.entity.ts`)\n- Fields: `id`, `slug`, `title`, `description`, `body`, `created`, `updated`, `tagList`, `favoriteCount`\n- Relations:\n  - **Many-to-One** with `UserEntity`: Each article has one author (`author`)\n  - **One-to-Many** with `Comment`: An article can have multiple comments (`comments`)\n\n### 3. **Comment** (`src/article/comment.entity.ts`)\n- Fields: `id`, `body`\n- Relations:\n  - **Many-to-One** with `ArticleEntity`: Each comment belongs to one article (`article`)\n\n### 4. **FollowsEntity** (`src/profile/follows.entity.ts`)\n- Fields: `id`, `followerId`, `followingId`\n- Purpose: Join table tracking user follow relationships (user with `followerId` follows user with `followingId`)\n\n### 5. **TagEntity** (`src/tag/tag.entity.ts`)\n- Fields: `id`, `tag`\n- Note: Currently **not directly related** to `ArticleEntity` — tags are stored as a simple string array (`tagList`) in articles rather than a formal entity relationship\n\n## Relationship Diagram\n\n```\nUserEntity\n├── One-to-Many ──→ ArticleEntity\n│                  └── One-to-Many ──→ Comment\n│\n└── Many-to-Many ──→ ArticleEntity (favorites)\n\nFollowsEntity (tracks: followerId → followingId relationships between users)\n```",
+    "score": {
+      "correctness": 4,
+      "fileIdentification": 5,
+      "reasoningQuality": 4
+    },
+    "inputTokens": 11469,
+    "outputTokens": 509,
+    "costUSD": 0.014014
+  },
+  {
+    "questionId": "nestjs-real-012",
+    "question": "What does ArticleService depend on? List all its injected dependencies.",
+    "mode": "minify",
+    "answer": "# ArticleService Dependencies\n\nBased on the code in `nestjs-real/source/src/article/article.service.ts`, the `ArticleService` has **4 injected dependencies**:\n\n1. **`ArticleRepository`** - Repository for `ArticleEntity`\n   - Injected via `@InjectRepository(ArticleEntity)`\n   - Type: `Repository<ArticleEntity>`\n\n2. **`CommentRepository`** - Repository for `Comment`\n   - Injected via `@InjectRepository(Comment)`\n   - Type: `Repository<Comment>`\n\n3. **`UserRepository`** - Repository for `UserEntity`\n   - Injected via `@InjectRepository(UserEntity)`\n   - Type: `Repository<UserEntity>`\n\n4. **`FollowsRepository`** - Repository for `FollowsEntity`\n   - Injected via `@InjectRepository(FollowsEntity)`\n   - Type: `Repository<FollowsEntity>`\n\nAll four are injected in the constructor and are TypeORM repository instances used for database operations on articles, comments, users, and follow relationships.",
+    "score": {
+      "correctness": 5,
+      "fileIdentification": 5,
+      "reasoningQuality": 5
+    },
+    "inputTokens": 11471,
+    "outputTokens": 264,
+    "costUSD": 0.012791
+  },
+  {
+    "questionId": "nestjs-real-013",
+    "question": "If I remove the `favorites` relationship from UserEntity, what else in the codebase would break?",
+    "mode": "minify",
+    "answer": "If you remove the `favorites` relationship from `UserEntity`, the following would break:\n\n## Direct Breaks:\n\n1. **`nestjs-real/source/src/article/article.service.ts`** - `favorite()` method (line ~130):\n   ```typescript\n   const isNewFavorite = user.favorites.findIndex(_article => _article.id === article.id) < 0;\n   if (isNewFavorite) {\n     user.favorites.push(article);  // ❌ user.favorites no longer exists\n   ```\n\n2. **`nestjs-real/source/src/article/article.service.ts`** - `unFavorite()` method (line ~145):\n   ```typescript\n   const deleteIndex = user.favorites.findIndex(_article => _article.id === article.id);\n   if (deleteIndex >= 0) {\n     user.favorites.splice(deleteIndex, 1);  // ❌ user.favorites no longer exists\n   ```\n\n3. **`nestjs-real/source/src/user/user.service.ts`** - `create()` method initialization (line ~49):\n   ```typescript\n   newUser.articles = [];\n   // This would be inconsistent if favorites is removed but articles remains\n   ```\n\n4. **`nestjs-real/source/src/user/user.service.ts`** - `update()` method (line ~63):\n   ```typescript\n   delete toUpdate.favorites;  // ❌ This line becomes unnecessary but also indicates favorites was being explicitly removed\n   ```\n\n## Related Query:\n\n5. **`nestjs-real/source/src/article/article.service.ts`** - `findAll()` method (line ~39):\n   ```typescript\n   if ('favorited' in query) {\n     const author = await this.userRepository.findOne({username: query.favorited});\n     const ids = author.favorites.map(el => el.id);  // ❌ author.favorites no longer exists\n   ```\n\n## Summary:\nThe `favorite()`, `unFavorite()`, and the `favorited` query filter in `findAll()` would all fail at runtime. The favorite functionality for articles would be completely broken.",
+    "score": {
+      "correctness": 4,
+      "fileIdentification": 5,
+      "reasoningQuality": 4
+    },
+    "inputTokens": 11478,
+    "outputTokens": 524,
+    "costUSD": 0.014098
+  },
+  {
+    "questionId": "nestjs-real-014",
+    "question": "If I change the JWT secret, what happens to currently logged-in users?",
+    "mode": "minify",
+    "answer": "# JWT Secret Change Impact on Currently Logged-In Users\n\nIf you change the JWT secret, **currently logged-in users will be unable to authenticate for protected routes**.\n\n## Why This Happens\n\nThe JWT secret is used to **verify the signature** of JWT tokens. Here's the flow:\n\n1. **Token Generation** (in `src/user/user.service.ts`, `generateJWT` method):\n   ```typescript\n   return jwt.sign({\n     id: user.id,\n     username: user.username,\n     email: user.email,\n     exp: exp.getTime() / 1000,\n   }, SECRET);\n   ```\n\n2. **Token Verification** (in two places):\n   - `src/user/auth.middleware.ts`: `jwt.verify(token, SECRET)`\n   - `src/user/user.decorator.ts`: `jwt.verify(token[1], SECRET)`\n\nWhen a user presents a token signed with the **old secret**, the verification against the **new secret** will fail.\n\n## Affected Routes\n\nAny route protected by `AuthMiddleware` will reject the old tokens:\n- `GET /api/user` (findMe)\n- `PUT /api/user` (update)\n- `POST /api/articles/feed`\n- `POST /api/articles` (create)\n- `PUT /api/articles/:slug` (update)\n- `DELETE /api/articles/:slug` (delete)\n- `POST /api/articles/:slug/comments` (create comment)\n- `DELETE /api/articles/:slug/comments/:id` (delete comment)\n- `POST /api/articles/:slug/favorite`\n- `DELETE /api/articles/:slug/favorite`\n- `POST /api/profiles/:username/follow`\n- `DELETE /api/profiles/:username/follow`\n\n## User Experience\n\nUsers will receive: `401 Unauthorized - \"Not authorized.\"`\n\nThey will need to **log in again** to obtain a new token signed with the new secret.",
+    "score": {
+      "correctness": 5,
+      "fileIdentification": 5,
+      "reasoningQuality": 5
+    },
+    "inputTokens": 11472,
+    "outputTokens": 461,
+    "costUSD": 0.013777
+  },
+  {
+    "questionId": "nestjs-real-015",
+    "question": "If I change the password hashing algorithm from argon2 to bcrypt, what steps are required?",
+    "mode": "minify",
+    "answer": "# Steps to Change Password Hashing from Argon2 to Bcrypt\n\nBased on the codebase, here are the required changes:\n\n## 1. **Update Dependencies**\nReplace argon2 with bcrypt in your `package.json`:\n```\nnpm uninstall argon2\nnpm install bcrypt\nnpm install --save-dev @types/bcrypt\n```\n\n## 2. **Update UserEntity** (`nestjs-real/source/src/user/user.entity.ts`)\nChange the import and the `hashPassword()` method:\n\n```typescript\n// Change from:\nimport * as argon2 from 'argon2';\n\n// To:\nimport * as bcrypt from 'bcrypt';\n\n// In the @BeforeInsert() method, change from:\n@BeforeInsert()\nasync hashPassword() {\n  this.password = await argon2.hash(this.password);\n}\n\n// To:\n@BeforeInsert()\nasync hashPassword() {\n  this.password = await bcrypt.hash(this.password, 10);\n}\n```\n\n## 3. **Update UserService** (`nestjs-real/source/src/user/user.service.ts`)\nChange the import and the `findOne()` method:\n\n```typescript\n// Change from:\nimport * as argon2 from 'argon2';\n\n// To:\nimport * as bcrypt from 'bcrypt';\n\n// In the findOne() method, change from:\nif (await argon2.verify(user.password, password)) {\n  return user;\n}\n\n// To:\nif (await bcrypt.compare(password, user.password)) {\n  return user;\n}\n```\n\n## Summary\n- **2 files** need modification: `user.entity.ts` and `user.service.ts`\n- Replace argon2 hash/verify calls with bcrypt hash/compare\n- Note: bcrypt.hash() requires a salt rounds parameter (10 is standard)\n- Password comparison changes from `verify(password, hash)` to `compare(password, hash)` (parameter order difference)",
+    "score": {
+      "correctness": 4,
+      "fileIdentification": 4,
+      "reasoningQuality": 5
+    },
+    "inputTokens": 11478,
+    "outputTokens": 494,
+    "costUSD": 0.013948
+  },
+  {
+    "questionId": "nestjs-real-001",
+    "question": "How does authentication work in this codebase? Walk through the entire auth flow from an incoming HTTP request to an authenticated user.",
+    "mode": "skeleton",
+    "answer": "# Authentication Flow in this NestJS Codebase\n\n## Overview\nThis codebase implements JWT-based authentication with middleware-level token validation and decorator-based user extraction.\n\n## Step-by-Step Auth Flow\n\n### 1. **User Registration/Login** (Entry Point)\n**File: `src/user/user.controller.ts`**\n\n```typescript\n@UsePipes(new ValidationPipe())\n@Post('users')\nasync create(@Body('user') userData: CreateUserDto)\n\n@UsePipes(new ValidationPipe())\n@Post('users/login')\nasync login(@Body('user') loginUserDto: LoginUserDto): Promise<UserRO>\n```\n\nUsers register via POST `/users` or login via POST `/users/login` with email/password credentials.\n\n### 2. **User Service - JWT Generation**\n**File: `src/user/user.service.ts`**\n\n```typescript\nasync findOne({email, password}: LoginUserDto): Promise<UserEntity>\n// Validates password against stored hash\n\npublic generateJWT(user)\n// Creates JWT token using SECRET from config\n\nprivate buildUserRO(user: UserEntity)\n// Returns UserRO with token included\n```\n\nThe `login()` method calls `findOne()` to validate credentials, then `generateJWT()` to create a token. The token is returned in the response.\n\n### 3. **Client Stores Token**\nThe client receives the JWT token and includes it in subsequent requests via the `Authorization` header (typically as `Bearer <token>`).\n\n### 4. **Auth Middleware - Token Validation**\n**File: `src/user/auth.middleware.ts`**\n\n```typescript\n@Injectable()\nexport class AuthMiddleware implements NestMiddleware {\n  constructor(private readonly userService: UserService) {}\n\n  async use(req: Request, res: Response, next: NextFunction)\n  // Extracts token from Authorization header\n  // Validates JWT signature using SECRET\n  // Loads user data from database\n  // Attaches user to request object\n}\n```\n\n**Applied in modules via:**\n\n- **`src/user/user.module.ts`**: Middleware configured for user routes\n- **`src/article/article.module.ts`**: Middleware configured for article routes  \n- **`src/profile/profile.module.ts`**: Middleware configured for profile routes\n- **`src/tag/tag.module.ts`**: Middleware configured for tag routes\n\nThe middleware runs on incoming requests and validates the JWT token before reaching controllers.\n\n### 5. **User Extraction - Custom Decorator**\n**File: `src/user/user.decorator.ts`**\n\n```typescript\nexport const User = createParamDecorator((data: any, ctx: ExecutionContext) =>\n```\n\nAfter middleware validates the token and attaches user to the request, the `@User()` decorator extracts specific user properties (email, id, etc.) from `req.user`.\n\n**Usage examples:**\n\n```typescript\n// In article.controller.ts\nasync getFeed(@User('id') userId: number, @Query() query)\nasync create(@User('id') userId: number, @Body('article') articleData)\n\n// In profile.controller.ts\nasync getProfile(@User('id') userId: number, @Param('username') username)\nasync follow(@User('email') email: string, @Param('username') username)\n\n// In user.controller.ts\nasync findMe(@User('email') email: string): Promise<UserRO>\nasync update(@User('id') userId: number, @Body('user') userData)\n```\n\n### 6. **Protected Route Execution**\nWith the `@User()` decorator, controllers now have the authenticated user's information available as method parameters, allowing them to:\n- Filter data by user ID\n- Validate ownership before updates/deletes\n- Record user actions (e.g., who created an article)\n\n## Token Lifecycle\n\n```\n1. POST /users/login (credentials)\n   ↓\n2. UserService.findOne() validates password\n   ↓\n3. UserService.generateJWT(user) creates token\n   ↓\n4. Client receives token in response\n   ↓\n5. Client includes token in Authorization header for future requests\n   ↓\n6. AuthMiddleware validates token signature\n   ↓\n7. AuthMiddleware loads user from database\n   ↓\n8. @User() decorator extra",
+    "score": {
+      "correctness": 5,
+      "fileIdentification": 5,
+      "reasoningQuality": 5
+    },
+    "inputTokens": 7068,
+    "outputTokens": 1024,
+    "costUSD": 0.012188
+  },
+  {
+    "questionId": "nestjs-real-002",
+    "question": "How are passwords stored and verified? What library is used and where does hashing happen?",
+    "mode": "skeleton",
+    "answer": "# Password Storage and Verification\n\n## Hashing Library\n**argon2** is used for password hashing, as seen in the import statement in `src/user/user.entity.ts`:\n```typescript\nimport * as argon2 from 'argon2';\n```\n\n## Where Hashing Happens\n\n### 1. **Password Hashing on User Creation**\nIn `src/user/user.entity.ts`, the `UserEntity` class has a `@BeforeInsert()` decorator that triggers password hashing before a user record is saved to the database:\n\n```typescript\n@BeforeInsert()\nasync hashPassword()\n```\n\nThis method (implementation not shown in the provided code) uses argon2 to hash the password before insertion.\n\n### 2. **Password Verification**\nIn `src/user/user.service.ts`, the `findOne()` method handles login verification:\n\n```typescript\nasync findOne({email, password}: LoginUserDto): Promise<UserEntity>\n```\n\nThis method (implementation details not shown) takes a `LoginUserDto` with email and password, and performs password verification logic (presumably using argon2's `verify()` method to compare the provided password against the stored hash).\n\n## Summary\n- **Library**: argon2\n- **Hashing**: Occurs in `UserEntity.hashPassword()` via `@BeforeInsert()` hook in `src/user/user.entity.ts`\n- **Verification**: Handled in `UserService.findOne()` in `src/user/user.service.ts`\n\n**Note**: The actual implementation bodies of these methods are not shown in the provided code context, so the specific argon2 API calls cannot be confirmed.",
+    "score": {
+      "correctness": 3,
+      "fileIdentification": 4,
+      "reasoningQuality": 4
+    },
+    "inputTokens": 7060,
+    "outputTokens": 392,
+    "costUSD": 0.00902
+  },
+  {
+    "questionId": "nestjs-real-003",
+    "question": "How are JWT tokens generated? What is in the token payload and how long do they last?",
+    "mode": "skeleton",
+    "answer": "# JWT Token Generation\n\nBased on the codebase provided, JWT tokens are generated in the `UserService` class, but **the implementation details are incomplete**.\n\n## Generation Method\n\n**Location:** `nestjs-real/source/src/user/user.service.ts`\n\n```typescript\npublic generateJWT(user)\n}\n```\n\nThe `generateJWT()` method is declared but has no implementation body shown in the provided code.\n\n## Token Usage\n\nThe token is used in:\n- **`nestjs-real/source/src/user/user.decorator.ts`** - The `User` decorator extracts and decodes JWT tokens from requests\n- **`nestjs-real/source/src/user/auth.middleware.ts`** - The `AuthMiddleware` validates JWT tokens\n\nBoth files import the `SECRET` constant:\n```typescript\nimport { SECRET } from '../config';\nimport * as jwt from 'jsonwebtoken';\n```\n\n## Known Information\n\n1. **JWT Library:** Uses Node.js `jsonwebtoken` package\n2. **Secret Key:** Stored in `../config` (file not provided in context)\n3. **Token Payload:** Likely includes user data, but exact payload structure is not shown\n4. **Token Expiration:** **Not specified in the provided code**\n\n## What's Missing\n\nThe provided codebase does not include:\n- The actual implementation of `generateJWT()` \n- The `config` file containing the `SECRET`\n- Token expiration/TTL settings (if any)\n- The exact payload structure\n\nTo answer your question completely, I would need to see the implementation of `UserService.generateJWT()` and the config file.",
+    "score": {
+      "correctness": 3,
+      "fileIdentification": 4,
+      "reasoningQuality": 4
+    },
+    "inputTokens": 7061,
+    "outputTokens": 383,
+    "costUSD": 0.008976
+  },
+  {
+    "questionId": "nestjs-real-004",
+    "question": "What is the article slug and how is it generated when a new article is created?",
+    "mode": "skeleton",
+    "answer": "# Article Slug Generation\n\nBased on the codebase, here's how article slugs are generated:\n\n## Slug Generation Method\n\nIn **`nestjs-real/source/src/article/article.service.ts`**, there is a `slugify()` method defined in the `ArticleService` class:\n\n```typescript\nslugify(title: string)\n```\n\nThe actual implementation uses the `slug` npm package (imported at the top of the file):\n```typescript\nconst slug = require('slug');\n```\n\n## When It's Used\n\nThe `slugify()` method is called during article creation in the `create()` method of `ArticleService`:\n\n```typescript\nasync create(userId: number, articleData: CreateArticleDto): Promise<ArticleEntity>\n```\n\n## Article Slug Field\n\nThe slug is stored in the **`ArticleEntity`** (`nestjs-real/source/src/article/article.entity.ts`):\n\n```typescript\n@Column()\nslug: string;\n```\n\n## Summary\n\n- **Generation**: The slug is generated from the article **title** using the `slug` npm package, which converts the title into a URL-friendly format (typically lowercase, with hyphens replacing spaces and special characters)\n- **Storage**: The generated slug is stored in the `slug` column of the `article` database table\n- **Service**: The `ArticleService.slugify()` method handles the conversion logic\n\nHowever, the complete implementation body of the `slugify()` method is not shown in the provided code context, only its signature.",
+    "score": {
+      "correctness": 4,
+      "fileIdentification": 5,
+      "reasoningQuality": 4
+    },
+    "inputTokens": 7059,
+    "outputTokens": 351,
+    "costUSD": 0.008814
+  },
+  {
+    "questionId": "nestjs-real-005",
+    "question": "How does the favorites/unfavorite system work for articles? What database operations happen?",
+    "mode": "skeleton",
+    "answer": "# Favorites/Unfavorite System for Articles\n\nBased on the provided code, here's how the favorites system works:\n\n## Database Structure\n\nThe favorites relationship is defined in **`nestjs-real/source/src/user/user.entity.ts`**:\n\n```typescript\n@ManyToMany(type => ArticleEntity)\n@JoinTable()\nfavorites: ArticleEntity[];\n```\n\nThis creates a **many-to-many relationship** between `UserEntity` and `ArticleEntity` through a join table.\n\n## Article Entity Tracking\n\nIn **`nestjs-real/source/src/article/article.entity.ts`**, articles track favorite counts:\n\n```typescript\n@Column({default: 0})\nfavoriteCount: number;\n```\n\n## Controller Endpoints\n\nTwo endpoints in **`nestjs-real/source/src/article/article.controller.ts`** handle favorites:\n\n```typescript\n@Post(':slug/favorite')\nasync favorite(@User('id') userId: number, @Param('slug') slug)\n\n@Delete(':slug/favorite')\nasync unFavorite(@User('id') userId: number, @Param('slug') slug)\n```\n\n## Service Methods\n\nThe **`ArticleService`** class in **`nestjs-real/source/src/article/article.service.ts`** contains the corresponding methods:\n\n```typescript\nasync favorite(id: number, slug: string): Promise<ArticleRO>\n\nasync unFavorite(id: number, slug: string): Promise<ArticleRO>\n```\n\n## Expected Database Operations\n\nWhile the method implementations are not fully shown, based on the structure, the operations would be:\n\n- **Favorite**: Add the article to the user's `favorites` many-to-many relationship and increment `favoriteCount`\n- **Unfavorite**: Remove the article from the user's `favorites` many-to-many relationship and decrement `favoriteCount`\n\n**Note**: The actual implementation details of these service methods are not visible in the provided code context.",
+    "score": {
+      "correctness": 4,
+      "fileIdentification": 5,
+      "reasoningQuality": 4
+    },
+    "inputTokens": 7060,
+    "outputTokens": 463,
+    "costUSD": 0.009375
+  },
+  {
+    "questionId": "nestjs-real-006",
+    "question": "Where would I add a new API endpoint to allow users to bookmark articles (separate from favorites)?",
+    "mode": "skeleton",
+    "answer": "# Adding a Bookmark API Endpoint\n\nBased on the codebase structure, here's where you would add a new bookmarking feature:\n\n## 1. **Create a Bookmark Entity**\nCreate a new file `nestjs-real/source/src/article/bookmark.entity.ts`:\n```typescript\nimport { Entity, PrimaryGeneratedColumn, Column, ManyToOne } from 'typeorm';\nimport { UserEntity } from '../user/user.entity';\nimport { ArticleEntity } from './article.entity';\n\n@Entity('bookmark')\nexport class BookmarkEntity {\n  @PrimaryGeneratedColumn()\n  id: number;\n\n  @ManyToOne(type => UserEntity)\n  user: UserEntity;\n\n  @ManyToOne(type => ArticleEntity)\n  article: ArticleEntity;\n\n  @Column({ type: 'timestamp', default: () => \"CURRENT_TIMESTAMP\"})\n  created: Date;\n}\n```\n\n## 2. **Add Methods to ArticleService**\nIn `nestjs-real/source/src/article/article.service.ts`, add:\n```typescript\nasync bookmark(id: number, slug: string): Promise<ArticleRO>\n\nasync unbookmark(id: number, slug: string): Promise<ArticleRO>\n\nasync getBookmarks(userId: number, query): Promise<ArticlesRO>\n```\n\n## 3. **Add Endpoints to ArticleController**\nIn `nestjs-real/source/src/article/article.controller.ts`, add these routes:\n```typescript\n@Post(':slug/bookmark')\nasync bookmark(@User('id') userId: number, @Param('slug') slug)\n\n@Delete(':slug/bookmark')\nasync unbookmark(@User('id') userId: number, @Param('slug') slug)\n\n@Get('bookmarks/list')\nasync getBookmarks(@User('id') userId: number, @Query() query): Promise<ArticlesRO>\n```\n\n## 4. **Update ArticleModule**\nIn `nestjs-real/source/src/article/article.module.ts`, add `BookmarkEntity` to the TypeOrmModule imports:\n```typescript\nimports: [TypeOrmModule.forFeature([ArticleEntity, Comment, UserEntity, FollowsEntity, BookmarkEntity]), UserModule],\n```\n\n## 5. **Inject Repository in ArticleService**\nAdd to the constructor in `article.service.ts`:\n```typescript\n@InjectRepository(BookmarkEntity)\nprivate readonly bookmarkRepository: Repository<BookmarkEntity>\n```\n\nThis follows the existing pattern used for the **favorite** functionality (`favorite()`, `unFavorite()` methods in `ArticleController` at lines matching the pattern of POST/DELETE `:slug/favorite` routes).",
+    "score": {
+      "correctness": 4,
+      "fileIdentification": 5,
+      "reasoningQuality": 5
+    },
+    "inputTokens": 7061,
+    "outputTokens": 648,
+    "costUSD": 0.010301
+  },
+  {
+    "questionId": "nestjs-real-007",
+    "question": "Where is the global API prefix configured, and where are Swagger docs set up?",
+    "mode": "skeleton",
+    "answer": "Based on my review of the provided codebase, I cannot find where the global API prefix is configured or where Swagger docs are set up.\n\nThe `src/main.ts` file contains a `bootstrap()` function that should contain this configuration, but the function body is incomplete in the provided code:\n\n```typescript\n// nestjs-real/source/src/main.ts\nasync function bootstrap()\n}\nbootstrap();\n```\n\nThe function is empty, so I cannot see:\n1. Where `NestFactory.create()` is called\n2. Where the global prefix might be set (typically via `app.setGlobalPrefix()`)\n3. Where Swagger setup occurs (typically via `SwaggerModule.setup()`)\n\nThere are also imports present that suggest Swagger configuration should exist:\n```typescript\nimport { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';\n```\n\nBut without the actual implementation in the `bootstrap()` function body, I cannot tell you the exact configuration details. You would need to check the complete `src/main.ts` file to find this information.",
+    "score": {
+      "correctness": 4,
+      "fileIdentification": 5,
+      "reasoningQuality": 5
+    },
+    "inputTokens": 7059,
+    "outputTokens": 242,
+    "costUSD": 0.008269
+  },
+  {
+    "questionId": "nestjs-real-008",
+    "question": "Where should I add a new field to the User profile response (e.g., a 'location' field)?",
+    "mode": "skeleton",
+    "answer": "# Adding a 'location' Field to User Profile Response\n\nYou should add the `location` field in the following places:\n\n## 1. **UserEntity** (`src/user/user.entity.ts`)\nAdd the column definition:\n```typescript\n@Column({default: ''})\nlocation: string;\n```\n\n## 2. **UserData Interface** (`src/user/user.interface.ts`)\nAdd the field to the `UserData` interface:\n```typescript\nexport interface UserData {\n  username: string;\n  email: string;\n  token: string;\n  bio: string;\n  image?: string;\n  location?: string;  // Add this\n}\n```\n\n## 3. **ProfileData Interface** (`src/profile/profile.interface.ts`)\nAdd the field to the `ProfileData` interface:\n```typescript\nexport interface ProfileData {\n  username: string;\n  bio: string;\n  image?: string;\n  following?: boolean;\n  location?: string;  // Add this\n}\n```\n\n## 4. **UpdateUserDto** (`src/user/dto/update-user.dto.ts`)\nAdd the field so it can be updated:\n```typescript\nexport class UpdateUserDto {\n  readonly username: string;\n  readonly email: string;\n  readonly bio: string;\n  readonly image: string;\n  readonly location: string;  // Add this\n}\n```\n\n## 5. **Service Methods** (if needed)\nEnsure that `buildUserRO()` in `src/user/user.service.ts` and `findProfile()` in `src/profile/profile.service.ts` include the `location` field when constructing response objects.\n\nThe field will then be automatically included in all user profile responses through the API.",
+    "score": {
+      "correctness": 4,
+      "fileIdentification": 4,
+      "reasoningQuality": 4
+    },
+    "inputTokens": 7066,
+    "outputTokens": 410,
+    "costUSD": 0.009116
+  },
+  {
+    "questionId": "nestjs-real-009",
+    "question": "Where is authentication middleware applied to routes, and which routes require authentication?",
+    "mode": "skeleton",
+    "answer": "# Authentication Middleware Application and Route Protection\n\n## Middleware Application Locations\n\nBased on the code, the `AuthMiddleware` is configured in the `configure` method of multiple modules, but **the actual implementation is incomplete** (only method signatures are shown without bodies):\n\n1. **UserModule** (`src/user/user.module.ts`) - implements `NestModule` with `configure()` method\n2. **ArticleModule** (`src/article/article.module.ts`) - implements `NestModule` with `configure()` method\n3. **ProfileModule** (`src/profile/profile.module.ts`) - implements `NestModule` with `configure()` method\n4. **TagModule** (`src/tag/tag.module.ts`) - implements `NestModule` with `configure()` method\n\nThe `AuthMiddleware` is defined in `src/user/auth.middleware.ts` and imported into these modules.\n\n## Routes Requiring Authentication\n\nBased on the decorators and function signatures, the following routes require authentication (indicated by `@ApiBearerAuth()` decorator and `@User()` parameter injections):\n\n### Article Routes (`src/article/article.controller.ts`)\n- `GET /articles` - has `@ApiBearerAuth()`\n- `GET /articles/feed` - requires `@User('id')` userId parameter\n- `POST /articles` - requires `@User('id')` userId parameter\n- `PUT /articles/:slug` - protected (has `@ApiBearerAuth()`)\n- `DELETE /articles/:slug` - protected (has `@ApiBearerAuth()`)\n- `POST /articles/:slug/comments` - protected (has `@ApiBearerAuth()`)\n- `DELETE /articles/:slug/comments/:id` - protected (has `@ApiBearerAuth()`)\n- `POST /articles/:slug/favorite` - requires `@User('id')` userId parameter\n- `DELETE /articles/:slug/favorite` - requires `@User('id')` userId parameter\n\n### Profile Routes (`src/profile/profile.controller.ts`)\n- `GET /profiles/:username` - requires `@User('id')` userId parameter\n- `POST /profiles/:username/follow` - requires `@User('email')` email parameter\n- `DELETE /profiles/:username/follow` - requires `@User('id')` userId parameter\n\n### User Routes (`src/user/user.controller.ts`)\n- `GET /user` - requires `@User('email')` email parameter\n- `PUT /user` - requires `@User('id')` userId parameter\n- `POST /users` - **No authentication required** (validation pipe only)\n- `POST /users/login` - **No authentication required** (validation pipe only)\n\n### Tag Routes (`src/tag/tag.controller.ts`)\n- `GET /tags` - has `@ApiBearerAuth()` decorator but no `@User()` parameter extraction\n\n**Note:** The actual middleware configuration logic in the `configure()` methods is not shown in the provided code, so the exact routes where middleware is applied cannot be verified with certainty.",
+    "score": {
+      "correctness": 3,
+      "fileIdentification": 5,
+      "reasoningQuality": 3
+    },
+    "inputTokens": 7056,
+    "outputTokens": 714,
+    "costUSD": 0.010626
+  },
+  {
+    "questionId": "nestjs-real-010",
+    "question": "What services or modules depend on UserService?",
+    "mode": "skeleton",
+    "answer": "# Services and Modules that Depend on UserService\n\nBased on the codebase analysis, the following services and modules depend on `UserService`:\n\n## Modules that Import UserModule (which exports UserService)\n\n1. **ArticleModule** (`nestjs-real/source/src/article/article.module.ts`)\n   - Imports `UserModule`\n\n2. **ProfileModule** (`nestjs-real/source/src/profile/profile.module.ts`)\n   - Imports `UserModule`\n\n3. **TagModule** (`nestjs-real/source/src/tag/tag.module.ts`)\n   - Imports `UserModule`\n\n## Direct Dependencies\n\n1. **AuthMiddleware** (`nestjs-real/source/src/user/auth.middleware.ts`)\n   - Constructor parameter: `userService: UserService`\n   - Uses it within the middleware to authenticate requests\n\n2. **UserController** (`nestjs-real/source/src/user/user.controller.ts`)\n   - Constructor parameter: `userService: UserService`\n   - Calls UserService methods for user operations (create, login, update, delete, findMe)\n\n## Export Context\n\n`UserService` is exported from `UserModule` via the `exports: [UserService]` declaration in `nestjs-real/source/src/user/user.module.ts`, making it available to other modules that import `UserModule`.\n\nHowever, the provided code does not show the actual implementation of services in ArticleModule, ProfileModule, or TagModule that might use UserService, so those dependencies cannot be definitively confirmed from the provided context.",
+    "score": {
+      "correctness": 4,
+      "fileIdentification": 4,
+      "reasoningQuality": 4
+    },
+    "inputTokens": 7051,
+    "outputTokens": 368,
+    "costUSD": 0.008891
+  },
+  {
+    "questionId": "nestjs-real-011",
+    "question": "What database entities exist and how are they related to each other?",
+    "mode": "skeleton",
+    "answer": "# Database Entities and Relationships\n\nBased on the codebase, here are the database entities and their relationships:\n\n## Entities\n\n1. **UserEntity** (`src/user/user.entity.ts`)\n   - Fields: id, username, email, bio, image, password\n   - Relations:\n     - `OneToMany` → ArticleEntity (as author)\n     - `ManyToMany` → ArticleEntity (favorites)\n\n2. **ArticleEntity** (`src/article/article.entity.ts`)\n   - Fields: id, slug, title, description, body, created, updated, tagList, favoriteCount\n   - Relations:\n     - `ManyToOne` → UserEntity (author)\n     - `OneToMany` → Comment (comments)\n\n3. **Comment** (`src/article/comment.entity.ts`)\n   - Fields: id, body\n   - Relations:\n     - `ManyToOne` → ArticleEntity (article)\n\n4. **FollowsEntity** (`src/profile/follows.entity.ts`)\n   - Fields: id, followerId, followingId\n   - Relations: None (stores follower/following relationships between users)\n\n5. **TagEntity** (`src/tag/tag.entity.ts`)\n   - Fields: id, tag\n   - Relations: None (simple tag storage)\n\n## Relationship Summary\n\n```\nUserEntity\n  ├─ OneToMany ──→ ArticleEntity (as author)\n  └─ ManyToMany ──→ ArticleEntity (favorites via JoinTable)\n\nArticleEntity\n  ├─ ManyToOne ──→ UserEntity (author)\n  └─ OneToMany ──→ Comment\n\nComment\n  └─ ManyToOne ──→ ArticleEntity\n\nFollowsEntity (independent - represents user follows)\nTagEntity (independent - tag list storage)\n```\n\nThe system implements a blog/article platform with user authentication, article management, commenting, user follows/profiles, and tagging functionality.",
+    "score": {
+      "correctness": 4,
+      "fileIdentification": 4,
+      "reasoningQuality": 5
+    },
+    "inputTokens": 7055,
+    "outputTokens": 472,
+    "costUSD": 0.009415
+  },
+  {
+    "questionId": "nestjs-real-012",
+    "question": "What does ArticleService depend on? List all its injected dependencies.",
+    "mode": "skeleton",
+    "answer": "# ArticleService Dependencies\n\nBased on the code in `nestjs-real/source/src/article/article.service.ts`, the `ArticleService` has **4 injected dependencies**:\n\n1. **ArticleRepository** - `Repository<ArticleEntity>`\n   - Injected via `@InjectRepository(ArticleEntity)`\n\n2. **CommentRepository** - `Repository<Comment>`\n   - Injected via `@InjectRepository(Comment)`\n\n3. **UserRepository** - `Repository<UserEntity>`\n   - Injected via `@InjectRepository(UserEntity)`\n\n4. **FollowsRepository** - `Repository<FollowsEntity>`\n   - Injected via `@InjectRepository(FollowsEntity)`\n\nAll four are injected through the constructor:\n\n```typescript\nconstructor(\n  @InjectRepository(ArticleEntity)\n  private readonly articleRepository: Repository<ArticleEntity>,\n  @InjectRepository(Comment)\n  private readonly commentRepository: Repository<Comment>,\n  @InjectRepository(UserEntity)\n  private readonly userRepository: Repository<UserEntity>,\n  @InjectRepository(FollowsEntity)\n  private readonly followsRepository: Repository<FollowsEntity>\n) {}\n```\n\nThese are all TypeORM repositories that provide database access to their respective entities.",
+    "score": {
+      "correctness": 5,
+      "fileIdentification": 5,
+      "reasoningQuality": 5
+    },
+    "inputTokens": 7057,
+    "outputTokens": 311,
+    "costUSD": 0.008612
+  },
+  {
+    "questionId": "nestjs-real-013",
+    "question": "If I remove the `favorites` relationship from UserEntity, what else in the codebase would break?",
+    "mode": "skeleton",
+    "answer": "# Impact Analysis: Removing `favorites` from UserEntity\n\nBased on the provided codebase, if you remove the `favorites` relationship from `UserEntity` in `nestjs-real/source/src/user/user.entity.ts`, here's what would break:\n\n## Direct Impact\n\n**ArticleController** (`nestjs-real/source/src/article/article.controller.ts`):\n- The `@Post(':slug/favorite')` method (line with `async favorite()`)\n- The `@Delete(':slug/favorite')` method (line with `async unFavorite()`)\n\nThese endpoints would fail because they rely on the many-to-many relationship to manage user favorites.\n\n**ArticleService** (`nestjs-real/source/src/article/article.service.ts`):\n- The `async favorite(id: number, slug: string)` method\n- The `async unFavorite(id: number, slug: string)` method\n\nThese service methods handle the actual logic for favoriting/unfavoriting articles and depend on querying/updating the `favorites` relationship.\n\n## Secondary Impact\n\n**ArticleInterface** (`nestjs-real/source/src/article/article.interface.ts`):\n- The `ArticleData` interface includes `favorited?: boolean` and `favoritesCount?: number` properties, which are likely populated based on the user's `favorites` relationship.\n\nAny code that serializes articles to return in API responses would need to handle missing favorite status information.\n\n---\n\n## Summary\n\nThe minimum breaking changes would be in the **favorite/unfavorite functionality** in `ArticleController` and `ArticleService`. The rest of the codebase could theoretically work, but the article response serialization logic would need to be updated to handle the loss of the `favorites` relationship data.",
+    "score": {
+      "correctness": 3,
+      "fileIdentification": 4,
+      "reasoningQuality": 3
+    },
+    "inputTokens": 7064,
+    "outputTokens": 409,
+    "costUSD": 0.009109
+  },
+  {
+    "questionId": "nestjs-real-014",
+    "question": "If I change the JWT secret, what happens to currently logged-in users?",
+    "mode": "skeleton",
+    "answer": "# Impact of Changing JWT Secret on Logged-in Users\n\nIf you change the JWT secret, **currently logged-in users will be unable to authenticate further requests**.\n\n## Why This Happens\n\nThe JWT secret is used to **verify the signature** of JWT tokens. Here's the flow:\n\n1. **Token Generation** (login): When a user logs in via `UserService.generateJWT()` in `src/user/user.service.ts`, a JWT is created and signed with the current secret.\n\n2. **Token Verification** (subsequent requests): On each authenticated request, the `AuthMiddleware` in `src/user/auth.middleware.ts` uses the same secret to verify the token's validity. The middleware imports `SECRET` from `src/config`.\n\n3. **When secret changes**: If you update the value in `src/config`, all existing tokens signed with the old secret will fail verification because their signatures no longer match.\n\n## Affected Areas\n\n- **`src/user/auth.middleware.ts`**: The middleware verifies tokens using the current `SECRET`\n- **`src/user/user.decorator.ts`**: The `@User()` decorator also uses `SECRET` to decode tokens\n- **`src/shared/base.controller.ts`**: The `getUserIdFromToken()` method relies on the same secret\n\n## User Experience\n\nCurrently logged-in users will experience:\n- **401 Unauthorized** responses on any protected endpoints\n- Forced logout (they'll need to log in again to get new tokens signed with the new secret)\n\nThis is expected behavior in JWT-based systems when the signing secret rotates.",
+    "score": {
+      "correctness": 4,
+      "fileIdentification": 3,
+      "reasoningQuality": 5
+    },
+    "inputTokens": 7058,
+    "outputTokens": 364,
+    "costUSD": 0.008878
+  },
+  {
+    "questionId": "nestjs-real-015",
+    "question": "If I change the password hashing algorithm from argon2 to bcrypt, what steps are required?",
+    "mode": "skeleton",
+    "answer": "# Steps to Change Password Hashing from Argon2 to Bcrypt\n\nBased on the codebase analysis, here are the required changes:\n\n## 1. **Update Dependencies**\n   - Remove `argon2` package\n   - Install `bcrypt` package (e.g., `npm install bcrypt` and `npm install -D @types/bcrypt`)\n\n## 2. **Update `src/user/user.entity.ts`**\n   - Replace the import statement (line with `import * as argon2 from 'argon2'`)\n   - Change to: `import * as bcrypt from 'bcrypt'`\n   - Update the `hashPassword()` method (the `@BeforeInsert()` decorated method) to use bcrypt's hashing instead of argon2\n\n## 3. **Update `src/user/user.service.ts`**\n   - Replace the import statement (line with `import * as argon2 from 'argon2'`)\n   - Change to: `import * as bcrypt from 'bcrypt'`\n   - Update password comparison logic in the `findOne()` method to use `bcrypt.compare()` instead of argon2's comparison\n\n## Key Implementation Details:\n- **`user.entity.ts`**: The `hashPassword()` method needs to change from `await argon2.hash(this.password)` to `await bcrypt.hash(this.password, saltRounds)` (typically 10 salt rounds)\n- **`user.service.ts`**: The password verification in `findOne()` method needs to use `await bcrypt.compare(password, user.password)` instead of argon2 equivalents\n\nNote: The codebase shows method signatures without implementations, so exact comparison logic isn't visible, but these are the two files requiring modifications.",
+    "score": {
+      "correctness": 3,
+      "fileIdentification": 3,
+      "reasoningQuality": 4
+    },
+    "inputTokens": 7064,
+    "outputTokens": 424,
+    "costUSD": 0.009184
+  }
+]

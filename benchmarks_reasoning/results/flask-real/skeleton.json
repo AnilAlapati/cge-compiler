@@ -1,0 +1,222 @@
+[
+  {
+    "questionId": "flask-001",
+    "mode": "skeleton",
+    "question": "How does authentication work in this Flask app? Explain the decorator used.",
+    "answer": "# Authentication in this Flask App\n\n## How Authentication Works\n\nThe Flask app implements authentication using a **decorator pattern** with the `@require_auth` decorator defined in `flask-real/source/app/app.py`.\n\n## The `require_auth` Decorator\n\n**Location:** `flask-real/source/app/app.py`, lines 8-14\n\n```python\ndef require_auth(f):\n    @wraps(f)\n    def decorated(*args, **kwargs):\n        token = request.headers.get('Authorization')\n        if not token or token != \"secret-token\":\n            return jsonify({\"error\": \"Unauthorized\"}), 401\n        return f(*args, **kwargs)\n    return decorated\n```\n\n### How It Works:\n\n1. **Extracts the token:** Retrieves the `Authorization` header from the HTTP request\n2. **Validates the token:** Checks if:\n   - The token exists (is not `None` or empty)\n   - The token equals the hardcoded string `\"secret-token\"`\n3. **Returns 401 if invalid:** If validation fails, it returns a JSON error response with HTTP status code 401 (Unauthorized)\n4. **Proceeds if valid:** If the token is correct, it executes the decorated function\n\n## Where It's Applied\n\nThe decorator is applied to the `/api/data` POST endpoint (line 22):\n\n```python\n@app.route('/api/data', methods=['POST'])\n@require_auth\ndef secure_data():\n    return jsonify({\"data\": \"secure payload\"})\n```\n\nThe `/api/status` GET endpoint has **no authentication** and is publicly accessible.\n\n---\n\n**Note:** This is a basic implementation using a hardcoded token—not suitable for production systems.",
+    "inputTokens": 352,
+    "outputTokens": 406,
+    "contextTokens": 221,
+    "latencyMs": 3607,
+    "costUSD": 0.002382
+  },
+  {
+    "questionId": "flask-002",
+    "mode": "skeleton",
+    "question": "Where is the database initialized and what database engine is used?",
+    "answer": "Based on the provided code:\n\n**Database Initialization Location:**\nThe database is initialized in `flask-real/source/app/app.py` at line 6:\n```python\ndb = SQLAlchemy(app)\n```\n\n**Database Engine Used:**\nSQLite (in-memory database), as specified in the configuration at line 5:\n```python\napp.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///:memory:'\n```\n\nThe `sqlite:///:memory:` URI indicates an in-memory SQLite database, which means the database exists only in RAM and is not persisted to disk. This is typically used for development, testing, or temporary data storage.",
+    "inputTokens": 349,
+    "outputTokens": 155,
+    "contextTokens": 221,
+    "latencyMs": 1803,
+    "costUSD": 0.001124
+  },
+  {
+    "questionId": "flask-003",
+    "mode": "skeleton",
+    "question": "What happens if a user accesses /api/data without a token?",
+    "answer": "# Answer\n\nIf a user accesses `/api/data` without a token, they will receive a **401 Unauthorized response** with the error message `{\"error\": \"Unauthorized\"}`.\n\n## Explanation\n\nThe `/api/data` endpoint in `flask-real/source/app/app.py` is decorated with `@require_auth` (line 18). This decorator:\n\n1. Checks the `Authorization` header in the request (line 9)\n2. If the header is missing (`not token`) or doesn't match `\"secret-token\"` (line 10), it returns:\n   - **Response body**: `{\"error\": \"Unauthorized\"}`\n   - **HTTP status code**: `401`\n\nTherefore, without a valid token, the `secure_data()` function is never executed, and the user gets the 401 error response instead.",
+    "inputTokens": 352,
+    "outputTokens": 195,
+    "contextTokens": 221,
+    "latencyMs": 2264,
+    "costUSD": 0.001327
+  },
+  {
+    "questionId": "flask-004",
+    "mode": "skeleton",
+    "question": "How are the application routes defined? Which file contains them?",
+    "answer": "# Application Routes Definition\n\nThe application routes are defined in **`flask-real/source/app/app.py`** using Flask's `@app.route()` decorator.\n\nThere are **two routes** defined:\n\n1. **`/api/status`** (GET method)\n   - Location: Line with `@app.route('/api/status', methods=['GET'])`\n   - Handler function: `get_status()`\n   - Returns: `{\"status\": \"running\"}`\n   - No authentication required\n\n2. **`/api/data`** (POST method)\n   - Location: Line with `@app.route('/api/data', methods=['POST'])`\n   - Handler function: `secure_data()`\n   - Returns: `{\"data\": \"secure payload\"}`\n   - **Protected by authentication** via the `@require_auth` decorator, which requires an `Authorization` header with value `\"secret-token\"`\n\nBoth routes return JSON responses using Flask's `jsonify()` function.",
+    "inputTokens": 349,
+    "outputTokens": 230,
+    "contextTokens": 221,
+    "latencyMs": 2317,
+    "costUSD": 0.001499
+  },
+  {
+    "questionId": "flask-005",
+    "mode": "skeleton",
+    "question": "If we want to change the authentication token to 'new-secret', where do we change it?",
+    "answer": "To change the authentication token to 'new-secret', you need to modify the `require_auth` function in `flask-real/source/app/app.py`.\n\nSpecifically, change this line:\n\n```python\nif not token or token != \"secret-token\":\n```\n\nto:\n\n```python\nif not token or token != \"new-secret\":\n```\n\nThis is located in the decorator function at approximately line 11 of the file. The token comparison happens in the `decorated` inner function within the `require_auth` decorator, which is used to protect routes like `/api/data`.",
+    "inputTokens": 358,
+    "outputTokens": 135,
+    "contextTokens": 221,
+    "latencyMs": 1736,
+    "costUSD": 0.001033
+  },
+  {
+    "questionId": "flask-006",
+    "mode": "skeleton",
+    "question": "What is the endpoint for checking the application status?",
+    "answer": "Based on the provided code, the endpoint for checking the application status is:\n\n**`/api/status`** (GET request)\n\nThis endpoint is defined in `flask-real/source/app/app.py` at the `get_status()` function (lines 17-18) and returns a JSON response with `{\"status\": \"running\"}`. It does not require authentication.",
+    "inputTokens": 347,
+    "outputTokens": 86,
+    "contextTokens": 221,
+    "latencyMs": 1459,
+    "costUSD": 0.000777
+  },
+  {
+    "questionId": "flask-007",
+    "mode": "skeleton",
+    "question": "Does this app use a blueprint for routing? If not, how are routes registered?",
+    "answer": "No, this app does not use a blueprint for routing.\n\nInstead, routes are registered **directly on the Flask application instance** using the `@app.route()` decorator. \n\nSpecifically, in `flask-real/source/app/app.py`:\n- The `get_status()` function at line 18 is registered with `@app.route('/api/status', methods=['GET'])`\n- The `secure_data()` function at line 22 is registered with `@app.route('/api/data', methods=['POST'])`\n\nBoth decorators reference the `app` object directly (created at line 5), which is a common approach for small applications but becomes less maintainable as the codebase grows. Using Flask blueprints would be a better practice for larger, more modular applications.",
+    "inputTokens": 354,
+    "outputTokens": 182,
+    "contextTokens": 221,
+    "latencyMs": 3179,
+    "costUSD": 0.001264
+  },
+  {
+    "questionId": "flask-008",
+    "mode": "skeleton",
+    "question": "What methods are allowed on the /api/data endpoint?",
+    "answer": "Based on the code in `flask-real/source/app/app.py`, the `/api/data` endpoint only allows the **POST** method.\n\nThis is specified in the route decorator on line 22:\n\n```python\n@app.route('/api/data', methods=['POST'])\n```",
+    "inputTokens": 349,
+    "outputTokens": 68,
+    "contextTokens": 221,
+    "latencyMs": 2153,
+    "costUSD": 0.000689
+  },
+  {
+    "questionId": "flask-009",
+    "mode": "skeleton",
+    "question": "How is JSON returned from the endpoints?",
+    "answer": "Based on the provided code, JSON is returned from the endpoints using Flask's **`jsonify()` function**.\n\nSpecifically:\n\n1. **In `get_status()` endpoint** (line 18):\n   ```python\n   return jsonify({\"status\": \"running\"})\n   ```\n\n2. **In `secure_data()` endpoint** (line 23):\n   ```python\n   return jsonify({\"data\": \"secure payload\"})\n   ```\n\n3. **In the `require_auth` decorator** (line 11, when authentication fails):\n   ```python\n   return jsonify({\"error\": \"Unauthorized\"}), 401\n   ```\n\nThe `jsonify()` function from Flask (imported at line 1) converts Python dictionaries into JSON responses with the appropriate `Content-Type: application/json` header. It also returns a Flask `Response` object, which allows for optional HTTP status codes to be specified (as shown in the authentication error response with the `401` status code).",
+    "inputTokens": 345,
+    "outputTokens": 226,
+    "contextTokens": 221,
+    "latencyMs": 2419,
+    "costUSD": 0.001475
+  },
+  {
+    "questionId": "flask-010",
+    "mode": "skeleton",
+    "question": "A user gets a 401 on /api/status. Is this expected behavior?",
+    "answer": "No, this is **not** expected behavior.\n\nLooking at the code in `flask-real/source/app/app.py`:\n\n- The `/api/status` endpoint (line 17-19) does **not** have the `@require_auth` decorator\n- Only the `/api/secure_data` endpoint (line 22-25) has the `@require_auth` decorator applied\n\nTherefore, `/api/status` should return a 200 response with `{\"status\": \"running\"}` and does **not** require authentication.\n\nIf a user is getting a 401 on `/api/status`, there is likely an issue outside this code (e.g., middleware, proxy, or reverse proxy configuration) that is incorrectly enforcing authentication on all endpoints.",
+    "inputTokens": 355,
+    "outputTokens": 172,
+    "contextTokens": 221,
+    "latencyMs": 2163,
+    "costUSD": 0.001215
+  },
+  {
+    "questionId": "flask-011",
+    "mode": "skeleton",
+    "question": "How does the app protect against cross-site scripting (XSS)?",
+    "answer": "Based on the provided code context, **the app does not implement explicit XSS protection measures**.\n\nHere's what I observe:\n\n1. **No input validation or sanitization**: The `secure_data()` endpoint at `POST /api/data` accepts requests but doesn't validate or sanitize any input data. The code doesn't show any mechanisms to escape or filter user-supplied content.\n\n2. **No Content Security Policy (CSP) headers**: There are no security headers being set that would help prevent XSS attacks.\n\n3. **No output encoding**: While the endpoints return JSON responses via `jsonify()`, there's no explicit encoding or escaping of potentially dangerous content.\n\n**Implicit protections** (if any):\n- Flask's `jsonify()` function does properly serialize data to JSON format, which provides some inherent protection when the response is consumed as JSON. However, this only helps if the client-side code handles it safely.\n\n**What's missing for robust XSS protection:**\n- Input validation/sanitization\n- Content Security Policy headers\n- Proper output encoding for the context (HTML, JavaScript, etc.)\n- Template escaping (if Jinja2 templates were used)\n- HTTPOnly and Secure cookie flags (if sessions are implemented)\n\nThe authentication mechanism (`require_auth` decorator) protects the `/api/data` endpoint from unauthorized access, but this is separate from XSS protection and doesn't address XSS vulnerabilities.",
+    "inputTokens": 353,
+    "outputTokens": 322,
+    "contextTokens": 221,
+    "latencyMs": 3859,
+    "costUSD": 0.001963
+  },
+  {
+    "questionId": "flask-012",
+    "mode": "skeleton",
+    "question": "What is the entry point script to start the Flask app?",
+    "answer": "The entry point script to start the Flask app is **`flask-real/source/app/app.py`**.\n\nWhen you run this file directly (as indicated by the `if __name__ == '__main__':` block at the bottom), it starts the Flask development server by calling `app.run()`. This will launch the Flask application and make it available for requests.",
+    "inputTokens": 349,
+    "outputTokens": 83,
+    "contextTokens": 221,
+    "latencyMs": 1853,
+    "costUSD": 0.000764
+  },
+  {
+    "questionId": "flask-013",
+    "mode": "skeleton",
+    "question": "Are there any database models defined in this application?",
+    "answer": "No, there are no database models defined in this application.\n\nWhile the codebase imports `SQLAlchemy` and initializes it with `db = SQLAlchemy(app)` in `flask-real/source/app/app.py`, no actual database models (classes inheriting from `db.Model`) are defined. The SQLAlchemy instance is set up but remains unused for defining any data models.",
+    "inputTokens": 347,
+    "outputTokens": 93,
+    "contextTokens": 221,
+    "latencyMs": 1568,
+    "costUSD": 0.000812
+  },
+  {
+    "questionId": "flask-014",
+    "mode": "skeleton",
+    "question": "Why would the database data be lost when the app restarts?",
+    "answer": "The database data would be lost when the app restarts because of this configuration line in `app.py`:\n\n```python\napp.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///:memory:'\n```\n\nThe `sqlite:///:memory:` URI creates an **in-memory SQLite database** rather than a persistent file-based database. This means:\n\n1. **Volatile Storage**: The database exists only in RAM while the application is running\n2. **No Persistence**: When the Flask app stops/restarts, all data in memory is discarded\n3. **No Recovery**: There is no database file on disk to reload from after restart\n\n**To fix this**, change the URI to point to a file-based database:\n\n```python\napp.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///app.db'\n```\n\nThis would create a persistent `app.db` file that survives application restarts.",
+    "inputTokens": 350,
+    "outputTokens": 210,
+    "contextTokens": 221,
+    "latencyMs": 2545,
+    "costUSD": 0.0014
+  },
+  {
+    "questionId": "flask-015",
+    "mode": "skeleton",
+    "question": "Where should I add a new authenticated endpoint for user profiles?",
+    "answer": "Based on the codebase, you should add a new authenticated endpoint for user profiles in **`flask-real/source/app/app.py`** following this pattern:\n\n1. **Define a User model** (before the routes) using SQLAlchemy:\n```python\nclass User(db.Model):\n    id = db.Column(db.Integer, primary_key=True)\n    username = db.Column(db.String(80), unique=True, nullable=False)\n    email = db.Column(db.String(120), unique=True, nullable=False)\n```\n\n2. **Add the authenticated endpoint** after the existing `secure_data()` function:\n```python\n@app.route('/api/users/<int:user_id>', methods=['GET'])\n@require_auth\ndef get_user_profile(user_id):\n    user = User.query.get(user_id)\n    if not user:\n        return jsonify({\"error\": \"User not found\"}), 404\n    return jsonify({\"id\": user.id, \"username\": user.username, \"email\": user.email})\n```\n\n**Key points:**\n- Use the `@require_auth` decorator (already defined in the file) to protect the endpoint\n- Follow the existing pattern of routes in the file\n- The authentication check validates the `Authorization` header against `\"secret-token\"`\n- Place it logically after existing endpoints, before the `if __name__ == '__main__'` block",
+    "inputTokens": 349,
+    "outputTokens": 341,
+    "contextTokens": 221,
+    "latencyMs": 3167,
+    "costUSD": 0.002054
+  },
+  {
+    "questionId": "flask-016",
+    "mode": "skeleton",
+    "question": "How does the `@require_auth` decorator preserve the original function signature?",
+    "answer": "The `@require_auth` decorator in `flask-real/source/app/app.py` preserves the original function signature by using the `@wraps(f)` decorator from the `functools` module.\n\nHere's how it works:\n\n```python\nfrom functools import wraps\n\ndef require_auth(f):\n    @wraps(f)\n    def decorated(*args, **kwargs):\n        # ... authentication logic ...\n        return f(*args, **kwargs)\n    return decorated\n```\n\n**Key mechanism:**\n\n1. **`@wraps(f)` decorator** - Applied to the inner `decorated` function, it copies metadata from the original function `f` to the wrapper function, including:\n   - `__name__` (function name)\n   - `__doc__` (docstring)\n   - `__module__` (module name)\n   - `__annotations__` (type hints)\n   - `__dict__` (function attributes)\n\n2. **`*args, **kwargs`** - The wrapper accepts any positional and keyword arguments and forwards them to the original function `f(*args, **kwargs)`, allowing the wrapper to work with functions of any signature.\n\nThis ensures that when `@require_auth` decorates functions like `secure_data()`, the decorated function maintains the appearance and behavior of the original function, which is important for Flask's routing system and introspection tools.",
+    "inputTokens": 353,
+    "outputTokens": 320,
+    "contextTokens": 221,
+    "latencyMs": 3820,
+    "costUSD": 0.001953
+  },
+  {
+    "questionId": "flask-017",
+    "mode": "skeleton",
+    "question": "Where is the Flask app instance instantiated?",
+    "answer": "The Flask app instance is instantiated in **`flask-real/source/app/app.py`** at **line 5**:\n\n```python\napp = Flask(__name__)\n```\n\nThis creates a Flask application object that is then configured with a SQLite in-memory database and used to define the routes in the file.",
+    "inputTokens": 346,
+    "outputTokens": 74,
+    "contextTokens": 221,
+    "latencyMs": 1557,
+    "costUSD": 0.000716
+  },
+  {
+    "questionId": "flask-018",
+    "mode": "skeleton",
+    "question": "If a user passes the token via a query parameter `?token=secret-token`, will they be authenticated?",
+    "answer": "No, they will not be authenticated.\n\nThe `require_auth` decorator in `app/app.py` only checks for the token in the HTTP headers:\n\n```python\ntoken = request.headers.get('Authorization')\n```\n\nIt does not check query parameters. If a user passes `?token=secret-token` as a query parameter, the `token` variable will be `None` (since there's no `Authorization` header), and the condition `if not token or token != \"secret-token\"` will evaluate to `True`, returning a 401 Unauthorized response.\n\nTo authenticate via query parameters, the code would need to also check `request.args.get('token')`.",
+    "inputTokens": 360,
+    "outputTokens": 153,
+    "contextTokens": 221,
+    "latencyMs": 2249,
+    "costUSD": 0.001125
+  },
+  {
+    "questionId": "flask-019",
+    "mode": "skeleton",
+    "question": "What is the return payload of the secure_data route?",
+    "answer": "The return payload of the `secure_data` route in `flask-real/source/app/app.py` is:\n\n```json\n{\"data\": \"secure payload\"}\n```\n\nThis is returned as a JSON response via the `jsonify()` function on line 24 of the file.",
+    "inputTokens": 349,
+    "outputTokens": 68,
+    "contextTokens": 221,
+    "latencyMs": 1233,
+    "costUSD": 0.000689
+  },
+  {
+    "questionId": "flask-020",
+    "mode": "skeleton",
+    "question": "Which Python modules from standard library or third-party are imported in app.py?",
+    "answer": "# Imports in app.py\n\nBased on the code in `flask-real/source/app/app.py`, the following modules are imported:\n\n## Standard Library\n- **`functools`** - specifically the `wraps` decorator\n\n## Third-Party\n- **`flask`** - specifically `Flask`, `jsonify`, and `request`\n- **`flask_sqlalchemy`** - specifically `SQLAlchemy`\n\nHere's the exact import section:\n```python\nfrom flask import Flask, jsonify, request\nfrom functools import wraps\nfrom flask_sqlalchemy import SQLAlchemy\n```",
+    "inputTokens": 354,
+    "outputTokens": 139,
+    "contextTokens": 221,
+    "latencyMs": 1626,
+    "costUSD": 0.001049
+  }
+]

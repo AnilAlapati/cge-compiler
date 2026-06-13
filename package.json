@@ -12,7 +12,8 @@
     "build": "node build.js && npm run build:cli && npm run build:browser",
     "benchmark": "npx tsx scripts/benchmark.ts",
     "eval": "npx tsx scripts/eval_runner.ts",
-    "blind-score": "npx tsx scripts/blind_score.ts"
+    "blind-score": "npx tsx scripts/blind_score.ts",
+    "workflow-poc": "npx tsx scripts/workflow_poc.ts"
   },
   "bin": {
     "cge-cli": "./dist/cli.js"

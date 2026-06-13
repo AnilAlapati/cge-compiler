@@ -1,0 +1,166 @@
+{
+  "repo": "flask-real",
+  "source_dir": "benchmarks_real/flask-real/source",
+  "questions": [
+    {
+      "id": "flask-001",
+      "category": "architecture",
+      "question": "How does authentication work in this Flask app? Explain the decorator used.",
+      "expected_files": ["source/app/app.py"],
+      "expected_concepts": ["require_auth", "decorator", "Authorization header", "secret-token"],
+      "difficulty": "easy"
+    },
+    {
+      "id": "flask-002",
+      "category": "navigation",
+      "question": "Where is the database initialized and what database engine is used?",
+      "expected_files": ["source/app/app.py"],
+      "expected_concepts": ["SQLAlchemy", "sqlite:///:memory:", "db = SQLAlchemy(app)"],
+      "difficulty": "easy"
+    },
+    {
+      "id": "flask-003",
+      "category": "navigation",
+      "question": "What happens if a user accesses /api/data without a token?",
+      "expected_files": ["source/app/app.py"],
+      "expected_concepts": ["401 Unauthorized", "jsonify({'error': 'Unauthorized'})"],
+      "difficulty": "easy"
+    },
+    {
+      "id": "flask-004",
+      "category": "architecture",
+      "question": "How are the application routes defined? Which file contains them?",
+      "expected_files": ["source/app/app.py"],
+      "expected_concepts": ["@app.route", "/api/status", "/api/data", "app.py"],
+      "difficulty": "easy"
+    },
+    {
+      "id": "flask-005",
+      "category": "bug_investigation",
+      "question": "If we want to change the authentication token to 'new-secret', where do we change it?",
+      "expected_files": ["source/app/app.py"],
+      "expected_concepts": ["require_auth", "token != 'secret-token'"],
+      "difficulty": "easy"
+    },
+    {
+      "id": "flask-006",
+      "category": "navigation",
+      "question": "What is the endpoint for checking the application status?",
+      "expected_files": ["source/app/app.py"],
+      "expected_concepts": ["/api/status", "get_status()"],
+      "difficulty": "easy"
+    },
+    {
+      "id": "flask-007",
+      "category": "architecture",
+      "question": "Does this app use a blueprint for routing? If not, how are routes registered?",
+      "expected_files": ["source/app/app.py"],
+      "expected_concepts": ["no blueprint", "@app.route on app instance"],
+      "difficulty": "easy"
+    },
+    {
+      "id": "flask-008",
+      "category": "navigation",
+      "question": "What methods are allowed on the /api/data endpoint?",
+      "expected_files": ["source/app/app.py"],
+      "expected_concepts": ["POST"],
+      "difficulty": "easy"
+    },
+    {
+      "id": "flask-009",
+      "category": "architecture",
+      "question": "How is JSON returned from the endpoints?",
+      "expected_files": ["source/app/app.py"],
+      "expected_concepts": ["flask.jsonify"],
+      "difficulty": "easy"
+    },
+    {
+      "id": "flask-010",
+      "category": "bug_investigation",
+      "question": "A user gets a 401 on /api/status. Is this expected behavior?",
+      "expected_files": ["source/app/app.py"],
+      "expected_concepts": ["No", "get_status does not use @require_auth"],
+      "difficulty": "easy"
+    },
+    {
+      "id": "flask-011",
+      "category": "architecture",
+      "question": "How does the app protect against cross-site scripting (XSS)?",
+      "expected_files": ["source/app/app.py"],
+      "expected_concepts": ["It doesn't explicitly, just returns JSON"],
+      "difficulty": "easy"
+    },
+    {
+      "id": "flask-012",
+      "category": "navigation",
+      "question": "What is the entry point script to start the Flask app?",
+      "expected_files": ["source/app/app.py"],
+      "expected_concepts": ["app.py", "if __name__ == '__main__': app.run()"],
+      "difficulty": "easy"
+    },
+    {
+      "id": "flask-013",
+      "category": "architecture",
+      "question": "Are there any database models defined in this application?",
+      "expected_files": ["source/app/app.py"],
+      "expected_concepts": ["No, SQLAlchemy is initialized but no models are defined"],
+      "difficulty": "easy"
+    },
+    {
+      "id": "flask-014",
+      "category": "bug_investigation",
+      "question": "Why would the database data be lost when the app restarts?",
+      "expected_files": ["source/app/app.py"],
+      "expected_concepts": ["sqlite:///:memory:", "in-memory database"],
+      "difficulty": "easy"
+    },
+    {
+      "id": "flask-015",
+      "category": "navigation",
+      "question": "Where should I add a new authenticated endpoint for user profiles?",
+      "expected_files": ["source/app/app.py"],
+      "expected_concepts": ["app.py", "@app.route", "@require_auth"],
+      "difficulty": "easy"
+    },
+    {
+      "id": "flask-016",
+      "category": "architecture",
+      "question": "How does the `@require_auth` decorator preserve the original function signature?",
+      "expected_files": ["source/app/app.py"],
+      "expected_concepts": ["functools.wraps", "@wraps(f)"],
+      "difficulty": "easy"
+    },
+    {
+      "id": "flask-017",
+      "category": "navigation",
+      "question": "Where is the Flask app instance instantiated?",
+      "expected_files": ["source/app/app.py"],
+      "expected_concepts": ["app.py", "app = Flask(__name__)"],
+      "difficulty": "easy"
+    },
+    {
+      "id": "flask-018",
+      "category": "bug_investigation",
+      "question": "If a user passes the token via a query parameter `?token=secret-token`, will they be authenticated?",
+      "expected_files": ["source/app/app.py"],
+      "expected_concepts": ["No", "request.headers.get('Authorization')"],
+      "difficulty": "easy"
+    },
+    {
+      "id": "flask-019",
+      "category": "architecture",
+      "question": "What is the return payload of the secure_data route?",
+      "expected_files": ["source/app/app.py"],
+      "expected_concepts": ["{'data': 'secure payload'}"],
+      "difficulty": "easy"
+    },
+    {
+      "id": "flask-020",
+      "category": "navigation",
+      "question": "Which Python modules from standard library or third-party are imported in app.py?",
+      "expected_files": ["source/app/app.py"],
+      "expected_concepts": ["flask (Flask, jsonify, request)", "functools (wraps)", "flask_sqlalchemy (SQLAlchemy)"],
+      "difficulty": "easy"
+    }
+  ]
+}

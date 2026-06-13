@@ -1,0 +1,842 @@
+[
+  {
+    "questionId": "express-001",
+    "question": "How does authentication work in this Express app? What mechanism is used and how is it applied to routes?",
+    "mode": "full",
+    "answer": "",
+    "score": {
+      "correctness": 1,
+      "fileIdentification": 1,
+      "reasoningQuality": 1
+    },
+    "inputTokens": 0,
+    "outputTokens": 0,
+    "costUSD": 0
+  },
+  {
+    "questionId": "express-002",
+    "question": "How is role-based access control implemented? Give an example of how a super_admin-only route is protected.",
+    "mode": "full",
+    "answer": "# Role-Based Access Control Implementation\n\n## Overview\n\nRole-based access control (RBAC) is implemented through middleware functions in `express-real/source/middleware/auth.js` and applied to routes in `express-real/source/app.js`.\n\n## Implementation Details\n\n### 1. **verifyToken Middleware** (`auth.js`)\nFirst, all protected routes require token verification:\n- Extracts the JWT token from the `Authorization` header\n- Verifies the token using `process.env.JWT_SECRET`\n- Decodes the token and attaches the user object (including role) to `req.user`\n- Returns 401 if no token is provided, or 403 if the token is invalid\n\n### 2. **requireRole Middleware** (`auth.js`)\nSecond, role-specific access is enforced:\n```javascript\nconst requireRole = (role) => {\n    return (req, res, next) => {\n        if (!req.user || req.user.role !== role) {\n            return res.status(403).json({ error: 'Forbidden: Insufficient role' });\n        }\n        next();\n    };\n};\n```\nThis is a **middleware factory** that returns a middleware function checking if `req.user.role` matches the required role.\n\n## Example: Super Admin Route Protection\n\nIn `app.js`, the system reset endpoint is protected as a `super_admin`-only route:\n\n```javascript\napp.post('/api/admin/reset', verifyToken, requireRole('super_admin'), async (req, res) => {\n    await prisma.user.deleteMany({});\n    res.json({ message: 'System reset complete' });\n});\n```\n\n**Middleware chain:**\n1. `verifyToken` - validates JWT and extracts user role\n2. `requireRole('super_admin')` - ensures user's role is exactly `'super_admin'`\n3. Only if both pass, the route handler executes\n\n**Access result:**\n- ✅ Valid token with `role: 'super_admin'` → allowed\n- ❌ Valid token with any other role → 403 Forbidden\n- ❌ No token or invalid token → 401/403 error",
+    "score": {
+      "correctness": 4,
+      "fileIdentification": 5,
+      "reasoningQuality": 5
+    },
+    "inputTokens": 630,
+    "outputTokens": 517,
+    "costUSD": 0.003215
+  },
+  {
+    "questionId": "express-003",
+    "question": "How is the database accessed across different routes? How is the Prisma client made available to route handlers?",
+    "mode": "full",
+    "answer": "# Database Access Architecture\n\nThe Prisma client is made available to route handlers through **middleware that attaches it to the request object**.\n\n## Implementation Details\n\n**Location:** `express-real/source/app.js` (lines 11-14)\n\n```javascript\napp.use((req, res, next) => {\n    req.db = prisma;\n    next();\n});\n```\n\nThis global middleware:\n1. **Instantiates PrismaClient** once at application startup (line 7)\n2. **Attaches it to each request** as `req.db` \n3. **Runs before all routes** due to its placement early in the middleware chain\n\n## How Routes Access the Database\n\nRoute handlers access the database through the `req.db` property. For example, in the admin reset endpoint (lines 20-23):\n\n```javascript\napp.post('/api/admin/reset', verifyToken, requireRole('super_admin'), async (req, res) => {\n    await prisma.user.deleteMany({});  // Direct access to prisma instance\n    res.json({ message: 'System reset complete' });\n});\n```\n\nThe same pattern would apply to handlers in `./routes/users` (referenced on line 19) — they can access the database via `req.db`.\n\n## Key Design Points\n\n- **Single instance**: One `PrismaClient` is created and reused across all requests\n- **Request-scoped access**: Each route handler gets access through `req.db`\n- **Consistent pattern**: All routes follow the same pattern for database access",
+    "score": {
+      "correctness": 2,
+      "fileIdentification": 3,
+      "reasoningQuality": 2
+    },
+    "inputTokens": 628,
+    "outputTokens": 360,
+    "costUSD": 0.002428
+  },
+  {
+    "questionId": "express-004",
+    "question": "A request with a valid JWT returns 401. What could be the causes based on the auth middleware?",
+    "mode": "full",
+    "answer": "Based on the auth middleware in `express-real/source/middleware/auth.js`, a request with a valid JWT that returns 401 could have these causes:\n\n1. **Missing Authorization Header**: The request doesn't include an `Authorization` header at all. The `verifyToken` middleware checks:\n   ```javascript\n   if (!authHeader) return res.status(401).json({ error: 'No token provided' });\n   ```\n   This returns 401 if `req.headers['authorization']` is undefined or falsy.\n\n2. **Malformed Authorization Header**: The header exists but doesn't follow the expected format (typically \"Bearer <token>\"). The code does:\n   ```javascript\n   const token = authHeader.split(' ')[1];\n   ```\n   If the header doesn't contain a space or the token part is missing, `token` would be `undefined`, which would fail JWT verification and return **403** (not 401), so this is less likely to cause 401.\n\n**Most Likely Cause**: The client is not sending the `Authorization` header, or it's being sent with an empty/null value.\n\n**Note**: The middleware would return **403** (not 401) if the token is invalid or malformed, since that's caught in the try-catch block. A 401 specifically indicates the absence of authentication credentials (the header).",
+    "score": {
+      "correctness": 3,
+      "fileIdentification": 4,
+      "reasoningQuality": 4
+    },
+    "inputTokens": 627,
+    "outputTokens": 307,
+    "costUSD": 0.002162
+  },
+  {
+    "questionId": "express-005",
+    "question": "Where would I add a new protected route that only authenticated users with the 'moderator' role can access?",
+    "mode": "full",
+    "answer": "Based on the codebase, you would add a new protected route for 'moderator' role in **`express-real/source/app.js`** using the existing middleware pattern.\n\nHere's where and how to add it:\n\n```javascript\n// In app.js, after the existing protected routes\n\n// Moderator-only route example\napp.post('/api/moderator/action', verifyToken, requireRole('moderator'), async (req, res) => {\n    // Your moderator-only logic here\n    res.json({ message: 'Moderator action completed' });\n});\n```\n\n**Key points:**\n\n1. **Use the chain:** `verifyToken` first (to authenticate), then `requireRole('moderator')` (to authorize)\n2. **Order matters:** Both middleware from `express-real/source/middleware/auth.js` must be applied in sequence before your route handler\n3. **Pattern to follow:** This matches the existing `/api/admin/reset` route which uses `verifyToken, requireRole('super_admin')`\n\nAlternatively, if you have many moderator routes, you could create a separate router file (like `routes/moderator.js`) and mount it similarly to how `/api/users` is mounted, wrapping it with both `verifyToken` and `requireRole('moderator')`:\n\n```javascript\nconst moderatorRouter = require('./routes/moderator');\napp.use('/api/moderator', verifyToken, requireRole('moderator'), moderatorRouter);\n```",
+    "score": {
+      "correctness": 4,
+      "fileIdentification": 4,
+      "reasoningQuality": 5
+    },
+    "inputTokens": 629,
+    "outputTokens": 346,
+    "costUSD": 0.002359
+  },
+  {
+    "questionId": "express-006",
+    "question": "What port does the Express application listen on by default?",
+    "mode": "full",
+    "answer": "Based on the provided code context, **the port that the Express application listens on is not specified in the codebase**.\n\nThe `app.js` file creates and exports the Express application (`module.exports = app`), but there is no `app.listen()` call or port configuration visible in the provided files. \n\nThe port would typically be defined in a separate entry point file (such as `server.js` or `index.js`) that is not included in the provided context. Without that file, I cannot determine the default port.",
+    "score": {
+      "correctness": 5,
+      "fileIdentification": 5,
+      "reasoningQuality": 5
+    },
+    "inputTokens": 617,
+    "outputTokens": 119,
+    "costUSD": 0.001212
+  },
+  {
+    "questionId": "express-007",
+    "question": "How are JSON request bodies parsed in this application?",
+    "mode": "full",
+    "answer": "Based on the provided code, JSON request bodies are parsed using the **`express.json()` middleware** in `express-real/source/app.js`:\n\n```javascript\napp.use(express.json());\n```\n\nThis middleware is registered globally at line 12, which means it will automatically parse all incoming request bodies with a `Content-Type: application/json` header and populate `req.body` with the parsed JSON object.\n\nThis built-in Express middleware handles the parsing before any route handlers or other middleware execute (except for the CORS middleware, which is applied first).",
+    "score": {
+      "correctness": 5,
+      "fileIdentification": 5,
+      "reasoningQuality": 5
+    },
+    "inputTokens": 616,
+    "outputTokens": 128,
+    "costUSD": 0.001256
+  },
+  {
+    "questionId": "express-008",
+    "question": "If a user forgets the 'Bearer ' prefix in the Authorization header, what status code is returned?",
+    "mode": "full",
+    "answer": "If a user forgets the 'Bearer ' prefix in the Authorization header, a **401 status code** is returned.\n\nHere's why: In `express-real/source/middleware/auth.js`, the `verifyToken` function checks:\n\n```javascript\nconst token = authHeader.split(' ')[1];\n```\n\nThis extracts the second part after splitting by space. If the header is missing the 'Bearer ' prefix (e.g., just a raw token), `split(' ')[1]` will be `undefined`. When `jwt.verify()` is called with `undefined`, it will throw an error, which is caught by the `try-catch` block and returns a **403 status code** with `{ error: 'Invalid token' }`.\n\nHowever, if the Authorization header itself is completely missing, the function returns early with a **401 status code** and `{ error: 'No token provided' }`.\n\nSo to clarify:\n- **Missing header entirely**: 401\n- **Malformed header (no 'Bearer ' prefix)**: 403",
+    "score": {
+      "correctness": 4,
+      "fileIdentification": 4,
+      "reasoningQuality": 4
+    },
+    "inputTokens": 628,
+    "outputTokens": 242,
+    "costUSD": 0.001838
+  },
+  {
+    "questionId": "express-009",
+    "question": "Where are the authentication middlewares exported?",
+    "mode": "full",
+    "answer": "The authentication middlewares are exported in **`express-real/source/middleware/auth.js`**.\n\nSpecifically, at the bottom of that file:\n\n```javascript\nmodule.exports = { verifyToken, requireRole };\n```\n\nTwo middlewares are exported:\n1. **`verifyToken`** - Verifies the JWT token from the Authorization header\n2. **`requireRole`** - A higher-order function that checks if the user has a specific role\n\nThese are then imported and used in `express-real/source/app.js` with the line:\n```javascript\nconst { verifyToken, requireRole } = require('./middleware/auth');\n```",
+    "score": {
+      "correctness": 5,
+      "fileIdentification": 5,
+      "reasoningQuality": 5
+    },
+    "inputTokens": 614,
+    "outputTokens": 151,
+    "costUSD": 0.001369
+  },
+  {
+    "questionId": "express-010",
+    "question": "What ORM or database client is being used?",
+    "mode": "full",
+    "answer": "Based on the provided code, **Prisma** is being used as the ORM/database client.\n\nThis is evident from:\n\n1. **Import statement** in `express-real/source/app.js`:\n   ```javascript\n   const { PrismaClient } = require('@prisma/client');\n   ```\n\n2. **Instantiation** in the same file:\n   ```javascript\n   const prisma = new PrismaClient();\n   ```\n\n3. **Usage** throughout the code:\n   - Attached to requests as middleware: `req.db = prisma;`\n   - Used directly in routes: `await prisma.user.deleteMany({});` in the admin reset endpoint",
+    "score": {
+      "correctness": 5,
+      "fileIdentification": 5,
+      "reasoningQuality": 5
+    },
+    "inputTokens": 616,
+    "outputTokens": 160,
+    "costUSD": 0.001416
+  },
+  {
+    "questionId": "express-011",
+    "question": "Is CORS enabled in this application?",
+    "mode": "full",
+    "answer": "Yes, CORS is enabled in this application.\n\nIn `express-real/source/app.js`, line 8, the CORS middleware is explicitly enabled:\n\n```javascript\napp.use(cors());\n```\n\nThis allows cross-origin requests from any origin by default. However, the current configuration uses the default CORS settings without any specific origin restrictions, which means all origins can access the API endpoints.",
+    "score": {
+      "correctness": 5,
+      "fileIdentification": 5,
+      "reasoningQuality": 5
+    },
+    "inputTokens": 614,
+    "outputTokens": 90,
+    "costUSD": 0.001064
+  },
+  {
+    "questionId": "express-012",
+    "question": "What is the endpoint for fetching the user profile?",
+    "mode": "full",
+    "answer": "Based on the provided code context, I cannot definitively answer this question. \n\nHere's what I can see:\n\n1. In `app.js`, there is a route registration:\n   ```javascript\n   app.use('/api/users', verifyToken, userRouter);\n   ```\n\n2. This means user-related endpoints are defined in the `userRouter` from `./routes/users`, but **that file is not included in the provided context**.\n\nTo answer your question accurately, I would need to see the contents of `express-real/source/routes/users.js` to identify the specific endpoint (e.g., `/api/users/profile`, `/api/users/:id`, etc.) that handles user profile fetching.",
+    "score": {
+      "correctness": 5,
+      "fileIdentification": 4,
+      "reasoningQuality": 5
+    },
+    "inputTokens": 617,
+    "outputTokens": 163,
+    "costUSD": 0.001432
+  },
+  {
+    "questionId": "express-013",
+    "question": "What is the endpoint for resetting the database?",
+    "mode": "full",
+    "answer": "The endpoint for resetting the database is:\n\n**`POST /api/admin/reset`**\n\nThis endpoint is defined in `express-real/source/app.js` (line 22-25) and requires:\n1. A valid JWT token in the `Authorization` header (verified by `verifyToken` middleware)\n2. The authenticated user must have the `super_admin` role (enforced by `requireRole('super_admin')` middleware)\n\nWhen called, it deletes all users from the database via `prisma.user.deleteMany({})`.",
+    "score": {
+      "correctness": 1,
+      "fileIdentification": 1,
+      "reasoningQuality": 2
+    },
+    "inputTokens": 616,
+    "outputTokens": 128,
+    "costUSD": 0.001256
+  },
+  {
+    "questionId": "express-014",
+    "question": "If the JWT_SECRET environment variable is missing, what happens during token verification?",
+    "mode": "full",
+    "answer": "# JWT_SECRET Missing - Behavior Analysis\n\nIf the `JWT_SECRET` environment variable is missing, `jwt.verify()` in `express-real/source/middleware/auth.js` at line 9 will receive `undefined` as the secret parameter.\n\n## What Happens:\n\n1. **jwt.verify() will throw an error** - The jsonwebtoken library requires a valid secret string. When passed `undefined`, it will fail to verify the token.\n\n2. **The catch block catches the error** - The try-catch in the `verifyToken` function (lines 8-12) will catch this error.\n\n3. **Client receives 403 Forbidden** - The error handler returns:\n   ```json\n   { \"error\": \"Invalid token\" }\n   ```\n   with HTTP status `403`.\n\n## Result:\n\n**All protected routes will be inaccessible** with a generic \"Invalid token\" error message, regardless of whether the actual token is valid or not. This makes debugging difficult since the error doesn't distinguish between:\n- A missing JWT_SECRET (configuration issue)\n- An actually invalid/expired token (authentication issue)\n\n## Recommendation:\n\nThe application should validate that `JWT_SECRET` is set during startup, rather than failing silently at runtime. This could be done in `app.js` with an early check before starting the server.",
+    "score": {
+      "correctness": 4,
+      "fileIdentification": 4,
+      "reasoningQuality": 5
+    },
+    "inputTokens": 622,
+    "outputTokens": 304,
+    "costUSD": 0.002142
+  },
+  {
+    "questionId": "express-015",
+    "question": "Which module is used for verifying JSON Web Tokens?",
+    "mode": "full",
+    "answer": "Based on the provided code context, the **`jsonwebtoken`** module (imported as `jwt`) is used for verifying JSON Web Tokens.\n\nThis can be seen in `express-real/source/middleware/auth.js` at line 1:\n\n```javascript\nconst jwt = require('jsonwebtoken');\n```\n\nThe module is specifically used in the `verifyToken` function (lines 3-12) where `jwt.verify()` is called to decode and validate the token:\n\n```javascript\nconst decoded = jwt.verify(token, process.env.JWT_SECRET);\n```",
+    "score": {
+      "correctness": 5,
+      "fileIdentification": 5,
+      "reasoningQuality": 5
+    },
+    "inputTokens": 618,
+    "outputTokens": 134,
+    "costUSD": 0.001288
+  },
+  {
+    "questionId": "express-016",
+    "question": "Does the app serve any static files?",
+    "mode": "full",
+    "answer": "No, the app does not serve any static files. \n\nBased on the provided code in `express-real/source/app.js`, there are no static file serving configurations. The app only:\n\n1. Sets up CORS and JSON body parsing middleware\n2. Defines a health check endpoint (`/health`)\n3. Routes API requests to `/api/users` and `/api/admin/reset`\n\nThere are no calls to `express.static()` or any other mechanism for serving static files like HTML, CSS, JavaScript, or images.",
+    "score": {
+      "correctness": 5,
+      "fileIdentification": 5,
+      "reasoningQuality": 5
+    },
+    "inputTokens": 614,
+    "outputTokens": 120,
+    "costUSD": 0.001214
+  },
+  {
+    "questionId": "express-017",
+    "question": "What happens when a database error occurs in the /api/profile route?",
+    "mode": "full",
+    "answer": "I cannot answer this question based on the provided code context. \n\nThe codebase does not contain a `/api/profile` route. The only routes defined are:\n- `GET /health` (public health check in `app.js`)\n- `POST /api/admin/reset` (admin-only reset in `app.js`)\n- `app.use('/api/users', ...)` (which delegates to `userRouter` from `./routes/users`, but that file is not provided)\n\nTo answer your question about error handling in a `/api/profile` route, I would need to see the implementation of that route, which is not included in the provided context.",
+    "score": {
+      "correctness": 5,
+      "fileIdentification": 5,
+      "reasoningQuality": 5
+    },
+    "inputTokens": 621,
+    "outputTokens": 150,
+    "costUSD": 0.001371
+  },
+  {
+    "questionId": "express-018",
+    "question": "What fields does the /api/profile endpoint select from the database?",
+    "mode": "full",
+    "answer": "I cannot answer this question based on the provided code context. The codebase does not contain a `/api/profile` endpoint. \n\nThe only endpoints visible in the provided files are:\n- `GET /health` (public health check in `express-real/source/app.js`)\n- `POST /api/admin/reset` (admin-only reset in `express-real/source/app.js`)\n- Routes mounted at `/api/users` (defined in a separate file not provided, referenced in `express-real/source/app.js`)\n\nTo answer your question about the `/api/profile` endpoint, I would need to see the implementation file that contains that endpoint definition (likely in `express-real/source/routes/users.js` or another routes file not included in this context).",
+    "score": {
+      "correctness": 5,
+      "fileIdentification": 5,
+      "reasoningQuality": 5
+    },
+    "inputTokens": 620,
+    "outputTokens": 178,
+    "costUSD": 0.00151
+  },
+  {
+    "questionId": "express-019",
+    "question": "If a user has role 'user' and tries to hit /api/admin/reset, what is the exact response?",
+    "mode": "full",
+    "answer": "Based on the code, if a user with role `'user'` tries to hit `/api/admin/reset`, the exact response will be:\n\n**Status Code:** 403\n\n**Response Body:**\n```json\n{\n  \"error\": \"Forbidden: Insufficient role\"\n}\n```\n\n**Explanation:**\n\nThe request flows through these middleware in order:\n\n1. `verifyToken` middleware (in `express-real/source/middleware/auth.js`) - verifies the JWT token and attaches the decoded user to `req.user`\n2. `requireRole('super_admin')` middleware - checks if `req.user.role === 'super_admin'`\n\nSince the user has role `'user'` instead of `'super_admin'`, the condition `req.user.role !== role` evaluates to true, triggering the error response from line 12-14 in `express-real/source/middleware/auth.js`.",
+    "score": {
+      "correctness": 5,
+      "fileIdentification": 5,
+      "reasoningQuality": 5
+    },
+    "inputTokens": 632,
+    "outputTokens": 217,
+    "costUSD": 0.001717
+  },
+  {
+    "questionId": "express-020",
+    "question": "How is the Express application instantiated?",
+    "mode": "full",
+    "answer": "Based on the provided code, the Express application is instantiated in `express-real/source/app.js` at line 6:\n\n```javascript\nconst app = express();\n```\n\nThis creates a new Express application instance by calling the `express()` function, which is imported at the top of the file via:\n\n```javascript\nconst express = require('express');\n```\n\nThe `app` object is then configured with middleware and routes throughout the file, and finally exported as a module at the end:\n\n```javascript\nmodule.exports = app;\n```",
+    "score": {
+      "correctness": 5,
+      "fileIdentification": 5,
+      "reasoningQuality": 5
+    },
+    "inputTokens": 614,
+    "outputTokens": 123,
+    "costUSD": 0.001229
+  },
+  {
+    "questionId": "express-001",
+    "question": "How does authentication work in this Express app? What mechanism is used and how is it applied to routes?",
+    "mode": "minify",
+    "answer": "# Authentication Mechanism in This Express App\n\n## Authentication Mechanism\nThe app uses **JWT (JSON Web Token)** authentication:\n\n1. **Token Verification**: The `verifyToken` middleware in `express-real/source/middleware/auth.js` extracts the JWT from the `Authorization` header (expecting format: `Bearer <token>`)\n2. **Token Validation**: It verifies the token using `jwt.verify()` with a `JWT_SECRET` environment variable\n3. **User Context**: Upon successful verification, the decoded token is attached to `req.user` for downstream use\n\n## How It's Applied to Routes\n\n### Global Application\n- **Health check route** (`/health`): Public, no authentication required\n- **User routes** (`/api/users`): Protected by `verifyToken` middleware in `app.js` line 20\n  ```javascript\n  app.use('/api/users', verifyToken, userRouter);\n  ```\n\n### Role-Based Access Control\n- **Admin reset route** (`/api/admin/reset`): Protected by both `verifyToken` AND `requireRole('super_admin')` middleware\n  ```javascript\n  app.post('/api/admin/reset', verifyToken, requireRole('super_admin'), async (req, res) => {\n  ```\n\n## Middleware Chain\nThe `requireRole()` function wraps role checking logic and works in conjunction with `verifyToken`:\n1. `verifyToken` runs first, validates the JWT and populates `req.user`\n2. `requireRole()` then checks if `req.user.role` matches the required role\n\n## Error Handling\n- **No token**: Returns `401 Unauthorized`\n- **Invalid token**: Returns `403 Forbidden`\n- **Insufficient role**: Returns `403 Forbidden`",
+    "score": {
+      "correctness": 3,
+      "fileIdentification": 2,
+      "reasoningQuality": 3
+    },
+    "inputTokens": 604,
+    "outputTokens": 413,
+    "costUSD": 0.002669
+  },
+  {
+    "questionId": "express-002",
+    "question": "How is role-based access control implemented? Give an example of how a super_admin-only route is protected.",
+    "mode": "minify",
+    "answer": "# Role-Based Access Control Implementation\n\n## How It Works\n\nRole-based access control (RBAC) is implemented through two middleware functions in `express-real/source/middleware/auth.js`:\n\n1. **`verifyToken`** - Authenticates the user by validating their JWT token and extracting user information (including role) into `req.user`\n\n2. **`requireRole(role)`** - A middleware factory that checks if the authenticated user's role matches the required role\n\n## Example: Super Admin Route Protection\n\nThe `/api/admin/reset` endpoint in `express-real/source/app.js` (lines 19-22) demonstrates this:\n\n```javascript\napp.post('/api/admin/reset', verifyToken, requireRole('super_admin'), async (req, res) => {\n    await prisma.user.deleteMany({});\n    res.json({ message: 'System reset complete' });\n});\n```\n\n**Protection Chain:**\n1. `verifyToken` middleware runs first - validates the JWT token and sets `req.user` with decoded claims\n2. `requireRole('super_admin')` middleware runs second - checks that `req.user.role === 'super_admin'`\n3. Only if both conditions pass does the route handler execute\n\n**Access Denial:** If a user lacks the `super_admin` role, the `requireRole` middleware returns:\n```json\n{ \"error\": \"Forbidden: Insufficient role\" }\n```\nwith HTTP status 403.",
+    "score": {
+      "correctness": 5,
+      "fileIdentification": 5,
+      "reasoningQuality": 5
+    },
+    "inputTokens": 607,
+    "outputTokens": 342,
+    "costUSD": 0.002317
+  },
+  {
+    "questionId": "express-003",
+    "question": "How is the database accessed across different routes? How is the Prisma client made available to route handlers?",
+    "mode": "minify",
+    "answer": "# Database Access Pattern\n\nThe Prisma client is made available to route handlers through **middleware injection on the request object**.\n\n## Implementation Details\n\n**In `express-real/source/app.js` (lines 12-15):**\n\n```javascript\napp.use((req, res, next) => {\n    req.db = prisma;\n    next();\n});\n```\n\nA custom middleware attaches the `PrismaClient` instance to `req.db`, making it accessible to all downstream route handlers.\n\n## How Routes Access the Database\n\nRoute handlers access the database via `req.db`. For example, in the `/api/admin/reset` endpoint (lines 22-25):\n\n```javascript\napp.post('/api/admin/reset', verifyToken, requireRole('super_admin'), async (req, res) => {\n    await prisma.user.deleteMany({});\n    // ...\n});\n```\n\nWhile this example uses the module-scoped `prisma` directly, route handlers typically would access it via `req.db` (which references the same instance).\n\n## Key Points\n\n- **Single instance**: A single `PrismaClient` is instantiated at application startup and reused across all requests\n- **Middleware-based injection**: The pattern allows every route handler to access the database without explicit imports\n- **Applied globally**: Since the middleware is registered early with `app.use()`, it applies to all routes defined afterward\n- **Available in routers**: Routes registered via `userRouter` (line 21) also have access to `req.db`\n\nThis is a common Express pattern for sharing database connections across a modular routing structure.",
+    "score": {
+      "correctness": 4,
+      "fileIdentification": 5,
+      "reasoningQuality": 4
+    },
+    "inputTokens": 605,
+    "outputTokens": 368,
+    "costUSD": 0.002445
+  },
+  {
+    "questionId": "express-004",
+    "question": "A request with a valid JWT returns 401. What could be the causes based on the auth middleware?",
+    "mode": "minify",
+    "answer": "Based on the auth middleware in `express-real/source/middleware/auth.js`, a valid JWT returning 401 is **not possible** given the current code logic.\n\nHere's why:\n\nThe only 401 response in the middleware occurs at this line:\n```javascript\nif (!authHeader) return res.status(401).json({ error: 'No token provided' });\n```\n\nThis means a 401 is only returned when:\n1. The `Authorization` header is missing entirely, OR\n2. The header exists but is falsy\n\n**If a valid JWT is being sent**, the `authHeader` should exist, so the code will:\n1. Extract the token: `token = authHeader.split(' ')[1]`\n2. Call `jwt.verify(token, process.env.JWT_SECRET)`\n3. Either succeed (call `next()`) or fail with a 403\n\n**Possible causes if you're observing a 401 with a valid JWT:**\n\n1. **Missing Authorization header** — The request isn't including the `Authorization` header at all\n2. **Malformed Authorization header** — The header format isn't `Bearer <token>` (the split on space expects this format)\n3. **Token not passed correctly** — The token might be in a different header or format than expected\n\nTo debug, verify that your client is sending:\n```\nAuthorization: Bearer <your_valid_jwt_token>\n```",
+    "score": {
+      "correctness": 4,
+      "fileIdentification": 5,
+      "reasoningQuality": 5
+    },
+    "inputTokens": 604,
+    "outputTokens": 324,
+    "costUSD": 0.002224
+  },
+  {
+    "questionId": "express-005",
+    "question": "Where would I add a new protected route that only authenticated users with the 'moderator' role can access?",
+    "mode": "minify",
+    "answer": "# Adding a New Protected Route for Moderators\n\nYou would add a new protected route in the **`express-real/source/app.js`** file, following the same pattern as the existing `/api/admin/reset` endpoint.\n\nHere's the pattern to use:\n\n```javascript\napp.post('/api/moderator/some-action', verifyToken, requireRole('moderator'), async (req, res) => {\n    // Your route handler logic here\n});\n```\n\n## Key points:\n\n1. **Middleware chain**: Use `verifyToken` first (to verify the JWT token exists and is valid), then `requireRole('moderator')` (to check the user's role)\n\n2. **Location**: Add this after line 17 in `app.js`, before the `module.exports` statement\n\n3. **The middleware flow**:\n   - `verifyToken` (from `express-real/source/middleware/auth.js`) decodes the JWT and attaches the user to `req.user`\n   - `requireRole('moderator')` checks that `req.user.role === 'moderator'`\n   - If either check fails, a 401 or 403 error is returned automatically\n\n4. **Alternative**: You could also organize moderator routes into a separate router file (like `routes/moderator.js`) and mount it similarly to how `userRouter` is mounted on line 17.",
+    "score": {
+      "correctness": 5,
+      "fileIdentification": 5,
+      "reasoningQuality": 5
+    },
+    "inputTokens": 606,
+    "outputTokens": 322,
+    "costUSD": 0.002216
+  },
+  {
+    "questionId": "express-006",
+    "question": "What port does the Express application listen on by default?",
+    "mode": "minify",
+    "answer": "Based on the provided code context, the Express application does **not specify a port** in the codebase files shown.\n\nThe `app.js` file creates and configures an Express application but does not include a `.listen()` call. While `app.js` exports the app (`module.exports = app`), the actual server initialization with a port binding would typically occur in a separate entry point file (such as `server.js` or `index.js`), which is not provided in the context.\n\nTherefore, I cannot determine the default port from the code provided. You would need to check the server entry point file to see what port is configured.",
+    "score": {
+      "correctness": 5,
+      "fileIdentification": 5,
+      "reasoningQuality": 5
+    },
+    "inputTokens": 594,
+    "outputTokens": 142,
+    "costUSD": 0.001304
+  },
+  {
+    "questionId": "express-007",
+    "question": "How are JSON request bodies parsed in this application?",
+    "mode": "minify",
+    "answer": "Based on the provided code, JSON request bodies are parsed using Express's built-in `express.json()` middleware.\n\nIn `express-real/source/app.js`, line 11:\n\n```javascript\napp.use(express.json());\n```\n\nThis middleware is registered globally on the Express application, so it will parse incoming request bodies with a `Content-Type: application/json` header and make the parsed data available via `req.body` for all routes in the application.",
+    "score": {
+      "correctness": 5,
+      "fileIdentification": 5,
+      "reasoningQuality": 5
+    },
+    "inputTokens": 593,
+    "outputTokens": 108,
+    "costUSD": 0.001133
+  },
+  {
+    "questionId": "express-008",
+    "question": "If a user forgets the 'Bearer ' prefix in the Authorization header, what status code is returned?",
+    "mode": "minify",
+    "answer": "If a user forgets the 'Bearer ' prefix in the Authorization header, the code will attempt to access `authHeader.split(' ')[1]`, which will result in `undefined`.\n\nThen, when `jwt.verify(token, process.env.JWT_SECRET)` is called with `undefined` as the token, it will throw an error that gets caught by the `catch` block in the `verifyToken` function at `express-real/source/middleware/auth.js`.\n\nTherefore, a **403** status code is returned with the error message `{ error: 'Invalid token' }`.",
+    "score": {
+      "correctness": 5,
+      "fileIdentification": 5,
+      "reasoningQuality": 5
+    },
+    "inputTokens": 605,
+    "outputTokens": 135,
+    "costUSD": 0.00128
+  },
+  {
+    "questionId": "express-009",
+    "question": "Where are the authentication middlewares exported?",
+    "mode": "minify",
+    "answer": "The authentication middlewares are exported in **`express-real/source/middleware/auth.js`** at the end of the file:\n\n```javascript\nmodule.exports = { verifyToken, requireRole };\n```\n\nThese two middlewares (`verifyToken` and `requireRole`) are then imported and used in **`express-real/source/app.js`**:\n\n```javascript\nconst { verifyToken, requireRole } = require('./middleware/auth');\n```",
+    "score": {
+      "correctness": 3,
+      "fileIdentification": 3,
+      "reasoningQuality": 3
+    },
+    "inputTokens": 591,
+    "outputTokens": 107,
+    "costUSD": 0.001126
+  },
+  {
+    "questionId": "express-010",
+    "question": "What ORM or database client is being used?",
+    "mode": "minify",
+    "answer": "The ORM being used is **Prisma** (via the `@prisma/client` package).\n\nThis is evident from:\n1. The import statement in `express-real/source/app.js`: `const { PrismaClient } = require('@prisma/client');`\n2. The instantiation: `const prisma = new PrismaClient();`\n3. Its usage throughout the code, such as in the `/api/admin/reset` endpoint where it calls `prisma.user.deleteMany({})`.",
+    "score": {
+      "correctness": 5,
+      "fileIdentification": 5,
+      "reasoningQuality": 5
+    },
+    "inputTokens": 593,
+    "outputTokens": 121,
+    "costUSD": 0.001198
+  },
+  {
+    "questionId": "express-011",
+    "question": "Is CORS enabled in this application?",
+    "mode": "minify",
+    "answer": "Yes, CORS is enabled in this application.\n\nIn `express-real/source/app.js`, line 7, CORS is explicitly enabled:\n\n```javascript\napp.use(cors());\n```\n\nThis middleware is applied globally to the Express application, allowing cross-origin requests from any origin by default. Note that this uses the default CORS configuration without restrictions—in production, you would typically want to configure specific allowed origins rather than allowing all origins.",
+    "score": {
+      "correctness": 5,
+      "fileIdentification": 5,
+      "reasoningQuality": 5
+    },
+    "inputTokens": 591,
+    "outputTokens": 100,
+    "costUSD": 0.001091
+  },
+  {
+    "questionId": "express-012",
+    "question": "What is the endpoint for fetching the user profile?",
+    "mode": "minify",
+    "answer": "Based on the provided codebase, I cannot definitively answer where the user profile endpoint is located.\n\nHere's what I can see:\n\n1. In `app.js`, there is a route mounted at `/api/users` that uses the `userRouter`:\n   ```javascript\n   app.use('/api/users', verifyToken, userRouter);\n   ```\n\n2. However, the actual `userRouter` is imported from `'./routes/users'`, but that file is **not included in the provided code context**.\n\nTo answer your question accurately, I would need to see the contents of `express-real/source/routes/users.js`, which defines the specific endpoints under `/api/users/`.\n\nThe user profile endpoint would likely be something like `/api/users/:id` or `/api/users/me`, but I cannot confirm the exact path without viewing the router file.",
+    "score": {
+      "correctness": 4,
+      "fileIdentification": 4,
+      "reasoningQuality": 5
+    },
+    "inputTokens": 594,
+    "outputTokens": 196,
+    "costUSD": 0.001574
+  },
+  {
+    "questionId": "express-013",
+    "question": "What is the endpoint for resetting the database?",
+    "mode": "minify",
+    "answer": "Based on the provided code, the endpoint for resetting the database is:\n\n**POST `/api/admin/reset`**\n\nThis endpoint is defined in `express-real/source/app.js` (lines 21-24). It requires:\n1. A valid JWT token in the `Authorization` header (enforced by `verifyToken` middleware)\n2. The user to have the `super_admin` role (enforced by `requireRole('super_admin')` middleware)\n\nWhen called with proper authentication and authorization, it deletes all users from the database and returns `{ message: 'System reset complete' }`.",
+    "score": {
+      "correctness": 5,
+      "fileIdentification": 5,
+      "reasoningQuality": 5
+    },
+    "inputTokens": 593,
+    "outputTokens": 140,
+    "costUSD": 0.001293
+  },
+  {
+    "questionId": "express-014",
+    "question": "If the JWT_SECRET environment variable is missing, what happens during token verification?",
+    "mode": "minify",
+    "answer": "If the `JWT_SECRET` environment variable is missing, the `jwt.verify()` call in the `verifyToken` middleware (in `express-real/source/middleware/auth.js` at line 10) will receive `undefined` as the secret parameter.\n\nThis will cause `jwt.verify()` to fail with an error, which is caught by the `try-catch` block. The middleware will then return a **403 Forbidden** response with the error message `{ error: 'Invalid token' }` (line 13).\n\nFrom the client's perspective, they cannot distinguish between an actually invalid token and a server configuration error—both result in the same 403 response.",
+    "score": {
+      "correctness": 4,
+      "fileIdentification": 4,
+      "reasoningQuality": 4
+    },
+    "inputTokens": 599,
+    "outputTokens": 153,
+    "costUSD": 0.001364
+  },
+  {
+    "questionId": "express-015",
+    "question": "Which module is used for verifying JSON Web Tokens?",
+    "mode": "minify",
+    "answer": "Based on the provided code context, **`jsonwebtoken`** (imported as `jwt`) is the module used for verifying JSON Web Tokens.\n\nThis can be seen in `express-real/source/middleware/auth.js` at line 1:\n\n```javascript\nconst jwt = require('jsonwebtoken');\n```\n\nThe `jwt.verify()` method is then used in the `verifyToken` function (line 9) to verify and decode the JWT token from the authorization header.",
+    "score": {
+      "correctness": 5,
+      "fileIdentification": 5,
+      "reasoningQuality": 5
+    },
+    "inputTokens": 595,
+    "outputTokens": 111,
+    "costUSD": 0.00115
+  },
+  {
+    "questionId": "express-016",
+    "question": "Does the app serve any static files?",
+    "mode": "minify",
+    "answer": "No, the app does not serve any static files.\n\nBased on the provided code in `express-real/source/app.js`, there are no static file serving configurations. The middleware setup includes:\n- `cors()` for cross-origin requests\n- `express.json()` for JSON parsing\n- A custom middleware that attaches the Prisma database client to requests\n\nThere are no calls to `express.static()` or any other static file serving middleware, and no routes configured to serve static assets.",
+    "score": {
+      "correctness": 5,
+      "fileIdentification": 5,
+      "reasoningQuality": 5
+    },
+    "inputTokens": 591,
+    "outputTokens": 112,
+    "costUSD": 0.001151
+  },
+  {
+    "questionId": "express-017",
+    "question": "What happens when a database error occurs in the /api/profile route?",
+    "mode": "minify",
+    "answer": "Based on the provided codebase, **I cannot answer this question confidently** because there is no `/api/profile` route defined in the code.\n\nThe codebase shows:\n- `app.js` - defines routes for `/health`, `/api/users` (which delegates to `userRouter`), and `/api/admin/reset`\n- `middleware/auth.js` - contains authentication middleware only\n\nThe `/api/users` route is delegated to `userRouter` from `./routes/users`, but that file is not provided in the context. Therefore, I cannot determine:\n1. Whether a `/api/profile` route exists within the users router\n2. What error handling is implemented for that route\n3. How database errors would be handled\n\nTo answer this question properly, I would need to see the contents of `./routes/users` file.",
+    "score": {
+      "correctness": 5,
+      "fileIdentification": 5,
+      "reasoningQuality": 5
+    },
+    "inputTokens": 598,
+    "outputTokens": 190,
+    "costUSD": 0.001548
+  },
+  {
+    "questionId": "express-018",
+    "question": "What fields does the /api/profile endpoint select from the database?",
+    "mode": "minify",
+    "answer": "I cannot answer this question based on the provided code context. The codebase does not contain a `/api/profile` endpoint.\n\nThe code shows:\n- A `/health` endpoint in `app.js`\n- A `/api/users` endpoint (routed to `userRouter` from `./routes/users`, which is not included in the provided files)\n- A `/api/admin/reset` endpoint in `app.js`\n\nTo answer your question about the `/api/profile` endpoint, I would need to see the implementation in the `./routes/users` file or wherever that endpoint is defined.",
+    "score": {
+      "correctness": 5,
+      "fileIdentification": 5,
+      "reasoningQuality": 5
+    },
+    "inputTokens": 597,
+    "outputTokens": 135,
+    "costUSD": 0.001272
+  },
+  {
+    "questionId": "express-019",
+    "question": "If a user has role 'user' and tries to hit /api/admin/reset, what is the exact response?",
+    "mode": "minify",
+    "answer": "If a user with role 'user' tries to hit `/api/admin/reset`, the exact response will be:\n\n**Status Code:** 403\n\n**Response Body:**\n```json\n{ \"error\": \"Forbidden: Insufficient role\" }\n```\n\n**Explanation:**\n\n1. The request first passes through the `verifyToken` middleware (from line 18 in app.js), which extracts and verifies the JWT token, setting `req.user` with the decoded token data including the role.\n\n2. The request then reaches the `requireRole('super_admin')` middleware (line 20 in app.js).\n\n3. Inside `requireRole` in middleware/auth.js (lines 14-19), it checks if `req.user.role !== role`. Since the user's role is 'user' and the required role is 'super_admin', the condition is true.\n\n4. The middleware returns the 403 status code with the error message shown above and does **not** call `next()`, so the request handler is never executed.",
+    "score": {
+      "correctness": 5,
+      "fileIdentification": 5,
+      "reasoningQuality": 5
+    },
+    "inputTokens": 609,
+    "outputTokens": 238,
+    "costUSD": 0.001799
+  },
+  {
+    "questionId": "express-020",
+    "question": "How is the Express application instantiated?",
+    "mode": "minify",
+    "answer": "# Express Application Instantiation\n\nBased on the code in `express-real/source/app.js`, the Express application is instantiated on **line 6**:\n\n```javascript\nconst app = express();\n```\n\nThis creates a new Express application instance by calling the `express()` function, which is imported at the top of the file:\n\n```javascript\nconst express = require('express');\n```\n\nThe `app` instance is then configured with middleware and routes before being exported as a module at the end of the file for use in other parts of the application.",
+    "score": {
+      "correctness": 5,
+      "fileIdentification": 5,
+      "reasoningQuality": 5
+    },
+    "inputTokens": 591,
+    "outputTokens": 124,
+    "costUSD": 0.001211
+  },
+  {
+    "questionId": "express-001",
+    "question": "How does authentication work in this Express app? What mechanism is used and how is it applied to routes?",
+    "mode": "skeleton",
+    "answer": "# Authentication Mechanism in This Express App\n\nBased on the provided code, here's how authentication works:\n\n## Authentication Mechanism\n\n**JWT (JSON Web Tokens)** is used for authentication, as evidenced by:\n- The import of `jsonwebtoken` in `express-real/source/middleware/auth.js`\n- The `verifyToken` middleware function that validates tokens\n\n## How It's Applied to Routes\n\n### 1. **Token Verification Middleware**\nThe `verifyToken` middleware (from `express-real/source/middleware/auth.js`) is used as route protection. It's applied to:\n- **Protected routes**: All `/api/users` routes require token verification\n  ```javascript\n  app.use('/api/users', verifyToken, userRouter);\n  ```\n\n### 2. **Role-Based Access Control**\nA `requireRole()` middleware factory creates role-checking middleware. It's used for:\n- **Admin-only routes**: The `/api/admin/reset` endpoint requires both token verification AND the `super_admin` role\n  ```javascript\n  app.post('/api/admin/reset', verifyToken, requireRole('super_admin'), async (req, res) => {...})\n  ```\n\n## Flow\n\n1. Request arrives at a protected route\n2. `verifyToken` middleware validates the JWT token\n3. For admin routes, `requireRole('super_admin')` additionally checks the user's role\n4. Only authenticated users with appropriate roles can access protected endpoints\n\n## Limitation\n\nThe actual implementation of both `verifyToken` and `requireRole` functions in `express-real/source/middleware/auth.js` are **incomplete** (shown as empty function signatures), so the specific token validation logic and role-checking logic cannot be determined from this context.",
+    "score": {
+      "correctness": 4,
+      "fileIdentification": 5,
+      "reasoningQuality": 4
+    },
+    "inputTokens": 405,
+    "outputTokens": 404,
+    "costUSD": 0.002425
+  },
+  {
+    "questionId": "express-002",
+    "question": "How is role-based access control implemented? Give an example of how a super_admin-only route is protected.",
+    "mode": "skeleton",
+    "answer": "# Role-Based Access Control Implementation\n\nBased on the provided codebase, role-based access control is implemented through **middleware composition**:\n\n## Implementation Pattern\n\nThe RBAC system uses two middleware functions from `express-real/source/middleware/auth.js`:\n\n1. **`verifyToken`** - Authenticates the user by validating their JWT token\n2. **`requireRole(role)`** - Authorization middleware that checks if the authenticated user has the required role\n\n## Example: Super Admin Route Protection\n\nIn `express-real/source/app.js`, the admin reset endpoint demonstrates the pattern:\n\n```javascript\napp.post('/api/admin/reset', verifyToken, requireRole('super_admin'), async (req, res) =>\n```\n\n**Middleware chain breakdown:**\n- `verifyToken` runs first → verifies JWT and extracts user identity\n- `requireRole('super_admin')` runs second → checks if user's role is `'super_admin'`\n- Only if both succeed does the route handler execute\n\n## Limitations\n\n**Note:** The actual implementation details of both middleware functions are incomplete in the provided code (they show only function signatures without bodies). Therefore, I cannot provide the specific verification logic, JWT secret handling, or exact role comparison mechanism. \n\nTo fully understand the implementation, you would need to review the complete `middleware/auth.js` file with the actual function implementations.",
+    "score": {
+      "correctness": 4,
+      "fileIdentification": 5,
+      "reasoningQuality": 4
+    },
+    "inputTokens": 408,
+    "outputTokens": 312,
+    "costUSD": 0.001968
+  },
+  {
+    "questionId": "express-003",
+    "question": "How is the database accessed across different routes? How is the Prisma client made available to route handlers?",
+    "mode": "skeleton",
+    "answer": "Based on the provided code context, I cannot fully answer this question because **the codebase snippets are incomplete** — they contain function signatures and structure but lack the actual implementations.\n\nHowever, I can identify what **should** be happening:\n\n## What I can see:\n\n1. **In `express-real/source/app.js`:**\n   - A `PrismaClient` instance is created at the top level: `const prisma = new PrismaClient();`\n   - Routes are registered, including `app.use('/api/users', verifyToken, userRouter);`\n\n2. **What's missing:**\n   - The implementation of how `prisma` is passed to route handlers is not shown\n   - The route files themselves (like the imported `userRouter` from `./routes/users`) are not provided\n\n## Likely implementation patterns:\n\nBased on standard Express + Prisma practices, the `prisma` client is typically made available to routes through one of these methods:\n\n1. **Attached to `req` object** (most common in the provided codebase pattern):\n   ```javascript\n   app.use((req, res, next) => {\n     req.prisma = prisma;\n     next();\n   });\n   ```\n   Then accessed in routes as `req.prisma.user.findUnique()`, etc.\n\n2. **Exported from a module** that route handlers import directly\n\n3. **Passed through middleware** to populate request context\n\n**To answer this question completely, I would need to see:**\n- The actual implementation of the middleware in `app.js` (lines with `}`)\n- The route handlers in `./routes/users.js`\n- How the `prisma` instance is injected into those handlers",
+    "score": {
+      "correctness": 4,
+      "fileIdentification": 4,
+      "reasoningQuality": 4
+    },
+    "inputTokens": 406,
+    "outputTokens": 394,
+    "costUSD": 0.002376
+  },
+  {
+    "questionId": "express-004",
+    "question": "A request with a valid JWT returns 401. What could be the causes based on the auth middleware?",
+    "mode": "skeleton",
+    "answer": "# Potential Causes of 401 with Valid JWT\n\nBased on the provided code context, I can identify the following potential causes:\n\n## 1. **Incomplete `verifyToken` Implementation**\nThe `verifyToken` function in `express-real/source/middleware/auth.js` is **incomplete** (ends with `=>` with no body). This means:\n- It may not be calling `next()` to pass control to the next middleware\n- It may not be properly extracting the JWT from request headers\n- It may not be validating the token signature against the secret key\n\n## 2. **Incomplete `requireRole` Implementation**\nThe `requireRole` function is also **incomplete**. Even if `verifyToken` passes, any route using `requireRole` could fail if:\n- It's not properly checking the user's role from the decoded token\n- It's not calling `next()` on role match\n\n## 3. **Missing Token Extraction Logic**\nWithout seeing the full implementation, common issues include:\n- Token not being extracted from `Authorization` header (e.g., `Bearer <token>`)\n- Incorrect header parsing (case sensitivity, malformed prefix)\n- Token stored in wrong request property (not `req.user` or similar)\n\n## 4. **JWT Secret Mismatch**\nIf `verifyToken` is attempting verification, it must use the same secret key that signed the token. A mismatch would cause verification to fail.\n\n## Recommendation\n**Complete the implementations** in `express-real/source/middleware/auth.js` to identify the exact issue. The incomplete code is the primary blocker for diagnosis.",
+    "score": {
+      "correctness": 4,
+      "fileIdentification": 5,
+      "reasoningQuality": 4
+    },
+    "inputTokens": 405,
+    "outputTokens": 371,
+    "costUSD": 0.00226
+  },
+  {
+    "questionId": "express-005",
+    "question": "Where would I add a new protected route that only authenticated users with the 'moderator' role can access?",
+    "mode": "skeleton",
+    "answer": "Based on the codebase structure, you would add a new protected route in **`express-real/source/app.js`** following the same pattern used for the admin reset endpoint.\n\nHere's where and how to add it:\n\n```javascript\n// In express-real/source/app.js, after the existing protected routes:\n\napp.post('/api/moderator/action', verifyToken, requireRole('moderator'), async (req, res) => {\n  // Your moderator-only logic here\n});\n```\n\n**The pattern is:**\n1. Define the route in `app.js`\n2. Use `verifyToken` middleware to ensure the user is authenticated\n3. Use `requireRole('moderator')` middleware to ensure they have the moderator role\n4. Add your route handler logic\n\nThis follows the exact same middleware chain used for the admin reset route at `/api/admin/reset`, which uses `verifyToken` and `requireRole('super_admin')`.\n\n**Note:** The code snippets in both files appear incomplete (missing closing braces for middleware functions), so you'll want to ensure the `verifyToken` and `requireRole` functions in `express-real/source/middleware/auth.js` are properly implemented before testing this route.",
+    "score": {
+      "correctness": 5,
+      "fileIdentification": 5,
+      "reasoningQuality": 5
+    },
+    "inputTokens": 407,
+    "outputTokens": 283,
+    "costUSD": 0.001822
+  },
+  {
+    "questionId": "express-006",
+    "question": "What port does the Express application listen on by default?",
+    "mode": "skeleton",
+    "answer": "Based on the provided code context, I cannot determine what port the Express application listens on by default.\n\nThe code snippet in `express-real/source/app.js` shows the application setup and middleware configuration, but it does not include the server startup code (typically something like `app.listen(port, ...)` or `app.listen(process.env.PORT, ...)`). The file appears to be incomplete, ending abruptly with `module.exports = app;` without showing where the port is specified.\n\nTo answer this question, I would need to see:\n1. The server startup file (often `server.js` or `index.js`)\n2. Any environment configuration files\n3. The complete `app.js` file with the listen call",
+    "score": {
+      "correctness": 5,
+      "fileIdentification": 5,
+      "reasoningQuality": 5
+    },
+    "inputTokens": 395,
+    "outputTokens": 168,
+    "costUSD": 0.001235
+  },
+  {
+    "questionId": "express-007",
+    "question": "How are JSON request bodies parsed in this application?",
+    "mode": "skeleton",
+    "answer": "Based on the provided code context, JSON request bodies are parsed using **Express's built-in `express.json()` middleware**.\n\nThis is configured in `express-real/source/app.js` at the global middleware level:\n\n```javascript\napp.use(express.json());\n```\n\nThis middleware is applied globally to the application, meaning all incoming requests with a `Content-Type: application/json` header will have their bodies automatically parsed into JavaScript objects and made available via `req.body`.\n\nHowever, I should note that the code in the provided context is **incomplete** — both middleware functions in `app.js` and `auth.js` are missing their implementations (they end with `}`), so I cannot provide additional details about any custom parsing logic that might exist beyond what's shown.",
+    "score": {
+      "correctness": 5,
+      "fileIdentification": 5,
+      "reasoningQuality": 5
+    },
+    "inputTokens": 394,
+    "outputTokens": 173,
+    "costUSD": 0.001259
+  },
+  {
+    "questionId": "express-008",
+    "question": "If a user forgets the 'Bearer ' prefix in the Authorization header, what status code is returned?",
+    "mode": "skeleton",
+    "answer": "I cannot answer this question confidently based on the provided code context.\n\nWhile the codebase shows that there is a `verifyToken` middleware in `express-real/source/middleware/auth.js` that would handle Authorization header validation, **the actual implementation of this middleware is incomplete** — the function body is missing (shown only as `const verifyToken = (req, res, next) =>`).\n\nWithout seeing the actual implementation of how `verifyToken` parses and validates the Authorization header format, I cannot determine what status code would be returned if the 'Bearer ' prefix is missing.\n\nTo answer this question, I would need to see the complete implementation of the `verifyToken` function in `express-real/source/middleware/auth.js`.",
+    "score": {
+      "correctness": 5,
+      "fileIdentification": 5,
+      "reasoningQuality": 5
+    },
+    "inputTokens": 406,
+    "outputTokens": 168,
+    "costUSD": 0.001246
+  },
+  {
+    "questionId": "express-009",
+    "question": "Where are the authentication middlewares exported?",
+    "mode": "skeleton",
+    "answer": "The authentication middlewares are exported in **`express-real/source/middleware/auth.js`**.\n\nSpecifically, at the end of that file, there is a `module.exports` statement that exports:\n- `verifyToken`\n- `requireRole`\n\nThese exported middlewares are then imported and used in **`express-real/source/app.js`** with the line:\n```javascript\nconst { verifyToken, requireRole } = require('./middleware/auth');\n```",
+    "score": {
+      "correctness": 3,
+      "fileIdentification": 3,
+      "reasoningQuality": 3
+    },
+    "inputTokens": 392,
+    "outputTokens": 111,
+    "costUSD": 0.000947
+  },
+  {
+    "questionId": "express-010",
+    "question": "What ORM or database client is being used?",
+    "mode": "skeleton",
+    "answer": "Based on the provided code context, **Prisma** is being used as the ORM/database client.\n\nThis is evident from:\n1. The import statement in `express-real/source/app.js`: `const { PrismaClient } = require('@prisma/client');`\n2. The instantiation: `const prisma = new PrismaClient();`\n\nPrisma is a modern Node.js and TypeScript ORM that provides type-safe database access.",
+    "score": {
+      "correctness": 5,
+      "fileIdentification": 5,
+      "reasoningQuality": 5
+    },
+    "inputTokens": 394,
+    "outputTokens": 109,
+    "costUSD": 0.000939
+  },
+  {
+    "questionId": "express-011",
+    "question": "Is CORS enabled in this application?",
+    "mode": "skeleton",
+    "answer": "Yes, CORS is enabled in this application.\n\nIn `express-real/source/app.js`, line 7 shows:\n\n```javascript\napp.use(cors());\n```\n\nThis middleware is imported at the top of the file (`const cors = require('cors');`) and applied globally without any restrictions, meaning CORS is enabled for all routes by default.",
+    "score": {
+      "correctness": 5,
+      "fileIdentification": 5,
+      "reasoningQuality": 5
+    },
+    "inputTokens": 392,
+    "outputTokens": 82,
+    "costUSD": 0.000802
+  },
+  {
+    "questionId": "express-012",
+    "question": "What is the endpoint for fetching the user profile?",
+    "mode": "skeleton",
+    "answer": "Based on the provided code context, I cannot definitively answer this question.\n\nHere's what I can observe:\n\n1. **User routes are delegated**: The code shows that user-related endpoints are handled by a router imported from `'./routes/users'`:\n   ```javascript\n   app.use('/api/users', verifyToken, userRouter);\n   ```\n\n2. **The actual route is not shown**: The `userRouter` module itself is not provided in the code context, so I cannot see what specific endpoints it defines (e.g., whether it's `/api/users/profile`, `/api/users/me`, `/api/users/:id`, etc.).\n\n3. **What I know**: All `/api/users/*` endpoints require token verification via the `verifyToken` middleware.\n\nTo answer your question accurately, I would need to see the contents of `express-real/source/routes/users.js` file, which defines the actual user profile endpoint.",
+    "score": {
+      "correctness": 5,
+      "fileIdentification": 5,
+      "reasoningQuality": 5
+    },
+    "inputTokens": 395,
+    "outputTokens": 215,
+    "costUSD": 0.00147
+  },
+  {
+    "questionId": "express-013",
+    "question": "What is the endpoint for resetting the database?",
+    "mode": "skeleton",
+    "answer": "Based on the provided code context, the endpoint for resetting the database is:\n\n**`POST /api/admin/reset`**\n\nThis endpoint is defined in `express-real/source/app.js` and requires:\n1. A valid JWT token (via the `verifyToken` middleware)\n2. The user to have the `super_admin` role (via the `requireRole('super_admin')` middleware)\n\nHowever, I should note that the actual implementation of this endpoint is incomplete in the provided code (the handler function body is missing), so I cannot confirm what the reset operation actually does.",
+    "score": {
+      "correctness": 1,
+      "fileIdentification": 1,
+      "reasoningQuality": 2
+    },
+    "inputTokens": 394,
+    "outputTokens": 134,
+    "costUSD": 0.001064
+  },
+  {
+    "questionId": "express-014",
+    "question": "If the JWT_SECRET environment variable is missing, what happens during token verification?",
+    "mode": "skeleton",
+    "answer": "Based on the provided code context, I **cannot answer this question confidently** because the implementation of the `verifyToken` function in `express-real/source/middleware/auth.js` is incomplete — it only shows the function signature without the actual function body.\n\nTo properly answer what happens when `JWT_SECRET` is missing during token verification, I would need to see:\n\n1. The complete implementation of `verifyToken` in `middleware/auth.js`\n2. How `JWT_SECRET` is accessed (e.g., `process.env.JWT_SECRET`)\n3. How the `jwt.verify()` call is configured with the secret\n\n**What I can observe:**\n- The codebase uses `jsonwebtoken` library (imported in `auth.js`)\n- The `verifyToken` middleware is applied to protected routes like `/api/users`\n- Both `app.js` and `middleware/auth.js` have incomplete function implementations (shown only with function signatures/arrows, no bodies)\n\nTo diagnose the actual behavior, please provide the complete implementation of the `verifyToken` and `requireRole` functions.",
+    "score": {
+      "correctness": 4,
+      "fileIdentification": 5,
+      "reasoningQuality": 5
+    },
+    "inputTokens": 400,
+    "outputTokens": 252,
+    "costUSD": 0.00166
+  },
+  {
+    "questionId": "express-015",
+    "question": "Which module is used for verifying JSON Web Tokens?",
+    "mode": "skeleton",
+    "answer": "Based on the provided code context, the **`jsonwebtoken`** module (imported as `jwt`) is used for verifying JSON Web Tokens.\n\nThis can be seen in `express-real/source/middleware/auth.js` at the top of the file:\n\n```javascript\nconst jwt = require('jsonwebtoken');\n```\n\nThis module is imported in the authentication middleware file where the `verifyToken` function is defined (though the implementation is incomplete in the provided snippet).",
+    "score": {
+      "correctness": 5,
+      "fileIdentification": 5,
+      "reasoningQuality": 5
+    },
+    "inputTokens": 396,
+    "outputTokens": 107,
+    "costUSD": 0.000931
+  },
+  {
+    "questionId": "express-016",
+    "question": "Does the app serve any static files?",
+    "mode": "skeleton",
+    "answer": "Based on the provided code context, **no, the app does not serve any static files**.\n\nThe codebase shows:\n\n1. **express-real/source/app.js** - Contains only:\n   - CORS middleware\n   - JSON body parser middleware\n   - A health check endpoint (`GET /health`)\n   - Protected API routes (`/api/users`)\n   - An admin reset endpoint (`POST /api/admin/reset`)\n\n2. **express-real/source/middleware/auth.js** - Contains only authentication middleware\n\nThere is no `app.use(express.static())` call or any static file serving configuration in the provided code. All endpoints are API routes that return JSON responses.\n\n**Note:** The code snippets appear incomplete (several function bodies are cut off with `}`), so it's possible static file serving could be configured elsewhere in the codebase that wasn't provided in this context.",
+    "score": {
+      "correctness": 4,
+      "fileIdentification": 4,
+      "reasoningQuality": 5
+    },
+    "inputTokens": 392,
+    "outputTokens": 202,
+    "costUSD": 0.001402
+  },
+  {
+    "questionId": "express-017",
+    "question": "What happens when a database error occurs in the /api/profile route?",
+    "mode": "skeleton",
+    "answer": "I cannot answer this question based on the provided code context.\n\nThe codebase excerpt does not contain a `/api/profile` route. The visible routes are:\n- `GET /health` (public health check)\n- `POST /api/admin/reset` (admin-only system reset)\n- `GET/POST /api/users/*` (protected user routes via `userRouter`)\n\nAdditionally, the code is incomplete—several function bodies are missing (marked with `}`), including:\n- The global middleware function in `app.js`\n- The `verifyToken` middleware in `auth.js`\n- The `requireRole` middleware in `auth.js`\n- The `/api/admin/reset` route handler in `app.js`\n\nTo answer your question about database error handling in a `/api/profile` route, I would need to see:\n1. The actual `/api/profile` route implementation\n2. The complete route handlers with error handling logic\n3. Likely the `userRouter` file (referenced but not provided)",
+    "score": {
+      "correctness": 5,
+      "fileIdentification": 5,
+      "reasoningQuality": 5
+    },
+    "inputTokens": 399,
+    "outputTokens": 232,
+    "costUSD": 0.001559
+  },
+  {
+    "questionId": "express-018",
+    "question": "What fields does the /api/profile endpoint select from the database?",
+    "mode": "skeleton",
+    "answer": "I cannot answer this question based on the provided code context. \n\nThe codebase excerpt shows:\n- `app.js` - which defines routes for `/health`, `/api/users`, and `/api/admin/reset`\n- `middleware/auth.js` - which contains authentication middleware\n\nThere is **no `/api/profile` endpoint** defined in the provided code. Additionally, the code snippets are incomplete (they end abruptly with `}` characters without implementation details).\n\nTo answer your question, I would need:\n1. The actual route handler file that defines the `/api/profile` endpoint\n2. The complete implementation of that endpoint, including the database query and `.select()` clause if using Prisma\n\nCould you provide the file containing the `/api/profile` endpoint implementation?",
+    "score": {
+      "correctness": 5,
+      "fileIdentification": 5,
+      "reasoningQuality": 5
+    },
+    "inputTokens": 398,
+    "outputTokens": 175,
+    "costUSD": 0.001273
+  },
+  {
+    "questionId": "express-019",
+    "question": "If a user has role 'user' and tries to hit /api/admin/reset, what is the exact response?",
+    "mode": "skeleton",
+    "answer": "I cannot answer this question with confidence based on the provided code context.\n\nWhile I can see that the `/api/admin/reset` endpoint is protected by `verifyToken` and `requireRole('super_admin')` middleware in `express-real/source/app.js`, the actual implementations of both `verifyToken` and `requireRole` functions in `express-real/source/middleware/auth.js` are incomplete (shown as empty stubs with only function signatures).\n\nWithout seeing the actual implementation of `requireRole`, I cannot determine:\n- What response status code is returned\n- What response body/message is sent\n- Whether an error is thrown or how it's handled\n\nTo answer accurately, I would need to see the complete implementation of the `requireRole` middleware function in `express-real/source/middleware/auth.js`.",
+    "score": {
+      "correctness": 4,
+      "fileIdentification": 5,
+      "reasoningQuality": 5
+    },
+    "inputTokens": 410,
+    "outputTokens": 185,
+    "costUSD": 0.001335
+  },
+  {
+    "questionId": "express-020",
+    "question": "How is the Express application instantiated?",
+    "mode": "skeleton",
+    "answer": "# Express Application Instantiation\n\nBased on the provided codebase, the Express application is instantiated in **`express-real/source/app.js`** on this line:\n\n```javascript\nconst app = express();\n```\n\nThis is a standard Express instantiation where:\n1. The `express` module is imported at the top of the file: `const express = require('express');`\n2. The `express()` function is called to create an application instance\n3. The `app` instance is then used to:\n   - Apply global middleware (CORS, JSON parsing)\n   - Define routes (health check, protected user routes, admin reset endpoint)\n   - Export the module for use elsewhere: `module.exports = app;`\n\n**Note:** The provided code snippets are incomplete (indicated by trailing `=>` and `}` markers), so the full implementation of the middleware setup and route handlers cannot be fully reviewed.",
+    "score": {
+      "correctness": 5,
+      "fileIdentification": 5,
+      "reasoningQuality": 5
+    },
+    "inputTokens": 392,
+    "outputTokens": 206,
+    "costUSD": 0.001422
+  }
+]

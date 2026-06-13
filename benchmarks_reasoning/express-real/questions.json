@@ -41,6 +41,126 @@
       "expected_files": ["source/app.js", "source/middleware/auth.js"],
       "expected_concepts": ["app.use", "verifyToken", "requireRole('moderator')", "new router file"],
       "difficulty": "easy"
+    },
+    {
+      "id": "express-006",
+      "category": "navigation",
+      "question": "What port does the Express application listen on by default?",
+      "expected_files": ["source/app.js"],
+      "expected_concepts": ["3000", "process.env.PORT", "app.listen"],
+      "difficulty": "easy"
+    },
+    {
+      "id": "express-007",
+      "category": "architecture",
+      "question": "How are JSON request bodies parsed in this application?",
+      "expected_files": ["source/app.js"],
+      "expected_concepts": ["express.json()", "middleware"],
+      "difficulty": "easy"
+    },
+    {
+      "id": "express-008",
+      "category": "bug_investigation",
+      "question": "If a user forgets the 'Bearer ' prefix in the Authorization header, what status code is returned?",
+      "expected_files": ["source/middleware/auth.js"],
+      "expected_concepts": ["401", "Unauthorized", "token extraction fails"],
+      "difficulty": "easy"
+    },
+    {
+      "id": "express-009",
+      "category": "navigation",
+      "question": "Where are the authentication middlewares exported?",
+      "expected_files": ["source/middleware/auth.js"],
+      "expected_concepts": ["module.exports", "verifyToken", "requireRole"],
+      "difficulty": "easy"
+    },
+    {
+      "id": "express-010",
+      "category": "architecture",
+      "question": "What ORM or database client is being used?",
+      "expected_files": ["source/app.js"],
+      "expected_concepts": ["PrismaClient", "@prisma/client"],
+      "difficulty": "easy"
+    },
+    {
+      "id": "express-011",
+      "category": "architecture",
+      "question": "Is CORS enabled in this application?",
+      "expected_files": ["source/app.js"],
+      "expected_concepts": ["No", "cors is not imported or used"],
+      "difficulty": "easy"
+    },
+    {
+      "id": "express-012",
+      "category": "navigation",
+      "question": "What is the endpoint for fetching the user profile?",
+      "expected_files": ["source/app.js"],
+      "expected_concepts": ["/api/profile", "GET"],
+      "difficulty": "easy"
+    },
+    {
+      "id": "express-013",
+      "category": "navigation",
+      "question": "What is the endpoint for resetting the database?",
+      "expected_files": ["source/app.js"],
+      "expected_concepts": ["/api/admin/reset", "POST"],
+      "difficulty": "easy"
+    },
+    {
+      "id": "express-014",
+      "category": "bug_investigation",
+      "question": "If the JWT_SECRET environment variable is missing, what happens during token verification?",
+      "expected_files": ["source/middleware/auth.js"],
+      "expected_concepts": ["jwt.verify will throw or fail", "401 or 500 error"],
+      "difficulty": "easy"
+    },
+    {
+      "id": "express-015",
+      "category": "navigation",
+      "question": "Which module is used for verifying JSON Web Tokens?",
+      "expected_files": ["source/middleware/auth.js"],
+      "expected_concepts": ["jsonwebtoken", "jwt"],
+      "difficulty": "easy"
+    },
+    {
+      "id": "express-016",
+      "category": "architecture",
+      "question": "Does the app serve any static files?",
+      "expected_files": ["source/app.js"],
+      "expected_concepts": ["No", "express.static is not used"],
+      "difficulty": "easy"
+    },
+    {
+      "id": "express-017",
+      "category": "architecture",
+      "question": "What happens when a database error occurs in the /api/profile route?",
+      "expected_files": ["source/app.js"],
+      "expected_concepts": ["try/catch", "res.status(500)", "Server Error"],
+      "difficulty": "easy"
+    },
+    {
+      "id": "express-018",
+      "category": "navigation",
+      "question": "What fields does the /api/profile endpoint select from the database?",
+      "expected_files": ["source/app.js"],
+      "expected_concepts": ["id, email, name, role"],
+      "difficulty": "easy"
+    },
+    {
+      "id": "express-019",
+      "category": "bug_investigation",
+      "question": "If a user has role 'user' and tries to hit /api/admin/reset, what is the exact response?",
+      "expected_files": ["source/middleware/auth.js"],
+      "expected_concepts": ["403", "Forbidden"],
+      "difficulty": "easy"
+    },
+    {
+      "id": "express-020",
+      "category": "architecture",
+      "question": "How is the Express application instantiated?",
+      "expected_files": ["source/app.js"],
+      "expected_concepts": ["const app = express()"],
+      "difficulty": "easy"
     }
   ]
 }
